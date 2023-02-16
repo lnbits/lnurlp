@@ -1,0 +1,10 @@
+{
+  "name": "LNURLp",
+  "short_description": "Make reusable LNURL pay links",
+	"tile": "/lnurlp/static/image/lnurl-pay.png",
+  "contributors": [
+    "arcbtc",
+    "eillarra",
+    "fiatjaf"
+  ]
+}
