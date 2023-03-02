@@ -27,3 +27,5 @@ LNURL is a range of lightning-network standards that allow us to use lightning-n
      ![view lnurlp](https://i.imgur.com/4n41S7T.jpg)
 
 3. Optional - add Lightning Address
+   - attach a username to your lnurlp to create a lightning address
+   - the LN address format will be username@lnbits-domain-name

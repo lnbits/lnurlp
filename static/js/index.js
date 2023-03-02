@@ -9,6 +9,8 @@ var locationPath = [
   window.location.pathname
 ].join('')
 
+var domain = window.location.hostname
+
 var mapPayLink = obj => {
   obj._data = _.clone(obj)
   obj.date = Quasar.utils.date.formatDate(
@@ -26,6 +28,7 @@ new Vue({
   mixins: [windowMixin],
   data() {
     return {
+      domain: domain,
       currencies: [],
       fiatRates: {},
       checker: null,
@@ -137,7 +140,8 @@ new Vue({
           'success_text',
           'success_url',
           'comment_chars',
-          'currency'
+          'currency',
+          'username'
         ),
         (value, key) =>
           (key === 'webhook_url' ||

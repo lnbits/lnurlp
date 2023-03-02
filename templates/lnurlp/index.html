@@ -29,6 +29,7 @@
             <q-tr :props="props">
               <q-th auto-width></q-th>
               <q-th auto-width>Description</q-th>
+              <q-th auto-width>Lightning Address</q-th>
               <q-th auto-width>Amount</q-th>
               <q-th auto-width>Currency</q-th>
               <q-th auto-width></q-th>
@@ -148,6 +149,21 @@
           label="Wallet *"
         >
         </q-select>
+        <div class="row">
+          <div class="col">
+           <q-input
+            filled
+            dense
+            v-model.trim="formDialog.data.lnaddress"
+            type="text"
+            label="Lightning Username"
+          >
+          </div>
+          <div class="col"  style="margin-top: 10px">
+            <span class="label"> @{% raw %} {{domain}} {% endraw %} </span>
+          </div>
+          </q-input>
+        </div>
         <q-input
           filled
           dense
