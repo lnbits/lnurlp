@@ -23,10 +23,15 @@ from .models import CreatePayLinkData
 from .lnurl import lnurl_response
 
 @lnurlp_ext.get("/api/v1/well-known/{username}")
-async def lnaddress(username: str, request: Request):
-     print("calling /api/v1/well-known")
-     domain = urlparse(str(request.url)).netloc
-     return await lnurl_response(username, domain, request)
+async def lnaddress(username: str):
+     msg = "calling /api/v1/well-known" + username
+     return msg
+
+# @lnurlp_ext.get("/api/v1/well-known/{username}")
+# async def lnaddress(username: str, request: Request):
+#      print("calling /api/v1/well-known")
+#      domain = urlparse(str(request.url)).netloc
+#      return await lnurl_response(username, domain, request)
 
 
 @lnurlp_ext.get("/api/v1/currencies")
