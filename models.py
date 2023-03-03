@@ -23,6 +23,7 @@ class CreatePayLinkData(BaseModel):
     success_text: str = Query(None)
     success_url: str = Query(None)
     fiat_base_multiplier: int = Query(100, ge=1)
+    username: str = Query(None)
 
 
 class PayLink(BaseModel):
@@ -41,6 +42,7 @@ class PayLink(BaseModel):
     comment_chars: int
     max: float
     fiat_base_multiplier: int
+    username: str
 
     @classmethod
     def from_row(cls, row: Row) -> "PayLink":
@@ -73,3 +75,10 @@ class PayLink(BaseModel):
             return {"tag": "message", "message": self.success_text}
         else:
             return None
+
+    async def lnurlpay_metadata(self, domain) -> LnurlPayMetadata:
+        text = f"Payment to {self.lnaddress}"
+        identifier = f"{self.lnaddress}@{domain}"
+        metadata = [["text/plain", text], ["text/identifier", identifier]]
+
+        return LnurlPayMetadata(json.dumps(metadata))
