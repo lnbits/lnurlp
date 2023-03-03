@@ -23,7 +23,7 @@ class CreatePayLinkData(BaseModel):
     success_text: str = Query(None)
     success_url: str = Query(None)
     fiat_base_multiplier: int = Query(100, ge=1)
-    username: str = Query(None)
+    username: str
 
 
 class PayLink(BaseModel):
