@@ -23,7 +23,7 @@ lnurlp_redirect_paths = [
     "from_path": "/.well-known/lnurlp",
     "redirect_to_path": "/api/v1/well-known",
     "header_filters": {
-        "accept": "application/json"
+        "accept": "application/lnurlp+json"
     }
   }
 ]
