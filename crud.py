@@ -95,7 +95,7 @@ async def create_pay_link(data: CreatePayLinkData, wallet_id: str) -> PayLink:
 
 async def get_address_data(username: str) -> Optional[PayLink]:
     row = await db.fetchone(
-        "SELECT * FROM lnurl.pay_links WHERE username = ?", (username,)
+        "SELECT * FROM lnurlp.pay_links WHERE username = ?", (username,)
     )
     return PayLink.from_row(row) if row else None
 

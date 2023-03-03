@@ -56,10 +56,6 @@ class PayLink(BaseModel):
         url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
         return lnurl_encode(url)
 
-    @property
-    def lnurlpay_metadata(self) -> LnurlPayMetadata:
-        return LnurlPayMetadata(json.dumps([["text/plain", self.description]]))
-
     def success_action(self, payment_hash: str) -> Optional[Dict]:
         if self.success_url:
             url: ParseResult = urlparse(self.success_url)
@@ -75,3 +71,10 @@ class PayLink(BaseModel):
             return {"tag": "message", "message": self.success_text}
         else:
             return None
+
+    async def lnurlpay_metadata(self, domain) -> LnurlPayMetadata:
+        text = f"Payment to {self.username}"
+        identifier = f"{self.username}@{domain}"
+        metadata = [["text/plain", text], ["text/identifier", identifier]]
+
+        return LnurlPayMetadata(json.dumps(metadata))
