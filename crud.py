@@ -6,9 +6,44 @@ from lnbits.helpers import urlsafe_short_hash
 from . import db #, maindb
 from .models import CreatePayLinkData, PayLink
 
-from loguru import logger
+# from loguru import logger
+
+async def check_lnaddress_update(username: str, id: str) -> bool:
+    # check no duplicates for lnaddress when updating an username
+    row = await db.fetchall(
+        "SELECT username FROM lnurlp.pay_links WHERE username = ? AND id = ?",
+        (username, id),
+    )
+    if len(row) > 1:
+        assert False, "Lightning Address Already exists. Try a different One?"
+        return
+    else:
+        return True
+
+
+async def check_lnaddress_exists(username: str) -> bool:
+    # check if lnaddress username exists in the database when creating a new entry
+    row = await db.fetchall(
+        "SELECT username FROM lnurlp.pay_links WHERE username = ?", (username,)
+    )
+    if row:
+        assert False, "Lighting Address Already exists. Try a different One?"
+        return
+    else:
+        return True
+
+
+async def check_lnaddress_format(username: str) -> bool:
+    # check username complies with lnaddress specification
+    if not re.match("^[a-z0-9-_.]{3,15}$", username):
+        assert False, "Only letters a-z0-9-_. allowed, min 3 and max 15 characters!"
+        return
+    return True
+
 
 async def create_pay_link(data: CreatePayLinkData, wallet_id: str) -> PayLink:
+    await check_lnaddress_format(data.username)
+    await check_lnaddress_exists(data.username)
     link_id = urlsafe_short_hash()[:6]
 
     result = await db.execute(
@@ -58,44 +93,6 @@ async def create_pay_link(data: CreatePayLinkData, wallet_id: str) -> PayLink:
     return link
 
 
-
-async def check_lnaddress_update(username: str, id: str) -> bool:
-    # check no duplicates for lnaddress when updating an username
-    row = await db.fetchall(
-        "SELECT username FROM lnurlp.pay_links WHERE username = ? AND id = ?",
-        (username, id),
-    )
-    logger.info("number of rows from username search")
-    logger.info(len(row))
-    if len(row) > 1:
-        assert False, "Lightning Address Already exists. Try a different One?"
-        return
-    else:
-        return True
-
-
-async def check_lnaddress_exists(username: str) -> bool:
-    # check if lnaddress username exists in the database when creating a new entry
-    row = await db.fetchall(
-        "SELECT username FROM lnurlp.pay_links WHERE username = ?", (username,)
-    )
-    logger.info("number of rows from lnaddress search")
-    if row:
-        assert False, "Lighting Address Already exists. Try a different One?"
-        return
-    else:
-        return True
-
-
-async def check_lnaddress_format(username: str) -> bool:
-    # check username complies with lnaddress specification
-    if not re.match("^[a-z0-9-_.]{3,15}$", username):
-        assert False, "Only letters a-z0-9-_. allowed, min 3 and max 15 characters!"
-        return
-    return True
-
-# async def get_wallet_key(wallet_id: str) -> str:
-    
 async def get_address_data(username: str) -> Optional[PayLink]:
     row = await db.fetchone(
         "SELECT * FROM lnurl.pay_links WHERE username = ?", (username,)
@@ -124,6 +121,12 @@ async def get_pay_links(wallet_ids: Union[str, List[str]]) -> List[PayLink]:
 
 
 async def update_pay_link(link_id: int, **kwargs) -> Optional[PayLink]:
+    for field in kwargs.items():
+        if field[0] == "lnaddress":
+            value = field[1]
+            await check_lnaddress_format(value)
+            await check_lnaddress_update(value, str(link_id))
+
     q = ", ".join([f"{field[0]} = ?" for field in kwargs.items()])
     await db.execute(
         f"UPDATE lnurlp.pay_links SET {q} WHERE id = ?", (*kwargs.values(), link_id)
