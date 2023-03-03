@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from fastapi import Request
+from fastapi import Request, Query
 from lnurl import LnurlErrorResponse, LnurlPayActionResponse, LnurlPayResponse
 from starlette.exceptions import HTTPException
 
@@ -8,8 +8,68 @@ from lnbits.core.services import create_invoice
 from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
 
 from . import lnurlp_ext
-from .crud import increment_pay_link
+from .crud import increment_pay_link, get_pay_link, get_address_data
+from loguru import logger
+from urllib.parse import urlparse
 
+# for .well-known/lnurlp
+async def lnurl_response(username: str, domain: str, request: Request):
+    address_data = await get_address_data(username)
+
+    if not address_data:
+        return {"status": "ERROR", "reason": "Address not found."}
+
+    resp = {
+        "tag": "payRequest",
+        "callback": request.url_for(
+            "lnurlp.api_lnurl_callback", link_id=address_data.id
+        ),
+        "metadata": await address_data.lnurlpay_metadata(domain=domain),
+        "minSendable": int(address_data.min * 1000),
+        "maxSendable": int(address_data.max * 1000),
+    }
+
+    logger.debug("RESP", resp)
+    return resp
+
+
+# for lnaddress callback
+@lnurlp_ext.get(
+    "/api/v1/lnurl/cb/{link_id}",
+    status_code=HTTPStatus.OK,
+    name="lnurlp.api_lnurl_callback",
+)
+async def api_lnurl_callback(request: Request, link_id, amount: int = Query(...)):
+    address = await get_pay_link(link_id)
+    if not address:
+        return LnurlErrorResponse(reason=f'{"Address not found"}').dict()
+
+    domain = urlparse(str(request.url)).netloc
+    assert domain
+
+    unhashed_description = await address.lnurlpay_metadata(domain=domain)
+    unhashed_description = unhashed_description.encode()
+    payment_hash, payment_request = await create_invoice(
+        wallet_id=address.wallet,
+        amount=int(amount / 1000),
+        memo=address.description,
+        unhashed_description=unhashed_description,
+        extra={
+            "tag": "lnurlp",
+            "link": address.id,
+            "extra": {"tag": f"Payment to {address.username}@{domain}"},
+        },
+    )
+
+    success_action = address.success_action(payment_hash)
+    if success_action:
+        resp = LnurlPayActionResponse(
+            pr=payment_request, success_action=success_action, routes=[]
+        )
+    else:
+        resp = LnurlPayActionResponse(pr=payment_request, routes=[])
+
+    return resp.dict()
 
 @lnurlp_ext.get(
     "/api/v1/lnurl/{link_id}",  # Backwards compatibility for old LNURLs / QR codes (with long URL)
