@@ -1,6 +1,7 @@
 import json
 from asyncio.log import logger
 from http import HTTPStatus
+from urllib.parse import urlparse
 
 from fastapi import Depends, Query, Request
 from lnurl.exceptions import InvalidUrl as LnurlInvalidUrl
@@ -19,6 +20,12 @@ from .crud import (
     update_pay_link,
 )
 from .models import CreatePayLinkData
+from .lnurl import lnurl_response
+
+@lnurlp_ext.get("/api/v1/well-known/{username}")
+async def lnaddress(username: str, request: Request):
+     domain = urlparse(str(request.url)).netloc
+     return await lnurl_response(username, domain, request)
 
 
 @lnurlp_ext.get("/api/v1/currencies")

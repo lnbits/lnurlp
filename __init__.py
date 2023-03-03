@@ -17,6 +17,17 @@ lnurlp_static_files = [
         "name": "lnurlp_static",
     }
 ]
+
+lnurlp_redirect_paths = [
+  {
+    "from_path": "/.well-known/lnurlp",
+    "redirect_to_path": "/api/v1/well-known",
+    "header_filters": {
+        "accept": "application/json"
+    }
+  }
+]
+
 scheduled_tasks: List[asyncio.Task] = []
 
 lnurlp_ext: APIRouter = APIRouter(prefix="/lnurlp", tags=["lnurlp"])
