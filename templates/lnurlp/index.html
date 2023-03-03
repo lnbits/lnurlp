@@ -29,9 +29,9 @@
             <q-tr :props="props">
               <q-th auto-width></q-th>
               <q-th auto-width>Description</q-th>
-              <q-th auto-width>Lightning Address</q-th>
               <q-th auto-width>Amount</q-th>
               <q-th auto-width>Currency</q-th>
+              <q-th auto-width>Lightning Address</q-th>
               <q-th auto-width></q-th>
               <q-th auto-width></q-th>
             </q-tr>
@@ -149,6 +149,14 @@
           label="Wallet *"
         >
         </q-select>
+        <q-input
+        filled
+        dense
+        v-model.trim="formDialog.data.description"
+        type="text"
+        label="Item description *"
+      >
+      </q-input>
         <div class="row">
           <div class="col">
            <q-input
@@ -164,14 +172,6 @@
           </div>
           </q-input>
         </div>
-        <q-input
-          filled
-          dense
-          v-model.trim="formDialog.data.description"
-          type="text"
-          label="Item description *"
-        >
-        </q-input>
         <div class="row q-col-gutter-sm">
           <q-input
             filled

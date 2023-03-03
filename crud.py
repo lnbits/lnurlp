@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 
 from lnbits.helpers import urlsafe_short_hash
 
-from . import db, maindb
+from . import db #, maindb
 from .models import CreatePayLinkData, PayLink
 
 from loguru import logger
@@ -94,13 +94,13 @@ async def check_lnaddress_format(username: str) -> bool:
         return
     return True
 
-async def get_wallet_key(wallet_id: str) -> str:
-    row = await maindb.fetchone("SELECT inkey FROM wallets WHERE id = ?", (wallet_id,))
-    if row is not None:
-        return row[0]
-    else:
-        assert False, "Cannot locate wallet invoice key"
-        return
+# async def get_wallet_key(wallet_id: str) -> str:
+#     row = await maindb.fetchone("SELECT inkey FROM wallets WHERE id = ?", (wallet_id,))
+#     if row is not None:
+#         return row[0]
+#     else:
+#         assert False, "Cannot locate wallet invoice key"
+#         return
     
 async def get_address_data(username: str) -> Optional[PayLink]:
     row = await db.fetchone(
