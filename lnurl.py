@@ -12,6 +12,7 @@ from .crud import increment_pay_link, get_pay_link, get_address_data
 from loguru import logger
 from urllib.parse import urlparse
 
+
 # for .well-known/lnurlp
 async def lnurl_response(username: str, domain: str, request: Request):
     address_data = await get_address_data(username)
