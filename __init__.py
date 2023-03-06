@@ -20,8 +20,8 @@ lnurlp_static_files = [
 
 lnurlp_redirect_paths = [
   {
-    "from_path": "/.well-known/lnurlp/two",
-    "redirect_to_path": "/api/v1/well-known/two",
+    "from_path": "/.well-known/lnurlp/",
+    "redirect_to_path": "/api/v1/well-known/",
   }
 ]
 
