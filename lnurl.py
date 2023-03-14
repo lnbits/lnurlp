@@ -71,9 +71,11 @@ async def api_lnurl_callback(
     extra = {
         "tag": "lnurlp",
         "link": link.id,
-        "comment": comment,
         "extra": request.query_params.get("amount"),
     }
+
+    if comment:
+        extra["comment"] = (comment,)
 
     if lnaddress and link.username and link.domain:
         extra["lnaddress"] = f"{link.username}@{link.domain}"
