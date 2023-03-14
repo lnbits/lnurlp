@@ -18,15 +18,17 @@ from .crud import (
     get_pay_link,
     get_pay_links,
     update_pay_link,
+    get_address_data,
 )
 from .models import CreatePayLinkData
-from .lnurl import lnurl_response
+from .lnurl import api_lnurl_response
+
 
 @lnurlp_ext.get("/api/v1/well-known/{username}")
 async def lnaddress(username: str, request: Request):
-     print("calling /api/v1/well-known/" + username)
-     domain = urlparse(str(request.url)).netloc
-     return await lnurl_response(username, domain, request)
+    address_data = await get_address_data(username)
+    assert address_data, "User not found"
+    return await api_lnurl_response(request, address_data.id, lnaddress=True)
 
 
 @lnurlp_ext.get("/api/v1/currencies")
