@@ -22,14 +22,13 @@ async def check_lnaddress_update(username: str, id: str) -> bool:
         return True
 
 
-async def check_lnaddress_exists(username: str) -> bool:
+async def check_lnaddress_not_exists(username: str) -> bool:
     # check if lnaddress username exists in the database when creating a new entry
     row = await db.fetchall(
         "SELECT username FROM lnurlp.pay_links WHERE username = ?", (username,)
     )
     if row:
         assert False, "Username already exists. Try a different one."
-        return
     else:
         return True
 
@@ -43,8 +42,10 @@ async def check_lnaddress_format(username: str) -> bool:
 
 
 async def create_pay_link(data: CreatePayLinkData, wallet_id: str) -> PayLink:
-    await check_lnaddress_format(data.username)
-    await check_lnaddress_exists(data.username)
+    if data.username:
+        await check_lnaddress_format(data.username)
+        await check_lnaddress_not_exists(data.username)
+
     link_id = urlsafe_short_hash()[:6]
 
     result = await db.execute(
@@ -121,12 +122,10 @@ async def get_pay_links(wallet_ids: Union[str, List[str]]) -> List[PayLink]:
     return [PayLink.from_row(row) for row in rows]
 
 
-async def update_pay_link(link_id: int, **kwargs) -> Optional[PayLink]:
-    for field in kwargs.items():
-        if field[0] == "lnaddress":
-            value = field[1]
-            await check_lnaddress_format(value)
-            await check_lnaddress_update(value, str(link_id))
+async def update_pay_link(link_id: str, **kwargs) -> Optional[PayLink]:
+    if "lnaddress" in kwargs:
+        await check_lnaddress_format(kwargs["lnaddress"])
+        await check_lnaddress_update(kwargs["lnaddress"], link_id)
 
     q = ", ".join([f"{field[0]} = ?" for field in kwargs.items()])
     await db.execute(
@@ -136,7 +135,7 @@ async def update_pay_link(link_id: int, **kwargs) -> Optional[PayLink]:
     return PayLink.from_row(row) if row else None
 
 
-async def increment_pay_link(link_id: int, **kwargs) -> Optional[PayLink]:
+async def increment_pay_link(link_id: str, **kwargs) -> Optional[PayLink]:
     q = ", ".join([f"{field[0]} = {field[0]} + ?" for field in kwargs.items()])
     await db.execute(
         f"UPDATE lnurlp.pay_links SET {q} WHERE id = ?", (*kwargs.values(), link_id)
@@ -145,5 +144,5 @@ async def increment_pay_link(link_id: int, **kwargs) -> Optional[PayLink]:
     return PayLink.from_row(row) if row else None
 
 
-async def delete_pay_link(link_id: int) -> None:
+async def delete_pay_link(link_id: str) -> None:
     await db.execute("DELETE FROM lnurlp.pay_links WHERE id = ?", (link_id,))
