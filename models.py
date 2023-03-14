@@ -23,7 +23,7 @@ class CreatePayLinkData(BaseModel):
     success_text: str = Query(None)
     success_url: str = Query(None)
     fiat_base_multiplier: int = Query(100, ge=1)
-    username: str
+    username: str = Query(None)
 
 
 class PayLink(BaseModel):
@@ -33,6 +33,7 @@ class PayLink(BaseModel):
     min: float
     served_meta: int
     served_pr: int
+    username: Optional[str]
     webhook_url: Optional[str]
     webhook_headers: Optional[str]
     webhook_body: Optional[str]
@@ -42,7 +43,6 @@ class PayLink(BaseModel):
     comment_chars: int
     max: float
     fiat_base_multiplier: int
-    username: str
 
     @classmethod
     def from_row(cls, row: Row) -> "PayLink":
