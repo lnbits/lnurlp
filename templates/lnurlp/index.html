@@ -26,7 +26,7 @@
         >
           {% raw %}
           <template v-slot:header="props">
-            <q-tr :props="props">
+            <q-tr  class="text-left" :props="props">
               <q-th auto-width></q-th>
               <q-th auto-width>Description</q-th>
               <q-th auto-width>Amount</q-th>
@@ -48,7 +48,7 @@
                   type="a"
                   :href="props.row.pay_url"
                   target="_blank"
-                ></q-btn>
+                ><q-tooltip>Sharable Page</q-tooltip></q-btn>
                 <q-btn
                   unelevated
                   dense
@@ -56,19 +56,7 @@
                   icon="visibility"
                   :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
                   @click="openQrCodeDialog(props.row.id)"
-                ></q-btn>
-                <q-btn
-                  unelevated
-                  dense
-                  size="xs"
-                  icon="checkmark"
-                  :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
-                  type="a"
-                  :href="'https://sendsats.to/' + props.row.username +'@' + domain"
-                  target="_blank"
-                >
-                </q-btn>
-                <q-tooltip>Check LN Address works via external call</q-tooltip>
+                ><q-tooltip>View Link</q-tooltip></q-btn>
               </q-td>
               <q-td auto-width>{{ props.row.description }}</q-td>
               <q-td auto-width>
@@ -114,6 +102,7 @@
                   icon="edit"
                   color="light-blue"
                 >
+                <q-tooltip>Edit</q-tooltip>
                 </q-btn>
                 <q-btn
                   flat
@@ -122,7 +111,7 @@
                   @click="deletePayLink(props.row.id)"
                   icon="cancel"
                   color="pink"
-                ></q-btn>
+                ><q-tooltip>Delete</q-tooltip></q-btn>
               </q-td>
             </q-tr>
           </template>
