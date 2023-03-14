@@ -3,10 +3,11 @@ from typing import List, Optional, Union
 
 from lnbits.helpers import urlsafe_short_hash
 
-from . import db #, maindb
+from . import db  # , maindb
 from .models import CreatePayLinkData, PayLink
 
 # from loguru import logger
+
 
 async def check_lnaddress_update(username: str, id: str) -> bool:
     # check no duplicates for lnaddress when updating an username
@@ -15,7 +16,7 @@ async def check_lnaddress_update(username: str, id: str) -> bool:
         (username, id),
     )
     if len(row) > 1:
-        assert False, "Lightning Address Already exists. Try a different One?"
+        assert False, "Username already exists. Try a different one."
         return
     else:
         return True
@@ -27,7 +28,7 @@ async def check_lnaddress_exists(username: str) -> bool:
         "SELECT username FROM lnurlp.pay_links WHERE username = ?", (username,)
     )
     if row:
-        assert False, "Lighting Address Already exists. Try a different One?"
+        assert False, "Username already exists. Try a different one."
         return
     else:
         return True
