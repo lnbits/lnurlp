@@ -13,29 +13,6 @@ from loguru import logger
 from urllib.parse import urlparse
 
 
-# for .well-known/lnurlp
-async def lnurl_response(username: str, domain: str, request: Request):
-    address_data = await get_address_data(username)
-    # for lnaddress
-    domain = urlparse(str(request.url)).netloc
-    link.domain = domain
-    if not address_data:
-        return {"status": "ERROR", "reason": "Address not found."}
-
-    resp = {
-        "tag": "payRequest",
-        "callback": request.url_for(
-            "lnurlp.api_lnurl_callback", link_id=address_data.id
-        ),
-        "metadata": await address_data.lnurlpay_metadata,
-        "minSendable": int(address_data.min * 1000),
-        "maxSendable": int(address_data.max * 1000),
-    }
-
-    logger.debug("RESP", resp)
-    return resp
-
-
 @lnurlp_ext.get(
     "/api/v1/lnurl/cb/lnaddr/{link_id}",
     status_code=HTTPStatus.OK,
@@ -107,10 +84,10 @@ async def api_lnurl_callback(
     success_action = link.success_action(payment_hash)
     if success_action:
         resp = LnurlPayActionResponse(
-            pr=payment_request, success_action=success_action, routes=[]
+            pr=payment_request, success_action=success_action, routes=[]  # type: ignore
         )
     else:
-        resp = LnurlPayActionResponse(pr=payment_request, routes=[])
+        resp = LnurlPayActionResponse(pr=payment_request, routes=[])  # type: ignore
 
     return resp.dict()
 
@@ -144,8 +121,8 @@ async def api_lnurl_response(request: Request, link_id, lnaddress=False):
 
     resp = LnurlPayResponse(
         callback=callback,
-        min_sendable=round(link.min * rate) * 1000,
-        max_sendable=round(link.max * rate) * 1000,
+        min_sendable=round(link.min * rate) * 1000,  # type: ignore
+        max_sendable=round(link.max * rate) * 1000,  # type: ignore
         metadata=link.lnurlpay_metadata,
     )
     params = resp.dict()

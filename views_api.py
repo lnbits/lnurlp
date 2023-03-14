@@ -23,7 +23,7 @@ from .crud import (
 from .models import CreatePayLinkData
 from .lnurl import api_lnurl_response
 
-
+# redirected from /.well-known/lnurlp
 @lnurlp_ext.get("/api/v1/well-known/{username}")
 async def lnaddress(username: str, request: Request):
     address_data = await get_address_data(username)
