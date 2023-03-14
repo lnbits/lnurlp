@@ -93,7 +93,8 @@ new Vue({
             : 'do nothing',
         lnurl: link.lnurl,
         pay_url: link.pay_url,
-        print_url: link.print_url
+        print_url: link.print_url,
+        username: link.username
       }
       this.qrCodeDialog.show = true
     },
