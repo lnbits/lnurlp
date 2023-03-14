@@ -65,20 +65,25 @@ async def api_lnurl_callback(
         ).dict()
 
     if lnaddress:
-        domain = urlparse(str(request.url)).netloc
-        link.domain = domain
+        # for lnaddress, we have to set this otherwise the metadata won't have the identifier
+        link.domain = urlparse(str(request.url)).netloc
+
+    extra = {
+        "tag": "lnurlp",
+        "link": link.id,
+        "comment": comment,
+        "extra": request.query_params.get("amount"),
+    }
+
+    if lnaddress and link.username and link.domain:
+        extra["lnaddress"] = f"{link.username}@{link.domain}"
 
     payment_hash, payment_request = await create_invoice(
         wallet_id=link.wallet,
         amount=int(amount_received / 1000),
         memo=link.description,
         unhashed_description=link.lnurlpay_metadata.encode(),
-        extra={
-            "tag": "lnurlp",
-            "link": link.id,
-            "comment": comment,
-            "extra": request.query_params.get("amount"),
-        },
+        extra=extra,
     )
 
     success_action = link.success_action(payment_hash)
@@ -112,9 +117,8 @@ async def api_lnurl_response(request: Request, link_id, lnaddress=False):
     rate = await get_fiat_rate_satoshis(link.currency) if link.currency else 1
 
     if lnaddress:
-        # for lnaddress
-        domain = urlparse(str(request.url)).netloc
-        link.domain = domain
+        # for lnaddress, we have to set this otherwise the metadata won't have the identifier
+        link.domain = urlparse(str(request.url)).netloc
         callback = request.url_for("lnurlp.api_lnurl_lnaddr_callback", link_id=link.id)
     else:
         callback = request.url_for("lnurlp.api_lnurl_callback", link_id=link.id)
