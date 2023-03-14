@@ -10,8 +10,7 @@ async def m001_initial(db):
             description TEXT NOT NULL,
             amount {db.big_int} NOT NULL,
             served_meta INTEGER NOT NULL,
-            served_pr INTEGER NOT NULL,
-            username TEXT
+            served_pr INTEGER NOT NULL
         );
         """
     )
@@ -98,8 +97,7 @@ async def m006_redux(db):
                 success_url TEXT,
                 comment_chars INTEGER DEFAULT 0,
                 webhook_headers TEXT,
-                webhook_body TEXT,
-                username TEXT
+                webhook_body TEXT
                 );
             """
         )
@@ -124,8 +122,7 @@ async def m006_redux(db):
                     max,
                     fiat_base_multiplier,
                     webhook_headers,
-                    webhook_body,
-                    username
+                    webhook_body
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
