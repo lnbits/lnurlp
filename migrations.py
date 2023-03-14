@@ -124,7 +124,7 @@ async def m006_redux(db):
                     webhook_headers,
                     webhook_body
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     row[0],
@@ -142,7 +142,6 @@ async def m006_redux(db):
                     row[12],
                     row[13],
                     row[14],
-                    row[15],
                 ),
             )
 
