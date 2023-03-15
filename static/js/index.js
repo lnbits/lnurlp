@@ -9,8 +9,6 @@ var locationPath = [
   window.location.pathname
 ].join('')
 
-var domain = window.location.hostname
-
 var mapPayLink = obj => {
   obj._data = _.clone(obj)
   obj.date = Quasar.utils.date.formatDate(
@@ -28,7 +26,7 @@ new Vue({
   mixins: [windowMixin],
   data() {
     return {
-      domain: domain,
+      domain: window.location.host,
       currencies: [],
       fiatRates: {},
       checker: null,
