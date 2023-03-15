@@ -23,6 +23,7 @@ class CreatePayLinkData(BaseModel):
     success_text: str = Query(None)
     success_url: str = Query(None)
     fiat_base_multiplier: int = Query(100, ge=1)
+    username: str = Query(None)
 
 
 class PayLink(BaseModel):
@@ -32,6 +33,8 @@ class PayLink(BaseModel):
     min: float
     served_meta: int
     served_pr: int
+    username: Optional[str]
+    domain: Optional[str]
     webhook_url: Optional[str]
     webhook_headers: Optional[str]
     webhook_body: Optional[str]
@@ -54,10 +57,6 @@ class PayLink(BaseModel):
         url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
         return lnurl_encode(url)
 
-    @property
-    def lnurlpay_metadata(self) -> LnurlPayMetadata:
-        return LnurlPayMetadata(json.dumps([["text/plain", self.description]]))
-
     def success_action(self, payment_hash: str) -> Optional[Dict]:
         if self.success_url:
             url: ParseResult = urlparse(self.success_url)
@@ -73,3 +72,14 @@ class PayLink(BaseModel):
             return {"tag": "message", "message": self.success_text}
         else:
             return None
+
+    @property
+    def lnurlpay_metadata(self) -> LnurlPayMetadata:
+        if self.domain and self.username:
+            text = f"Payment to {self.username}"
+            identifier = f"{self.username}@{self.domain}"
+            metadata = [["text/plain", text], ["text/identifier", identifier]]
+        else:
+            metadata = [["text/plain", self.description]]
+
+        return LnurlPayMetadata(json.dumps(metadata))
