@@ -1,6 +1,7 @@
 import json
 from asyncio.log import logger
 from http import HTTPStatus
+from urllib.parse import urlparse
 
 from fastapi import Depends, Query, Request
 from lnurl.exceptions import InvalidUrl as LnurlInvalidUrl
@@ -17,8 +18,17 @@ from .crud import (
     get_pay_link,
     get_pay_links,
     update_pay_link,
+    get_address_data,
 )
 from .models import CreatePayLinkData
+from .lnurl import api_lnurl_response
+
+# redirected from /.well-known/lnurlp
+@lnurlp_ext.get("/api/v1/well-known/{username}")
+async def lnaddress(username: str, request: Request):
+    address_data = await get_address_data(username)
+    assert address_data, "User not found"
+    return await api_lnurl_response(request, address_data.id, lnaddress=True)
 
 
 @lnurlp_ext.get("/api/v1/currencies")

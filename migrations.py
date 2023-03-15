@@ -146,3 +146,10 @@ async def m006_redux(db):
             )
 
         await db.execute("DROP TABLE lnurlp.pay_links_old")
+
+
+async def m007_add_lnaddress_username(db):
+    """
+    Add headers and body to webhooks
+    """
+    await db.execute("ALTER TABLE lnurlp.pay_links ADD COLUMN username TEXT;")

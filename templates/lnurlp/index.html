@@ -26,11 +26,12 @@
         >
           {% raw %}
           <template v-slot:header="props">
-            <q-tr :props="props">
+            <q-tr  class="text-left" :props="props">
               <q-th auto-width></q-th>
               <q-th auto-width>Description</q-th>
               <q-th auto-width>Amount</q-th>
               <q-th auto-width>Currency</q-th>
+              <q-th auto-width>Username</q-th>
               <q-th auto-width></q-th>
               <q-th auto-width></q-th>
             </q-tr>
@@ -47,7 +48,7 @@
                   type="a"
                   :href="props.row.pay_url"
                   target="_blank"
-                ></q-btn>
+                ><q-tooltip>Sharable Page</q-tooltip></q-btn>
                 <q-btn
                   unelevated
                   dense
@@ -55,7 +56,7 @@
                   icon="visibility"
                   :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
                   @click="openQrCodeDialog(props.row.id)"
-                ></q-btn>
+                ><q-tooltip>View Link</q-tooltip></q-btn>
               </q-td>
               <q-td auto-width>{{ props.row.description }}</q-td>
               <q-td auto-width>
@@ -65,6 +66,7 @@
                 <span v-else>{{ props.row.min }} - {{ props.row.max }}</span>
               </q-td>
               <q-td>{{ props.row.currency || 'sat' }}</q-td>
+              <q-td auto-width :class="(props.row.username) ? 'text-normal' : 'text-grey'">{{ props.row.username || 'None' }}</q-td>
               <q-td>
                 <q-icon v-if="props.row.webhook_url" size="14px" name="http">
                   <q-tooltip>Webhook to {{ props.row.webhook_url}}</q-tooltip>
@@ -100,6 +102,7 @@
                   icon="edit"
                   color="light-blue"
                 >
+                <q-tooltip>Edit</q-tooltip>
                 </q-btn>
                 <q-btn
                   flat
@@ -108,7 +111,7 @@
                   @click="deletePayLink(props.row.id)"
                   icon="cancel"
                   color="pink"
-                ></q-btn>
+                ><q-tooltip>Delete</q-tooltip></q-btn>
               </q-td>
             </q-tr>
           </template>
@@ -149,13 +152,28 @@
         >
         </q-select>
         <q-input
-          filled
-          dense
-          v-model.trim="formDialog.data.description"
-          type="text"
-          label="Item description *"
-        >
-        </q-input>
+        filled
+        dense
+        v-model.trim="formDialog.data.description"
+        type="text"
+        label="Item description *"
+      >
+      </q-input>
+        <div class="row">
+          <div class="col">
+           <q-input
+            filled
+            dense
+            v-model.trim="formDialog.data.username"
+            type="text"
+            label="Lightning Address"
+          >
+          </div>
+          <div class="col"  style="margin-top: 10px">
+            <span class="label">  &nbsp; @ {% raw %} {{domain}} {% endraw %} </span>
+          </div>
+          </q-input>
+        </div>
         <div class="row q-col-gutter-sm">
           <q-input
             filled
@@ -301,6 +319,10 @@
         <strong>Dispatches webhook to:</strong> {{ qrCodeDialog.data.webhook
         }}<br />
         <strong>On success:</strong> {{ qrCodeDialog.data.success }}<br />
+        <span v-if="qrCodeDialog.data.username">
+        <strong>Lightning Address: </strong> {{ qrCodeDialog.data.username}}@{{domain}} 
+          <br/>
+        </span>
       </p>
       {% endraw %}
       <div class="row q-mt-lg q-gutter-sm">
