@@ -77,6 +77,10 @@ async def api_lnurl_callback(
     if comment:
         extra["comment"] = (comment,)
 
+    nostr = request.query_params.get("nostr")
+    if nostr:
+        extra["nostr"] = nostr
+
     if lnaddress and link.username and link.domain:
         extra["lnaddress"] = f"{link.username}@{link.domain}"
 
@@ -84,7 +88,7 @@ async def api_lnurl_callback(
         wallet_id=link.wallet,
         amount=int(amount_received / 1000),
         memo=link.description,
-        unhashed_description=link.lnurlpay_metadata.encode(),
+        unhashed_description=nostr.encode() or link.lnurlpay_metadata.encode(),
         extra=extra,
     )
 
@@ -136,4 +140,8 @@ async def api_lnurl_response(request: Request, link_id, lnaddress=False):
     if link.comment_chars > 0:
         params["commentAllowed"] = link.comment_chars
 
+    params["allowNostr"] = True
+    params[
+        "nostrPubkey"
+    ] = "749b4d4dfc6b00a5e6c9a88d8a220c46c069ff8f027dcf312f040475e059554a"  # private: de1af06647137d49b2277faa86f96effc94257a7b7efd6f5dcc52bea08a4746b
     return params
