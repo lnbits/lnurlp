@@ -92,17 +92,10 @@ async def on_invoice_paid(payment: Payment):
                 tags.append([t, tag])
         tags.append(["bolt11", payment.bolt11])
         tags.append(["description", json.dumps(event_json)])
-        zap_receipt = Event(
-            public_key="749b4d4dfc6b00a5e6c9a88d8a220c46c069ff8f027dcf312f040475e059554a",
-            kind=9735,
-            tags=tags,
-        )
+        zap_receipt = Event(kind=9735, tags=tags, content="asd")
         private_key.sign_event(zap_receipt)
 
-        print(f"NOSTR STUFF: {event_json}")
-        print(f"Receipt: {zap_receipt}")
-
-        def send_event(class_obj):
+        def send_event(_):
             ws.send(zap_receipt.to_message())
             # nonlocal wst
             # wst.join(timeout=1)
