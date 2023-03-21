@@ -108,7 +108,7 @@ async def on_invoice_paid(payment: Payment):
             # wst.join(timeout=1)
 
         ws = WebSocketApp(
-            f"wss://localhost:{settings.port}/nostrclient/api/v1/relay",
+            f"ws://localhost:{settings.port}/nostrclient/api/v1/relay",
             on_open=send_event,
         )
         wst = Thread(target=ws.run_forever)
