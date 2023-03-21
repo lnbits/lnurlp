@@ -65,6 +65,7 @@ async def on_invoice_paid(payment: Payment):
                     payment.payment_hash, -1, False, "Unexpected Error", str(ex)
                 )
 
+    # NIP-57
     nostr = payment.extra.get("nostr")
     if nostr:
         from ..nostrclient.nostr.event import Event
@@ -92,11 +93,15 @@ async def on_invoice_paid(payment: Payment):
                 tags.append([t, tag])
         tags.append(["bolt11", payment.bolt11])
         tags.append(["description", nostr])
-        zap_receipt = Event(kind=9735, tags=tags, content="asd")
+        zap_receipt = Event(
+            kind=9735, tags=tags, content=payment.extra.get("comment") or ""
+        )
         private_key.sign_event(zap_receipt)
 
         def send_event(_):
+            # logger.debug(f"Sending zap: {zap_receipt.to_message()}")
             ws.send(zap_receipt.to_message())
+            ws.close()
 
         from lnbits.core import bolt11
 

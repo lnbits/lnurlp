@@ -48,15 +48,15 @@ async def api_lnurl_callback(
         min = link.min * 1000
         max = link.max * 1000
 
-    amount_received = amount
-    if amount_received < min:
+    amount = amount
+    if amount < min:
         return LnurlErrorResponse(
-            reason=f"Amount {amount_received} is smaller than minimum {min}."
+            reason=f"Amount {amount} is smaller than minimum {min}."
         ).dict()
 
-    elif amount_received > max:
+    elif amount > max:
         return LnurlErrorResponse(
-            reason=f"Amount {amount_received} is greater than maximum {max}."
+            reason=f"Amount {amount} is greater than maximum {max}."
         ).dict()
 
     comment = request.query_params.get("comment")
@@ -79,21 +79,22 @@ async def api_lnurl_callback(
         extra["comment"] = (comment,)
 
     nostr = request.query_params.get("nostr")
+    nostr_description = ""
     if nostr:
         extra["nostr"] = nostr
+        # print("HASHING THIS")
+        nostr_description = json.dumps(nostr)[1:-1]  # remove leading and trailing "
+        # print(nostr_description)
+        import hashlib
+
+        print(hashlib.sha256(nostr_description.encode()).hexdigest())
 
     if lnaddress and link.username and link.domain:
         extra["lnaddress"] = f"{link.username}@{link.domain}"
 
-    print("HASHING THIS")
-    nostr_description = json.dumps(nostr)[1:-1]  # remove leading and trailing "
-    print(nostr_description)
-    import hashlib
-
-    print(hashlib.sha256(nostr_description.encode()).hexdigest())
     payment_hash, payment_request = await create_invoice(
         wallet_id=link.wallet,
-        amount=int(amount_received / 1000),
+        amount=int(amount / 1000),
         memo=link.description,
         unhashed_description=nostr_description.encode()
         if nostr
@@ -149,7 +150,7 @@ async def api_lnurl_response(request: Request, link_id, lnaddress=False):
     if link.comment_chars > 0:
         params["commentAllowed"] = link.comment_chars
 
-    params["allowNostr"] = True
+    params["allowsNostr"] = True
     params[
         "nostrPubkey"
     ] = "749b4d4dfc6b00a5e6c9a88d8a220c46c069ff8f027dcf312f040475e059554a"  # private: de1af06647137d49b2277faa86f96effc94257a7b7efd6f5dcc52bea08a4746b
