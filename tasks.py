@@ -98,6 +98,11 @@ async def on_invoice_paid(payment: Payment):
         def send_event(_):
             ws.send(zap_receipt.to_message())
 
+        from lnbits.core import bolt11
+
+        print(
+            f"Invoice description hash: {bolt11.decode(payment.bolt11).description_hash}"
+        )
         ws = WebSocketApp(
             f"ws://localhost:{settings.port}/nostrclient/api/v1/relay",
             on_open=send_event,

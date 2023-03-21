@@ -85,7 +85,12 @@ async def api_lnurl_callback(
     if lnaddress and link.username and link.domain:
         extra["lnaddress"] = f"{link.username}@{link.domain}"
 
+    print("HASHING THIS")
     nostr_description = json.dumps(nostr)[1:-1]  # remove leading and trailing "
+    print(nostr_description)
+    import hashlib
+
+    print(hashlib.sha256(nostr_description.encode()).hexdigest())
     payment_hash, payment_request = await create_invoice(
         wallet_id=link.wallet,
         amount=int(amount_received / 1000),
