@@ -11,6 +11,7 @@ from . import lnurlp_ext
 from .crud import increment_pay_link, get_pay_link, get_address_data
 from loguru import logger
 from urllib.parse import urlparse
+import json
 
 
 @lnurlp_ext.get(
@@ -88,7 +89,7 @@ async def api_lnurl_callback(
         wallet_id=link.wallet,
         amount=int(amount_received / 1000),
         memo=link.description,
-        unhashed_description=nostr.encode()
+        unhashed_description=json.dumps(nostr).encode()
         if nostr
         else link.lnurlpay_metadata.encode(),
         extra=extra,

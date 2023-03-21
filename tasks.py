@@ -91,14 +91,12 @@ async def on_invoice_paid(payment: Payment):
             if tag:
                 tags.append([t, tag])
         tags.append(["bolt11", payment.bolt11])
-        tags.append(["description", json.dumps(event_json)])
+        tags.append(["description", nostr])
         zap_receipt = Event(kind=9735, tags=tags, content="asd")
         private_key.sign_event(zap_receipt)
 
         def send_event(_):
             ws.send(zap_receipt.to_message())
-            # nonlocal wst
-            # wst.join(timeout=1)
 
         ws = WebSocketApp(
             f"ws://localhost:{settings.port}/nostrclient/api/v1/relay",
