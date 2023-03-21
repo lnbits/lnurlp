@@ -85,11 +85,12 @@ async def api_lnurl_callback(
     if lnaddress and link.username and link.domain:
         extra["lnaddress"] = f"{link.username}@{link.domain}"
 
+    nostr_description = json.dumps(nostr)[1:-1]  # remove leading and trailing "
     payment_hash, payment_request = await create_invoice(
         wallet_id=link.wallet,
         amount=int(amount_received / 1000),
         memo=link.description,
-        unhashed_description=nostr.encode()
+        unhashed_description=nostr_description.encode()
         if nostr
         else link.lnurlpay_metadata.encode(),
         extra=extra,
