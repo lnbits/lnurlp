@@ -78,16 +78,10 @@ async def api_lnurl_callback(
     if comment:
         extra["comment"] = (comment,)
 
+    # nip 57
     nostr = request.query_params.get("nostr")
-    nostr_description = ""
     if nostr:
-        extra["nostr"] = nostr
-        # print("HASHING THIS")
-        nostr_description = nostr  # json.dumps(nostr)[1:-1]  # json.dumps supposedly makes escaped "-s, remove leading and trailing "
-        # print(nostr_description)
-        import hashlib
-
-        print(hashlib.sha256(nostr_description.encode()).hexdigest())
+        extra["nostr"] = nostr  # put it here for later publishing in tasks.py
 
     if lnaddress and link.username and link.domain:
         extra["lnaddress"] = f"{link.username}@{link.domain}"
@@ -96,8 +90,8 @@ async def api_lnurl_callback(
         wallet_id=link.wallet,
         amount=int(amount / 1000),
         memo=link.description,
-        unhashed_description=nostr_description.encode()
-        if nostr
+        unhashed_description=nostr.encode()
+        if nostr  # we take the zap request as the description instead of the LNURL metadata if present
         else link.lnurlpay_metadata.encode(),
         extra=extra,
     )
