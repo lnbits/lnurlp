@@ -99,7 +99,7 @@ async def on_invoice_paid(payment: Payment):
         private_key.sign_event(zap_receipt)
 
         def send_event(_):
-            # logger.debug(f"Sending zap: {zap_receipt.to_message()}")
+            logger.debug(f"Sending zap: {zap_receipt.to_message()}")
             ws.send(zap_receipt.to_message())
             ws.close()
 

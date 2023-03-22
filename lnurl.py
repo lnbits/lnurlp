@@ -83,7 +83,7 @@ async def api_lnurl_callback(
     if nostr:
         extra["nostr"] = nostr
         # print("HASHING THIS")
-        nostr_description = json.dumps(nostr)[1:-1]  # remove leading and trailing "
+        nostr_description = nostr  # json.dumps(nostr)[1:-1]  # json.dumps supposedly makes escaped "-s, remove leading and trailing "
         # print(nostr_description)
         import hashlib
 
