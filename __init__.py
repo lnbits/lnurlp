@@ -7,6 +7,18 @@ from fastapi.staticfiles import StaticFiles
 from lnbits.db import Database
 from lnbits.helpers import template_renderer
 from lnbits.tasks import catch_everything_and_restart
+from loguru import logger
+
+try:
+    from ..nostrclient.nostr.event import Event
+    from ..nostrclient.nostr.key import PrivateKey, PublicKey
+
+    nostrclient_present = True
+    nostr_privatekey = PrivateKey()
+    nostr_publickey: PublicKey = nostr_privatekey.public_key
+    logger.debug(f"LNURLP Zaps Nostr pubkey: {nostr_publickey.hex()}")
+except ImportError:
+    nostrclient_present = False
 
 db = Database("ext_lnurlp")
 
@@ -19,10 +31,10 @@ lnurlp_static_files = [
 ]
 
 lnurlp_redirect_paths = [
-  {
-    "from_path": "/.well-known/lnurlp",
-    "redirect_to_path": "/api/v1/well-known",
-  }
+    {
+        "from_path": "/.well-known/lnurlp",
+        "redirect_to_path": "/api/v1/well-known",
+    }
 ]
 
 scheduled_tasks: List[asyncio.Task] = []

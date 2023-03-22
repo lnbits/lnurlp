@@ -12,6 +12,14 @@ from websocket import WebSocketApp
 from lnbits.settings import settings
 from .crud import get_pay_link
 from threading import Thread
+from . import nostrclient_present, nostr_privatekey
+
+if nostrclient_present:
+    try:
+        from ..nostrclient.nostr.event import Event
+        from ..nostrclient.nostr.key import PrivateKey, PublicKey
+    except ImportError:
+        nostrclient_present = False
 
 
 async def wait_for_paid_invoices():
@@ -67,9 +75,7 @@ async def on_invoice_paid(payment: Payment):
 
     # NIP-57
     nostr = payment.extra.get("nostr")
-    if nostr:
-        from ..nostrclient.nostr.event import Event
-        from ..nostrclient.nostr.key import PrivateKey, PublicKey
+    if nostrclient_present and nostr:
 
         event_json = json.loads(nostr)
 
@@ -79,13 +85,6 @@ async def on_invoice_paid(payment: Payment):
             ]
             return res[0] if res else None
 
-        private_key = PrivateKey(
-            bytes.fromhex(
-                "de1af06647137d49b2277faa86f96effc94257a7b7efd6f5dcc52bea08a4746b"
-            )
-        )
-
-        p_tag = get_tag(event_json, "p")
         tags = []
         for t in ["p", "e"]:
             tag = get_tag(event_json, t)
@@ -96,7 +95,7 @@ async def on_invoice_paid(payment: Payment):
         zap_receipt = Event(
             kind=9735, tags=tags, content=payment.extra.get("comment") or ""
         )
-        private_key.sign_event(zap_receipt)
+        nostr_privatekey.sign_event(zap_receipt)
 
         def send_event(_):
             logger.debug(f"Sending zap: {zap_receipt.to_message()}")
