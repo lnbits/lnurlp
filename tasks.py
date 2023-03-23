@@ -13,6 +13,7 @@ from lnbits.settings import settings
 from .crud import get_pay_link
 from threading import Thread
 from . import nostrclient_present, nostr_privatekey
+from typing import List
 
 if nostrclient_present:
     try:
@@ -81,7 +82,7 @@ async def on_invoice_paid(payment: Payment):
 
         def get_tag(event_json, tag):
             res = [
-                event_tag[1] for event_tag in event_json["tags"] if event_tag[0] == tag
+                event_tag[1:] for event_tag in event_json["tags"] if event_tag[0] == tag
             ]
             return res[0] if res else None
 
@@ -89,7 +90,7 @@ async def on_invoice_paid(payment: Payment):
         for t in ["p", "e"]:
             tag = get_tag(event_json, t)
             if tag:
-                tags.append([t, tag])
+                tags.append([t, tag[0]])
         tags.append(["bolt11", payment.bolt11])
         tags.append(["description", nostr])
         zap_receipt = Event(
@@ -97,18 +98,41 @@ async def on_invoice_paid(payment: Payment):
         )
         nostr_privatekey.sign_event(zap_receipt)
 
-        def send_event(_):
-            logger.debug(f"Sending zap: {zap_receipt.to_message()}")
-            ws.send(zap_receipt.to_message())
-            ws.close()
+        def send_zap(relay):
+            def send_event(_):
+                logger.debug(f"Sending zap to {ws.url}")
+                ws.send(zap_receipt.to_message())
+                ws.close()
 
-        ws = WebSocketApp(
-            f"ws://localhost:{settings.port}/nostrclient/api/v1/relay",
-            on_open=send_event,
-        )
-        wst = Thread(target=ws.run_forever)
-        wst.daemon = True
-        wst.start()
+            ws = WebSocketApp(relay, on_open=send_event)
+            wst = Thread(target=ws.run_forever, name=f"LNURL zap {relay}")
+            wst.daemon = True
+            wst.start()
+            return ws, wst
+
+        # list of all websockets
+        wss: List[WebSocketApp] = []
+        # list of all threads for these websockets
+        wsts: List[Thread] = []
+
+        # send zap via nostrclient
+        ws, wst = send_zap(f"ws://localhost:{settings.port}/nostrclient/api/v1/relay")
+        wss += [ws]
+        wsts += [wst]
+
+        # send zap receipt to relays in zap request
+        relays = get_tag(event_json, "relays")
+        if relays:
+            for i, r in enumerate(relays):
+                ws, wst = send_zap(r)
+                wss += [ws]
+                wsts += [wst]
+
+        await asyncio.sleep(10)
+        for ws, wst in zip(wss, wsts):
+            logger.debug(f"Closing websocket {ws.url}")
+            ws.close()
+            wst.join()
 
 
 async def mark_webhook_sent(
