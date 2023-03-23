@@ -14,6 +14,7 @@ from .crud import get_pay_link
 from threading import Thread
 from . import nostrclient_present, nostr_privatekey
 from typing import List
+import time
 
 if nostrclient_present:
     try:
@@ -102,6 +103,7 @@ async def on_invoice_paid(payment: Payment):
             def send_event(_):
                 logger.debug(f"Sending zap to {ws.url}")
                 ws.send(zap_receipt.to_message())
+                time.sleep(2)
                 ws.close()
 
             ws = WebSocketApp(relay, on_open=send_event)
