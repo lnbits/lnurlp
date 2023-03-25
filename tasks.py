@@ -125,7 +125,9 @@ async def on_invoice_paid(payment: Payment):
         # send zap receipt to relays in zap request
         relays = get_tag(event_json, "relays")
         if relays:
-            for i, r in enumerate(relays):
+            if len(relays) > 50:
+                relays = relays[:50]
+            for r in relays:
                 ws, wst = send_zap(r)
                 wss += [ws]
                 wsts += [wst]
