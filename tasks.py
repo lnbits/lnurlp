@@ -12,16 +12,12 @@ from websocket import WebSocketApp
 from lnbits.settings import settings
 from .crud import get_pay_link
 from threading import Thread
-from . import nostrclient_present, nostr_privatekey
+from . import nostr_privatekey
 from typing import List
 import time
 
-if nostrclient_present:
-    try:
-        from ..nostrclient.nostr.event import Event
-        from ..nostrclient.nostr.key import PrivateKey, PublicKey
-    except ImportError:
-        nostrclient_present = False
+from .nostr.event import Event
+from .nostr.key import PrivateKey, PublicKey
 
 
 async def wait_for_paid_invoices():
@@ -77,7 +73,7 @@ async def on_invoice_paid(payment: Payment):
 
     # NIP-57
     nostr = payment.extra.get("nostr")
-    if nostrclient_present and nostr:
+    if nostr:
 
         event_json = json.loads(nostr)
 
@@ -117,10 +113,10 @@ async def on_invoice_paid(payment: Payment):
         # list of all threads for these websockets
         wsts: List[Thread] = []
 
-        # send zap via nostrclient
-        ws, wst = send_zap(f"ws://localhost:{settings.port}/nostrclient/api/v1/relay")
-        wss += [ws]
-        wsts += [wst]
+        # # send zap via nostrclient
+        # ws, wst = send_zap(f"ws://localhost:{settings.port}/nostrclient/api/v1/relay")
+        # wss += [ws]
+        # wsts += [wst]
 
         # send zap receipt to relays in zap request
         relays = get_tag(event_json, "relays")

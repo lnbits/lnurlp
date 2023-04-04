@@ -23,6 +23,7 @@ LNURL is a range of lightning-network standards that allow us to use lightning-n
 
 2. Use the shareable link or view the LNURLp you just created\
    ![LNURLp](https://i.imgur.com/C8s1P0Q.jpg)
+
    - you can now open your LNURLp and copy the LNURL, get the shareable link or print it\
      ![view lnurlp](https://i.imgur.com/4n41S7T.jpg)
 

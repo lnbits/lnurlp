@@ -12,13 +12,9 @@ from .crud import increment_pay_link, get_pay_link, get_address_data
 from loguru import logger
 from urllib.parse import urlparse
 import json
-from . import nostrclient_present, nostr_publickey
+from . import nostr_publickey
 
-if nostrclient_present:
-    try:
-        from ..nostrclient.nostr.key import PrivateKey, PublicKey
-    except ImportError:
-        nostrclient_present = False
+from ..nostrclient.nostr.key import PrivateKey, PublicKey
 
 
 @lnurlp_ext.get(
@@ -151,7 +147,6 @@ async def api_lnurl_response(request: Request, link_id, lnaddress=False):
     if link.comment_chars > 0:
         params["commentAllowed"] = link.comment_chars
 
-    if nostrclient_present:
-        params["allowsNostr"] = True
-        params["nostrPubkey"] = nostr_publickey.hex()
+    params["allowsNostr"] = True
+    params["nostrPubkey"] = nostr_publickey.hex()
     return params
