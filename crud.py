@@ -9,19 +9,6 @@ from .models import CreatePayLinkData, PayLink
 # from loguru import logger
 
 
-async def check_lnaddress_update(username: str, id: str) -> bool:
-    # check no duplicates for lnaddress when updating an username
-    row = await db.fetchall(
-        "SELECT username FROM lnurlp.pay_links WHERE username = ? AND id = ?",
-        (username, id),
-    )
-    if len(row) > 1:
-        assert False, "Username already exists. Try a different one."
-        return
-    else:
-        return True
-
-
 async def check_lnaddress_not_exists(username: str) -> bool:
     # check if lnaddress username exists in the database when creating a new entry
     row = await db.fetchall(
@@ -123,9 +110,9 @@ async def get_pay_links(wallet_ids: Union[str, List[str]]) -> List[PayLink]:
 
 
 async def update_pay_link(link_id: str, **kwargs) -> Optional[PayLink]:
-    if "lnaddress" in kwargs:
-        await check_lnaddress_format(kwargs["lnaddress"])
-        await check_lnaddress_update(kwargs["lnaddress"], link_id)
+    if len(kwargs["username"]) > 0:
+        await check_lnaddress_format(kwargs["username"])
+        await check_lnaddress_not_exists(kwargs["username"])
 
     q = ", ".join([f"{field[0]} = ?" for field in kwargs.items()])
     await db.execute(
