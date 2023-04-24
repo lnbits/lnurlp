@@ -55,7 +55,7 @@ class PayLink(BaseModel):
 
     def lnurl(self, req: Request) -> str:
         url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
-        return lnurl_encode(url)
+        return lnurl_encode(str(url))
 
     def success_action(self, payment_hash: str) -> Optional[Dict]:
         if self.success_url:

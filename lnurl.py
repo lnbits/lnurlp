@@ -121,9 +121,9 @@ async def api_lnurl_response(request: Request, link_id, lnaddress=False):
     if lnaddress:
         # for lnaddress, we have to set this otherwise the metadata won't have the identifier
         link.domain = urlparse(str(request.url)).netloc
-        callback = request.url_for("lnurlp.api_lnurl_lnaddr_callback", link_id=link.id)
+        callback = str(request.url_for("lnurlp.api_lnurl_lnaddr_callback", link_id=link.id))
     else:
-        callback = request.url_for("lnurlp.api_lnurl_callback", link_id=link.id)
+        callback = str(request.url_for("lnurlp.api_lnurl_callback", link_id=link.id))
 
     resp = LnurlPayResponse(
         callback=callback,
