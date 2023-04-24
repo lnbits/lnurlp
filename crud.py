@@ -58,10 +58,11 @@ async def create_pay_link(data: CreatePayLinkData, wallet_id: str) -> PayLink:
             comment_chars,
             currency,
             fiat_base_multiplier,
-            username
+            username,
+            zaps
 
         )
-        VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             link_id,
@@ -78,6 +79,7 @@ async def create_pay_link(data: CreatePayLinkData, wallet_id: str) -> PayLink:
             data.currency,
             data.fiat_base_multiplier,
             data.username,
+            data.zaps,
         ),
     )
     assert result

@@ -72,9 +72,9 @@ async def on_invoice_paid(payment: Payment):
                 )
 
     # NIP-57
+    # load the zap request
     nostr = payment.extra.get("nostr")
-    if nostr:
-
+    if pay_link and pay_link.zaps and nostr:
         event_json = json.loads(nostr)
 
         def get_tag(event_json, tag):
@@ -114,7 +114,7 @@ async def on_invoice_paid(payment: Payment):
         wsts: List[Thread] = []
 
         # # send zap via nostrclient
-        # ws, wst = send_zap(f"ws://localhost:{settings.port}/nostrclient/api/v1/relay")
+        # ws, wst = send_zap(f"wss://localhost:{settings.port}/nostrclient/api/v1/relay")
         # wss += [ws]
         # wsts += [wst]
 
@@ -138,7 +138,6 @@ async def on_invoice_paid(payment: Payment):
 async def mark_webhook_sent(
     payment_hash: str, status: int, is_success: bool, reason_phrase="", text=""
 ) -> None:
-
     await update_payment_extra(
         payment_hash,
         {

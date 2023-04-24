@@ -147,6 +147,7 @@ async def api_lnurl_response(request: Request, link_id, lnaddress=False):
     if link.comment_chars > 0:
         params["commentAllowed"] = link.comment_chars
 
-    params["allowsNostr"] = True
-    params["nostrPubkey"] = nostr_publickey.hex()
+    if link.zaps:
+        params["allowsNostr"] = True
+        params["nostrPubkey"] = nostr_publickey.hex()
     return params
