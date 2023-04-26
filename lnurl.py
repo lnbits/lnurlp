@@ -14,8 +14,6 @@ from urllib.parse import urlparse
 import json
 from . import nostr_publickey
 
-from ..nostrclient.nostr.key import PrivateKey, PublicKey
-
 
 @lnurlp_ext.get(
     "/api/v1/lnurl/cb/lnaddr/{link_id}",
