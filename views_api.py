@@ -15,13 +15,14 @@ from . import lnurlp_ext, scheduled_tasks
 from .crud import (
     create_pay_link,
     delete_pay_link,
+    get_address_data,
     get_pay_link,
     get_pay_links,
     update_pay_link,
-    get_address_data,
 )
-from .models import CreatePayLinkData
 from .lnurl import api_lnurl_response
+from .models import CreatePayLinkData
+
 
 # redirected from /.well-known/lnurlp
 @lnurlp_ext.get("/api/v1/well-known/{username}")

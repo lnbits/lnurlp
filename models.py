@@ -1,13 +1,12 @@
 import json
-import re
 from sqlite3 import Row
 from typing import Dict, Optional
 from urllib.parse import ParseResult, urlparse, urlunparse
 
+from fastapi import Request
 from fastapi.param_functions import Query
 from lnurl.types import LnurlPayMetadata
 from pydantic import BaseModel
-from starlette.requests import Request
 
 from lnbits.lnurl import encode as lnurl_encode
 
@@ -56,11 +55,13 @@ class PayLink(BaseModel):
             data["max"] /= data["fiat_base_multiplier"]
         return cls(**data)
 
-    def lnurl(self, req: Request) -> str:        
+    def lnurl(self, req: Request) -> str:     
         url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
         # Check if url is .onion and change to http
-        if ".onion" in url.hostname:
-            url = url._replace(scheme="http")
+        if urlparse(url).netloc.endswith(".app"):
+            # change url string scheme to http
+            url = url.replace("https://", "http://")
+            
         return lnurl_encode(str(url))
 
     def success_action(self, payment_hash: str) -> Optional[Dict]:
