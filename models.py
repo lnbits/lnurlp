@@ -58,7 +58,7 @@ class PayLink(BaseModel):
     def lnurl(self, req: Request) -> str:     
         url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
         # Check if url is .onion and change to http
-        if urlparse(url).netloc.endswith(".app"):
+        if urlparse(url).netloc.endswith(".onion"):
             # change url string scheme to http
             url = url.replace("https://", "http://")
             
