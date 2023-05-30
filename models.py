@@ -24,6 +24,7 @@ class CreatePayLinkData(BaseModel):
     success_url: str = Query(None)
     fiat_base_multiplier: int = Query(100, ge=1)
     username: str = Query(None)
+    zaps: bool = Query(False)
 
 
 class PayLink(BaseModel):
@@ -34,6 +35,7 @@ class PayLink(BaseModel):
     served_meta: int
     served_pr: int
     username: Optional[str]
+    zaps: Optional[bool]
     domain: Optional[str]
     webhook_url: Optional[str]
     webhook_headers: Optional[str]

@@ -26,7 +26,7 @@
         >
           {% raw %}
           <template v-slot:header="props">
-            <q-tr  class="text-left" :props="props">
+            <q-tr class="text-left" :props="props">
               <q-th auto-width></q-th>
               <q-th auto-width>Description</q-th>
               <q-th auto-width>Amount</q-th>
@@ -48,7 +48,8 @@
                   type="a"
                   :href="props.row.pay_url"
                   target="_blank"
-                ><q-tooltip>Sharable Page</q-tooltip></q-btn>
+                  ><q-tooltip>Sharable Page</q-tooltip></q-btn
+                >
                 <q-btn
                   unelevated
                   dense
@@ -56,7 +57,8 @@
                   icon="visibility"
                   :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
                   @click="openQrCodeDialog(props.row.id)"
-                ><q-tooltip>View Link</q-tooltip></q-btn>
+                  ><q-tooltip>View Link</q-tooltip></q-btn
+                >
               </q-td>
               <q-td auto-width>{{ props.row.description }}</q-td>
               <q-td auto-width>
@@ -66,10 +68,14 @@
                 <span v-else>{{ props.row.min }} - {{ props.row.max }}</span>
               </q-td>
               <q-td>{{ props.row.currency || 'sat' }}</q-td>
-              <q-td auto-width :class="(props.row.username) ? 'text-normal' : 'text-grey'">{{ props.row.username || 'None' }}</q-td>
+              <q-td
+                auto-width
+                :class="(props.row.username) ? 'text-normal' : 'text-grey'"
+                >{{ props.row.username || 'None' }}</q-td
+              >
               <q-td>
                 <q-icon v-if="props.row.webhook_url" size="14px" name="http">
-                  <q-tooltip>Webhook to {{ props.row.webhook_url}}</q-tooltip>
+                  <q-tooltip>Webhook to {{ props.row.webhook_url }}</q-tooltip>
                 </q-icon>
                 <q-icon
                   v-if="props.row.success_text || props.row.success_url"
@@ -102,7 +108,7 @@
                   icon="edit"
                   color="light-blue"
                 >
-                <q-tooltip>Edit</q-tooltip>
+                  <q-tooltip>Edit</q-tooltip>
                 </q-btn>
                 <q-btn
                   flat
@@ -111,7 +117,8 @@
                   @click="deletePayLink(props.row.id)"
                   icon="cancel"
                   color="pink"
-                ><q-tooltip>Delete</q-tooltip></q-btn>
+                  ><q-tooltip>Delete</q-tooltip></q-btn
+                >
               </q-td>
             </q-tr>
           </template>
@@ -125,7 +132,7 @@
     <q-card>
       <q-card-section>
         <h6 class="text-subtitle1 q-my-none">
-          {{SITE_TITLE}} LNURL-pay extension
+          {{ SITE_TITLE }} LNURL-pay extension
         </h6>
       </q-card-section>
       <q-card-section class="q-pa-none">
@@ -152,29 +159,30 @@
         >
         </q-select>
         <q-input
-        filled
-        dense
-        v-model.trim="formDialog.data.description"
-        type="text"
-        label="Item description *"
-      >
-      </q-input>
+          filled
+          dense
+          v-model.trim="formDialog.data.description"
+          type="text"
+          label="Item description *"
+        >
+        </q-input>
         <div class="row">
           <div class="col">
-           <q-input
-            filled
-            dense
-            v-model.trim="formDialog.data.username"
-            type="text"
-            label="Lightning Address"
-          >
+            <q-input
+              filled
+              dense
+              v-model.trim="formDialog.data.username"
+              type="text"
+              label="Lightning Address"
+            />
           </div>
-          <div class="col"  style="margin-top: 10px">
-            <span class="label">  &nbsp; @ {% raw %} {{domain}} {% endraw %} </span>
+          <div class="col" style="margin-top: 10px">
+            <span class="label">
+              &nbsp; @ {% raw %} {{ domain }} {% endraw %}
+            </span>
           </div>
-          </q-input>
         </div>
-        <div class="row q-col-gutter-sm">
+        <div class="row q-col-gutter-sm q-mx-sm">
           <q-input
             filled
             dense
@@ -209,63 +217,111 @@
               v-model="formDialog.data.currency"
               :display-value="formDialog.data.currency || 'satoshis'"
               label="Currency"
-              :hint="'Amounts will be converted at use-time to satoshis. ' + (formDialog.data.currency && fiatRates[formDialog.data.currency] ? `Currently 1 ${formDialog.data.currency} = ${fiatRates[formDialog.data.currency]} sat` : '')"
+              :hint="'Converted to satoshis at each payment. ' + (formDialog.data.currency && fiatRates[formDialog.data.currency] ? `Currently 1 ${formDialog.data.currency} = ${fiatRates[formDialog.data.currency]} sat` : '')"
               @input="updateFiatRate"
             />
           </div>
         </div>
-        <q-input
-          filled
-          dense
-          v-model.number="formDialog.data.comment_chars"
-          type="number"
-          label="Comment maximum characters"
-          hint="Tell wallets to prompt users for a comment that will be sent along with the payment. LNURLp will store the comment and send it in the webhook."
+        <q-expansion-item
+          group="advanced"
+          icon="settings"
+          label="Advanced options"
         >
-        </q-input>
-        <q-input
-          filled
-          dense
-          v-model="formDialog.data.webhook_url"
-          type="text"
-          label="Webhook URL (optional)"
-          hint="A URL to be called whenever this link receives a payment."
-        ></q-input>
-        <q-input
-          filled
-          dense
-          v-if="formDialog.data.webhook_url"
-          v-model="formDialog.data.webhook_headers"
-          type="text"
-          label="Webhook headers (optional)"
-          hint="Custom data as JSON string, send headers along with the webhook."
-        ></q-input>
-        <q-input
-          filled
-          dense
-          v-if="formDialog.data.webhook_url"
-          v-model="formDialog.data.webhook_body"
-          type="text"
-          label="Webhook custom data (optional)"
-          hint="Custom data as JSON string, will get posted along with webhook 'body' field."
-        ></q-input>
-        <q-input
-          filled
-          dense
-          v-model="formDialog.data.success_text"
-          type="text"
-          label="Success message (optional)"
-          hint="Will be shown to the user in his wallet after a successful payment."
-        ></q-input>
-        <q-input
-          filled
-          dense
-          v-model="formDialog.data.success_url"
-          type="text"
-          label="Success URL (optional)"
-          hint="Will be shown as a clickable link to the user in his wallet after a successful payment, appended by the payment_hash as a query string."
-        >
-        </q-input>
+        <q-card>
+          <q-card-section>
+            <h5 class="text-caption q-mt-sm q-mb-none">LNURL</h5>
+          <div class="row">
+            <div class="col-12">
+              <q-input
+                filled
+                dense
+                v-model.number="formDialog.data.comment_chars"
+                type="number"
+                label="Comment maximum characters"
+                hint="Allow the payer to attach a comment."
+              >
+              </q-input>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <q-input
+                filled
+                dense
+                v-model="formDialog.data.webhook_url"
+                type="text"
+                label="Webhook URL (optional)"
+                hint="A URL to be called whenever this link receives a payment."
+              ></q-input>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <q-input
+                filled
+                dense
+                v-if="formDialog.data.webhook_url"
+                v-model="formDialog.data.webhook_headers"
+                type="text"
+                label="Webhook headers (optional)"
+                hint="Custom data as JSON string, send headers along with the webhook."
+              ></q-input>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <q-input
+                filled
+                dense
+                v-if="formDialog.data.webhook_url"
+                v-model="formDialog.data.webhook_body"
+                type="text"
+                label="Webhook custom data (optional)"
+                hint="Custom data as JSON string, will get posted along with webhook 'body' field."
+              ></q-input>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <q-input
+                filled
+                dense
+                v-model="formDialog.data.success_text"
+                type="text"
+                label="Success message (optional)"
+                hint="Will be shown to the user in his wallet after a successful payment."
+              ></q-input>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <q-input
+                filled
+                dense
+                v-model="formDialog.data.success_url"
+                type="text"
+                label="Success URL (optional)"
+                hint="Link will be shown to the sender after a successful payment."
+              >
+              </q-input>
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-section>
+          <h5 class="text-caption q-mt-sm q-mb-none">Nostr</h5>
+          <div class="row">
+            <div class="col-12">
+              <q-checkbox
+                :toggle-indeterminate="false"
+                dense
+                v-model="formDialog.data.zaps"
+                label="Enable nostr zaps"
+              />
+            </div>
+          </div>
+        </q-card-section>
+        </q-card>
+        </q-expansion-item>
         <div class="row q-mt-lg">
           <q-btn
             v-if="formDialog.data.id"
@@ -311,17 +367,22 @@
         <strong>ID:</strong> {{ qrCodeDialog.data.id }}<br />
         <strong>Amount:</strong> {{ qrCodeDialog.data.amount }}<br />
         <span v-if="qrCodeDialog.data.currency"
-          ><strong>{{ qrCodeDialog.data.currency }} price:</strong> {{
-          fiatRates[qrCodeDialog.data.currency] ?
-          fiatRates[qrCodeDialog.data.currency] + ' sat' : 'Loading...' }}<br
+          ><strong>{{ qrCodeDialog.data.currency }} price:</strong>
+          {{
+            fiatRates[qrCodeDialog.data.currency]
+              ? fiatRates[qrCodeDialog.data.currency] + ' sat'
+              : 'Loading...'
+          }}<br
         /></span>
-        <strong>Accepts comments:</strong> {{ qrCodeDialog.data.comments }}<br />
+        <strong>Accepts comments:</strong> {{ qrCodeDialog.data.comments
+        }}<br />
         <strong>Dispatches webhook to:</strong> {{ qrCodeDialog.data.webhook
         }}<br />
         <strong>On success:</strong> {{ qrCodeDialog.data.success }}<br />
         <span v-if="qrCodeDialog.data.username">
-        <strong>Lightning Address: </strong> {{ qrCodeDialog.data.username}}@{{domain}} 
-          <br/>
+          <strong>Lightning Address: </strong>
+          {{ qrCodeDialog.data.username }}@{{ domain }}
+          <br />
         </span>
       </p>
       {% endraw %}

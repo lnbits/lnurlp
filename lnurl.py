@@ -11,6 +11,8 @@ from . import lnurlp_ext
 from .crud import increment_pay_link, get_pay_link, get_address_data
 from loguru import logger
 from urllib.parse import urlparse
+import json
+from . import nostr_publickey
 
 
 @lnurlp_ext.get(
@@ -47,15 +49,15 @@ async def api_lnurl_callback(
         min = link.min * 1000
         max = link.max * 1000
 
-    amount_received = amount
-    if amount_received < min:
+    amount = amount
+    if amount < min:
         return LnurlErrorResponse(
-            reason=f"Amount {amount_received} is smaller than minimum {min}."
+            reason=f"Amount {amount} is smaller than minimum {min}."
         ).dict()
 
-    elif amount_received > max:
+    elif amount > max:
         return LnurlErrorResponse(
-            reason=f"Amount {amount_received} is greater than maximum {max}."
+            reason=f"Amount {amount} is greater than maximum {max}."
         ).dict()
 
     comment = request.query_params.get("comment")
@@ -77,14 +79,21 @@ async def api_lnurl_callback(
     if comment:
         extra["comment"] = (comment,)
 
+    # nip 57
+    nostr = request.query_params.get("nostr")
+    if nostr:
+        extra["nostr"] = nostr  # put it here for later publishing in tasks.py
+
     if lnaddress and link.username and link.domain:
         extra["lnaddress"] = f"{link.username}@{link.domain}"
 
     payment_hash, payment_request = await create_invoice(
         wallet_id=link.wallet,
-        amount=int(amount_received / 1000),
+        amount=int(amount / 1000),
         memo=link.description,
-        unhashed_description=link.lnurlpay_metadata.encode(),
+        unhashed_description=nostr.encode()
+        if nostr  # we take the zap request as the description instead of the LNURL metadata if present
+        else link.lnurlpay_metadata.encode(),
         extra=extra,
     )
 
@@ -136,4 +145,7 @@ async def api_lnurl_response(request: Request, link_id, lnaddress=False):
     if link.comment_chars > 0:
         params["commentAllowed"] = link.comment_chars
 
+    if link.zaps:
+        params["allowsNostr"] = True
+        params["nostrPubkey"] = nostr_publickey.hex()
     return params

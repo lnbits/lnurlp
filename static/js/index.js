@@ -40,7 +40,9 @@ new Vue({
       formDialog: {
         show: false,
         fixedAmount: true,
-        data: {}
+        data: {
+          zaps:false
+        }
       },
       qrCodeDialog: {
         show: false,
@@ -140,7 +142,8 @@ new Vue({
           'success_url',
           'comment_chars',
           'currency',
-          'username'
+          'username',
+          'zaps'
         ),
         (value, key) =>
           (key === 'webhook_url' ||

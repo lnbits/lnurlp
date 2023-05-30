@@ -5,6 +5,7 @@ from lnbits.helpers import urlsafe_short_hash
 
 from . import db  # , maindb
 from .models import CreatePayLinkData, PayLink
+from .services import check_lnaddress_format
 
 # from loguru import logger
 
@@ -15,9 +16,8 @@ async def check_lnaddress_update(username: str, id: str) -> bool:
         "SELECT username FROM lnurlp.pay_links WHERE username = ? AND id = ?",
         (username, id),
     )
-    if len(row) > 1:
-        assert False, "Username already exists. Try a different one."
-        return
+    if row:
+        raise Exception("Username already exists. Try a different one.")
     else:
         return True
 
@@ -28,17 +28,9 @@ async def check_lnaddress_not_exists(username: str) -> bool:
         "SELECT username FROM lnurlp.pay_links WHERE username = ?", (username,)
     )
     if row:
-        assert False, "Username already exists. Try a different one."
+        raise Exception("Username already exists. Try a different one.")
     else:
         return True
-
-
-async def check_lnaddress_format(username: str) -> bool:
-    # check username complies with lnaddress specification
-    if not re.match("^[a-z0-9-_.]{3,15}$", username):
-        assert False, "Only letters a-z0-9-_. allowed, min 3 and max 15 characters!"
-        return
-    return True
 
 
 async def create_pay_link(data: CreatePayLinkData, wallet_id: str) -> PayLink:
@@ -66,10 +58,11 @@ async def create_pay_link(data: CreatePayLinkData, wallet_id: str) -> PayLink:
             comment_chars,
             currency,
             fiat_base_multiplier,
-            username
+            username,
+            zaps
 
         )
-        VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             link_id,
@@ -86,6 +79,7 @@ async def create_pay_link(data: CreatePayLinkData, wallet_id: str) -> PayLink:
             data.currency,
             data.fiat_base_multiplier,
             data.username,
+            data.zaps,
         ),
     )
     assert result

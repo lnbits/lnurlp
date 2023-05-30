@@ -8,8 +8,16 @@ from lnbits.core.crud import update_payment_extra
 from lnbits.core.models import Payment
 from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
-
+from websocket import WebSocketApp
+from lnbits.settings import settings
 from .crud import get_pay_link
+from threading import Thread
+from . import nostr_privatekey
+from typing import List
+import time
+
+from .nostr.event import Event
+from .nostr.key import PrivateKey, PublicKey
 
 
 async def wait_for_paid_invoices():
@@ -63,11 +71,73 @@ async def on_invoice_paid(payment: Payment):
                     payment.payment_hash, -1, False, "Unexpected Error", str(ex)
                 )
 
+    # NIP-57
+    # load the zap request
+    nostr = payment.extra.get("nostr")
+    if pay_link and pay_link.zaps and nostr:
+        event_json = json.loads(nostr)
+
+        def get_tag(event_json, tag):
+            res = [
+                event_tag[1:] for event_tag in event_json["tags"] if event_tag[0] == tag
+            ]
+            return res[0] if res else None
+
+        tags = []
+        for t in ["p", "e"]:
+            tag = get_tag(event_json, t)
+            if tag:
+                tags.append([t, tag[0]])
+        tags.append(["bolt11", payment.bolt11])
+        tags.append(["description", nostr])
+        zap_receipt = Event(
+            kind=9735, tags=tags, content=payment.extra.get("comment") or ""
+        )
+        nostr_privatekey.sign_event(zap_receipt)
+
+        def send_zap(relay):
+            def send_event(_):
+                logger.debug(f"Sending zap to {ws.url}")
+                ws.send(zap_receipt.to_message())
+                time.sleep(2)
+                ws.close()
+
+            ws = WebSocketApp(relay, on_open=send_event)
+            wst = Thread(target=ws.run_forever, name=f"LNURL zap {relay}")
+            wst.daemon = True
+            wst.start()
+            return ws, wst
+
+        # list of all websockets
+        wss: List[WebSocketApp] = []
+        # list of all threads for these websockets
+        wsts: List[Thread] = []
+
+        # # send zap via nostrclient
+        # ws, wst = send_zap(f"wss://localhost:{settings.port}/nostrclient/api/v1/relay")
+        # wss += [ws]
+        # wsts += [wst]
+
+        # send zap receipt to relays in zap request
+        relays = get_tag(event_json, "relays")
+        if relays:
+            if len(relays) > 50:
+                relays = relays[:50]
+            for r in relays:
+                ws, wst = send_zap(r)
+                wss += [ws]
+                wsts += [wst]
+
+        await asyncio.sleep(10)
+        for ws, wst in zip(wss, wsts):
+            logger.debug(f"Closing websocket {ws.url}")
+            ws.close()
+            wst.join()
+
 
 async def mark_webhook_sent(
     payment_hash: str, status: int, is_success: bool, reason_phrase="", text=""
 ) -> None:
-
     await update_payment_extra(
         payment_hash,
         {
