@@ -116,7 +116,6 @@ new Vue({
       if (this.formDialog.fixedAmount) data.max = data.min
       if (data.currency === 'satoshis') data.currency = null
       if (isNaN(parseInt(data.comment_chars))) data.comment_chars = 0
-
       if (data.id) {
         this.updatePayLink(wallet, data)
       } else {
@@ -131,33 +130,12 @@ new Vue({
       }
     },
     updatePayLink(wallet, data) {
-      let values = _.omit(
-        _.pick(
-          data,
-          'description',
-          'min',
-          'max',
-          'webhook_url',
-          'success_text',
-          'success_url',
-          'comment_chars',
-          'currency',
-          'username',
-          'zaps'
-        ),
-        (value, key) =>
-          (key === 'webhook_url' ||
-            key === 'success_text' ||
-            key === 'success_url') &&
-          (value === null || value === '')
-      )
-
       LNbits.api
         .request(
           'PUT',
           '/lnurlp/api/v1/links/' + data.id,
           wallet.adminkey,
-          values
+          data
         )
         .then(response => {
           this.payLinks = _.reject(this.payLinks, obj => obj.id === data.id)
