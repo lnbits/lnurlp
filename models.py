@@ -16,7 +16,7 @@ class CreatePayLinkData(BaseModel):
     min: float = Query(1, ge=0.01)
     max: float = Query(1, ge=0.01)
     currency: str = Query(None)
-    comment_chars: int = Query(0, ge=0, lt=800)
+    comment_chars: int = Query(0, ge=0, le=799)
     webhook_url: str = Query(None)
     webhook_headers: str = Query(None)
     webhook_body: str = Query(None)
