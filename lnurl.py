@@ -20,7 +20,7 @@ from .crud import get_address_data, get_pay_link, increment_pay_link
     name="lnurlp.api_lnurl_lnaddr_callback",
 )
 async def api_lnurl_lnaddr_callback(
-    request: Request, link_id, amount: int
+    request: Request, link_id, amount: int = Query(...)
 ):
     return await api_lnurl_callback(request, link_id, amount, lnaddress=True)
 
@@ -31,7 +31,7 @@ async def api_lnurl_lnaddr_callback(
     name="lnurlp.api_lnurl_callback",
 )
 async def api_lnurl_callback(
-    request: Request, link_id, amount: int, lnaddress=False
+    request: Request, link_id, amount: int = Query(...), lnaddress=False
 ):
     link = await increment_pay_link(link_id, served_pr=1)
     if not link:
