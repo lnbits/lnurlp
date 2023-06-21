@@ -1,18 +1,17 @@
+import json
 from http import HTTPStatus
+from urllib.parse import urlparse
 
-from fastapi import Request, Query
+from fastapi import Query, Request
 from lnurl import LnurlErrorResponse, LnurlPayActionResponse, LnurlPayResponse
+from loguru import logger
 from starlette.exceptions import HTTPException
 
 from lnbits.core.services import create_invoice
 from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
 
-from . import lnurlp_ext
-from .crud import increment_pay_link, get_pay_link, get_address_data
-from loguru import logger
-from urllib.parse import urlparse
-import json
-from . import nostr_publickey
+from . import lnurlp_ext, nostr_publickey
+from .crud import get_address_data, get_pay_link, increment_pay_link
 
 
 @lnurlp_ext.get(
@@ -21,7 +20,7 @@ from . import nostr_publickey
     name="lnurlp.api_lnurl_lnaddr_callback",
 )
 async def api_lnurl_lnaddr_callback(
-    request: Request, link_id, amount: int = Query(...)
+    request: Request, link_id, amount: int
 ):
     return await api_lnurl_callback(request, link_id, amount, lnaddress=True)
 
@@ -32,7 +31,7 @@ async def api_lnurl_lnaddr_callback(
     name="lnurlp.api_lnurl_callback",
 )
 async def api_lnurl_callback(
-    request: Request, link_id, amount: int = Query(...), lnaddress=False
+    request: Request, link_id, amount: int, lnaddress=False
 ):
     link = await increment_pay_link(link_id, served_pr=1)
     if not link:
