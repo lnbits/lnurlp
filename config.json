@@ -2,5 +2,6 @@
   "name": "LNURLp",
   "short_description": "Make reusable LNURL pay links",
   "tile": "/lnurlp/static/image/lnurl-pay.png",
-  "contributors": ["arcbtc", "eillarra", "fiatjaf", "callebtc"]
+  "contributors": ["arcbtc", "eillarra", "fiatjaf", "callebtc"],
+  "min_lnbits_version": "0.XX.0"
 }
