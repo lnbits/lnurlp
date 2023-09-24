@@ -16,7 +16,7 @@ class CreatePayLinkData(BaseModel):
     min: float = Query(1, ge=0.01)
     max: float = Query(1, ge=0.01)
     currency: str = Query(None)
-    comment_chars: int = Query(0, ge=0, lt=800)
+    comment_chars: int = Query(0, ge=0, le=799)
     webhook_url: str = Query(None)
     webhook_headers: str = Query(None)
     webhook_body: str = Query(None)
@@ -24,6 +24,7 @@ class CreatePayLinkData(BaseModel):
     success_url: str = Query(None)
     fiat_base_multiplier: int = Query(100, ge=1)
     username: str = Query(None)
+    zaps: bool = Query(False)
 
 
 class PayLink(BaseModel):
@@ -34,6 +35,7 @@ class PayLink(BaseModel):
     served_meta: int
     served_pr: int
     username: Optional[str]
+    zaps: Optional[bool]
     domain: Optional[str]
     webhook_url: Optional[str]
     webhook_headers: Optional[str]
@@ -55,7 +57,7 @@ class PayLink(BaseModel):
 
     def lnurl(self, req: Request) -> str:
         url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
-        return lnurl_encode(url)
+        return lnurl_encode(str(url))
 
     def success_action(self, payment_hash: str) -> Optional[Dict]:
         if self.success_url:

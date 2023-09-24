@@ -150,6 +150,13 @@ async def m006_redux(db):
 
 async def m007_add_lnaddress_username(db):
     """
-    Add headers and body to webhooks
+    Add Lightning address to pay links
     """
     await db.execute("ALTER TABLE lnurlp.pay_links ADD COLUMN username TEXT;")
+
+
+async def m008_add_zap_enabled_column(db):
+    """
+    Add Nostr zaps to pay links
+    """
+    await db.execute("ALTER TABLE lnurlp.pay_links ADD COLUMN zaps BOOLEAN;")

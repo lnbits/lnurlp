@@ -1,4 +1,5 @@
-# LNURLp
+# LNURLp - <small>[LNbits](https://github.com/lnbits/lnbits) extension</small>
+<small>For more about LNBits extension check [this tutorial](https://github.com/lnbits/lnbits/wiki/LNbits-Extensions)</small>
 
 ## Create a static QR code or LNaddress people can use to pay over Lightning Network
 
@@ -23,6 +24,7 @@ LNURL is a range of lightning-network standards that allow us to use lightning-n
 
 2. Use the shareable link or view the LNURLp you just created\
    ![LNURLp](https://i.imgur.com/C8s1P0Q.jpg)
+
    - you can now open your LNURLp and copy the LNURL, get the shareable link or print it\
      ![view lnurlp](https://i.imgur.com/4n41S7T.jpg)
 
