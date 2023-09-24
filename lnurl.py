@@ -1,7 +1,9 @@
 from http import HTTPStatus
+from urllib.parse import urlparse
 
-from fastapi import Request, Query
+from fastapi import Query, Request
 from lnurl import LnurlErrorResponse, LnurlPayActionResponse, LnurlPayResponse
+from loguru import logger
 from starlette.exceptions import HTTPException
 
 from lnbits.core.services import create_invoice
