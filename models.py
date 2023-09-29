@@ -55,14 +55,14 @@ class PayLink(BaseModel):
             data["max"] /= data["fiat_base_multiplier"]
         return cls(**data)
 
-    def lnurl(self, req: Request) -> str:     
-        url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
+    def lnurl(self, req: Request) -> str:
+        url = str(req.url_for("lnurlp.api_lnurl_response", link_id=self.id))
         # Check if url is .onion and change to http
         if urlparse(url).netloc.endswith(".onion"):
             # change url string scheme to http
             url = url.replace("https://", "http://")
-            
-        return lnurl_encode(str(url))
+
+        return lnurl_encode(url)
 
     def success_action(self, payment_hash: str) -> Optional[Dict]:
         if self.success_url:
