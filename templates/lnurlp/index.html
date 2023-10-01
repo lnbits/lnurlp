@@ -105,7 +105,10 @@
         </q-input>
         <div class="row">
           <div class="col">
-            <q-input filled dense v-model.trim="formDialog.data.username" type="text" label="Lightning Address" />
+            <q-input filled dense v-model.trim="formDialog.data.username" type="text" label="Lightning Address" @input="formDialog.data.username = formDialog.data.username.toLowerCase()" />
+            <span class="label">
+            &nbsp; @ {% raw %} {{ domain }} {% endraw %}
+            </span>
           </div>
           <div class="col" style="margin-top: 10px">
             <span class="label">
