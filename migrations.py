@@ -160,3 +160,16 @@ async def m008_add_zap_enabled_column(db):
     Add Nostr zaps to pay links
     """
     await db.execute("ALTER TABLE lnurlp.pay_links ADD COLUMN zaps BOOLEAN;")
+
+
+async def m009_add_settings(db):
+    """
+    Add extension settings table
+    """
+    await db.execute(
+        """
+        CREATE TABLE lnurlp.settings (
+            nostr_private_key TEXT NOT NULL,
+            );
+        """
+    )

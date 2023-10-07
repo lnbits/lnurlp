@@ -1,3 +1,4 @@
+import json
 from http import HTTPStatus
 from urllib.parse import urlparse
 
@@ -8,8 +9,11 @@ from starlette.exceptions import HTTPException
 from lnbits.core.services import create_invoice
 from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
 
-from . import lnurlp_ext, nostr_publickey
-from .crud import increment_pay_link
+from . import lnurlp_ext
+from .crud import (
+    get_or_create_lnurlp_settings,
+    increment_pay_link,
+)
 
 
 @lnurlp_ext.get(
@@ -145,6 +149,7 @@ async def api_lnurl_response(request: Request, link_id, lnaddress=False):
         params["commentAllowed"] = link.comment_chars
 
     if link.zaps:
+        settings = await get_or_create_lnurlp_settings()
         params["allowsNostr"] = True
-        params["nostrPubkey"] = nostr_publickey.hex()
+        params["nostrPubkey"] = settings.public_key
     return params
