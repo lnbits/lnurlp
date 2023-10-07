@@ -26,16 +26,14 @@ async def get_or_create_lnurlp_settings() -> LnurlpSettings:
 
 async def update_lnurlp_settings(settings: LnurlpSettings) -> LnurlpSettings:
     await db.execute(
-        """
-        UPDATE lnurlp.settings SET (nostr_private_key) VALUES (?)
-        """
-        , (settings.nostr_private_key,)
+        "UPDATE lnurlp.settings SET nostr_private_key = ?",
+        (settings.nostr_private_key,)
     )
     return settings
 
 
 async def delete_lnurlp_settings() -> None:
-    await db.fetchone("DELETE FROM lnurlp.settings")
+    await db.execute("DELETE FROM lnurlp.settings")
 
 
 async def check_lnaddress_not_exists(username: str) -> bool:

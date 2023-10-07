@@ -210,5 +210,5 @@ async def api_update_settings(data: LnurlpSettings) -> LnurlpSettings:
 
 
 @lnurlp_ext.delete("/api/v1/settings", dependencies=[Depends(check_admin)])
-async def api_delete_settings():
+async def api_delete_settings() -> None:
     await delete_lnurlp_settings()

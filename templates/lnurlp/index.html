@@ -3,23 +3,18 @@
 <div class="row q-col-gutter-md">
   <div class="col-12 col-md-7 q-gutter-y-md">
     <q-card>
-      <extension-settings
-        :settings-data.sync="settings"
-        :settings-endpoint="/lnurlp/api/v1/settings"
-        :adminkey="g.user.wallets[0].adminkey"
-      >
-        <template v-slot:formDialog>
-            <q-input filled dense
-              v-model.trim="settings.nostr_key"
-              type="password"
-              label="Nostr Private Key"
-            ></q-input>
-        </template>
-      </extension-settings>
       <q-card-section>
-        <q-btn unelevated color="primary" @click="formDialog.show = true"
-          >New pay link</q-btn
+        <q-btn unelevated color="primary" @click="formDialog.show = true">New pay link</q-btn>
+        <extension-settings
+          :settings-data.sync="settings"
+          settings-endpoint="/lnurlp/api/v1/settings"
         >
+          <q-input filled dense
+            v-model.trim="settings.nostr_private_key"
+            type="input"
+            label="Nostr Private Key"
+          ></q-input>
+        </extension-settings>
       </q-card-section>
     </q-card>
 

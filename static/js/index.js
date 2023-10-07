@@ -2,14 +2,14 @@
 
 Vue.component(VueQrcode.name, VueQrcode)
 
-var locationPath = [
+const locationPath = [
   window.location.protocol,
   '//',
   window.location.host,
   window.location.pathname
 ].join('')
 
-var mapPayLink = obj => {
+const mapPayLink = obj => {
   obj._data = _.clone(obj)
   obj.date = Quasar.utils.date.formatDate(
     new Date(obj.time * 1000),
@@ -47,6 +47,9 @@ new Vue({
       qrCodeDialog: {
         show: false,
         data: null
+      },
+      settings: {
+          nostr_private_key: '',
       }
     }
   },

@@ -169,7 +169,7 @@ async def m009_add_settings(db):
     await db.execute(
         """
         CREATE TABLE lnurlp.settings (
-            nostr_private_key TEXT NOT NULL,
-            );
+            nostr_private_key TEXT NOT NULL
+        );
         """
     )
