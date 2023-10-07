@@ -4,8 +4,8 @@ from lnbits.helpers import urlsafe_short_hash
 
 from . import db
 from .models import CreatePayLinkData, LnurlpSettings, PayLink
-from .services import check_lnaddress_format
 from .nostr.key import PrivateKey
+from .services import check_lnaddress_format
 
 
 async def get_or_create_lnurlp_settings() -> LnurlpSettings:
@@ -14,14 +14,12 @@ async def get_or_create_lnurlp_settings() -> LnurlpSettings:
         return LnurlpSettings(**row)
     else:
 
-        private_key = PrivateKey()
-        nostr_public_key = private_key.public_key.hex()
-        nostr_private_key = private_key.hex()
+        nostr_private_key = PrivateKey().hex()
         await db.execute(
             """
             INSERT INTO lnurlp.settings (nostr_private_key) VALUES (?)
             """
-            , (nostr_private_key, nostr_public_key)
+            , (nostr_private_key,)
         )
         return LnurlpSettings(nostr_private_key=nostr_private_key)
 
