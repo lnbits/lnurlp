@@ -47,9 +47,6 @@ new Vue({
       qrCodeDialog: {
         show: false,
         data: null
-      },
-      settings: {
-          nostr_private_key: '',
       }
     }
   },

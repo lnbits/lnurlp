@@ -5,16 +5,7 @@
     <q-card>
       <q-card-section>
         <q-btn unelevated color="primary" @click="formDialog.show = true">New pay link</q-btn>
-        <extension-settings
-          :settings-data.sync="settings"
-          settings-endpoint="/lnurlp/api/v1/settings"
-        >
-          <q-input filled dense
-            v-model.trim="settings.nostr_private_key"
-            type="input"
-            label="Nostr Private Key"
-          ></q-input>
-        </extension-settings>
+        <extension-settings settings-endpoint="/lnurlp/api/v1/settings"></extension-settings>
       </q-card-section>
     </q-card>
 

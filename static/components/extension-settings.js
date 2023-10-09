@@ -34,7 +34,7 @@ Vue.component('extension-settings', {
           this.interalSettings
         )
         this.show = false
-        this.interalSettings = data
+        this.settings = data
       } catch (error) {
         LNbits.utils.notifyApiError(error)
       }
@@ -70,11 +70,15 @@ Vue.component('extension-settings', {
     }
   },
   template: `
-    <q-btn v-if="admin" unelevated @click="show = true" color="primary" icon="settings" class="float-right">
+    <q-btn v-if="admin && interalSettings" unelevated @click="show = true" color="primary" icon="settings" class="float-right">
         <q-dialog v-model="show" position="top">
           <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
             <q-form @submit="updateSettings" class="q-gutter-md">
-              <slot v-bind:settings="settings"></slot>
+              <q-input filled dense
+                v-model.trim="interalSettings.nostr_private_key"
+                type="input"
+                label="Nostr Private Key"
+              ></q-input>
               <div class="row q-mt-lg">
                 <q-btn unelevated color="primary" type="submit">Update</q-btn>
                 <q-btn unelevated color="danger" @click="resetSettings" >Reset</q-btn>
