@@ -26,6 +26,13 @@ new Vue({
   mixins: [windowMixin],
   data() {
     return {
+      settings: [
+        {
+          "type": "str",
+          "description": "Nostr private key used to zap",
+          "name": "nostr_private_key",
+        }
+      ],
       domain: window.location.host,
       currencies: [],
       fiatRates: {},

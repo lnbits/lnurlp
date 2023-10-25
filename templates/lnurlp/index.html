@@ -5,7 +5,7 @@
     <q-card>
       <q-card-section>
         <q-btn unelevated color="primary" @click="formDialog.show = true">New pay link</q-btn>
-        <extension-settings settings-endpoint="/lnurlp/api/v1/settings"></extension-settings>
+        <lnbits-extension-settings-btn-dialog name="lnurlp" :options="settings" />
       </q-card-section>
     </q-card>
 
@@ -420,6 +420,5 @@
   </q-dialog>
 </div>
 {% endblock %} {% block scripts %} {{ window_vars(user) }}
-<script src="/lnurlp/static/components/extension-settings.js"></script>
 <script src="/lnurlp/static/js/index.js"></script>
 {% endblock %}
