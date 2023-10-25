@@ -5,7 +5,7 @@
     <q-card>
       <q-card-section>
         <q-btn unelevated color="primary" @click="formDialog.show = true">New pay link</q-btn>
-        <lnbits-extension-settings-btn-dialog name="lnurlp" :options="settings" />
+        <lnbits-extension-settings-btn-dialog v-if="this.g.user.admin" :endpoint="endpoint" :options="settings" />
       </q-card-section>
     </q-card>
 

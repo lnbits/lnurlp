@@ -24,6 +24,11 @@ const mapPayLink = obj => {
 new Vue({
   el: '#vue',
   mixins: [windowMixin],
+  computed: {
+    endpoint: function() {
+      return `/lnurlp/api/v1/settings?usr=${this.g.user.id}`
+    }
+  },
   data() {
     return {
       settings: [
