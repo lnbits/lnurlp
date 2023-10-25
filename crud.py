@@ -1,6 +1,6 @@
 from typing import List, Optional, Union
 
-from lnbits.helpers import urlsafe_short_hash
+from lnbits.helpers import urlsafe_short_hash, insert_query, update_query
 
 from . import db
 from .models import CreatePayLinkData, LnurlpSettings, PayLink
@@ -13,22 +13,13 @@ async def get_or_create_lnurlp_settings() -> LnurlpSettings:
     if row:
         return LnurlpSettings(**row)
     else:
-
-        nostr_private_key = PrivateKey().hex()
-        await db.execute(
-            """
-            INSERT INTO lnurlp.settings (nostr_private_key) VALUES (?)
-            """
-            , (nostr_private_key,)
-        )
-        return LnurlpSettings(nostr_private_key=nostr_private_key)
+        settings = LnurlpSettings(nostr_private_key=PrivateKey().hex())
+        await db.execute(insert_query("lnurlp.settings", settings), (*settings.model_dump().values(),))
+        return settings
 
 
 async def update_lnurlp_settings(settings: LnurlpSettings) -> LnurlpSettings:
-    await db.execute(
-        "UPDATE lnurlp.settings SET nostr_private_key = ?",
-        (settings.nostr_private_key,)
-    )
+    await db.execute(update_query("lnurlp.settings", settings, where=""), (*settings.model_dump().values(),))
     return settings
 
 
