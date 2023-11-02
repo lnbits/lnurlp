@@ -24,7 +24,7 @@ class CreatePayLinkData(BaseModel):
     success_url: str = Query(None)
     fiat_base_multiplier: int = Query(100, ge=1)
     username: str = Query(None)
-    zaps: bool = Query(False)
+    zaps: Optional[bool] = Query(False)
 
 
 class PayLink(BaseModel):
