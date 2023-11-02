@@ -41,7 +41,7 @@ new Vue({
         show: false,
         fixedAmount: true,
         data: {
-          zaps:false
+          zaps: false
         }
       },
       qrCodeDialog: {

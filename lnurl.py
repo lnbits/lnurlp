@@ -3,18 +3,13 @@ from urllib.parse import urlparse
 
 from fastapi import Query, Request
 from lnurl import LnurlErrorResponse, LnurlPayActionResponse, LnurlPayResponse
-from loguru import logger
 from starlette.exceptions import HTTPException
 
 from lnbits.core.services import create_invoice
 from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
 
-from . import lnurlp_ext
-from .crud import increment_pay_link, get_pay_link, get_address_data
-from loguru import logger
-from urllib.parse import urlparse
-import json
-from . import nostr_publickey
+from . import lnurlp_ext, nostr_publickey
+from .crud import increment_pay_link
 
 
 @lnurlp_ext.get(
@@ -132,7 +127,9 @@ async def api_lnurl_response(request: Request, link_id, lnaddress=False):
     if lnaddress:
         # for lnaddress, we have to set this otherwise the metadata won't have the identifier
         link.domain = urlparse(str(request.url)).netloc
-        callback = str(request.url_for("lnurlp.api_lnurl_lnaddr_callback", link_id=link.id))
+        callback = str(
+            request.url_for("lnurlp.api_lnurl_lnaddr_callback", link_id=link.id)
+        )
     else:
         callback = str(request.url_for("lnurlp.api_lnurl_callback", link_id=link.id))
 

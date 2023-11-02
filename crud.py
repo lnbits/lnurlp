@@ -1,4 +1,3 @@
-import re
 from typing import List, Optional, Union
 
 from lnbits.helpers import urlsafe_short_hash
@@ -105,7 +104,7 @@ async def get_pay_links(wallet_ids: Union[str, List[str]]) -> List[PayLink]:
 
 
 async def update_pay_link(link_id: str, **kwargs) -> Optional[PayLink]:
-    if "username" in kwargs and len(kwargs["username"]) > 0:
+    if "username" in kwargs and len(kwargs["username"] or "") > 0:
         await check_lnaddress_format(kwargs["username"])
         await check_lnaddress_not_exists(kwargs["username"])
 

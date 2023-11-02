@@ -1,17 +1,16 @@
 import asyncio
 from typing import List
 
+from environs import Env
 from fastapi import APIRouter
+from loguru import logger
 
 from lnbits.db import Database
 from lnbits.helpers import template_renderer
 from lnbits.tasks import catch_everything_and_restart
-from loguru import logger
-
 
 from .nostr.event import Event
 from .nostr.key import PrivateKey, PublicKey
-from environs import Env
 
 
 def generate_keys(private_key: str = ""):

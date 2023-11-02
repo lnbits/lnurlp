@@ -1,7 +1,6 @@
 import json
 from asyncio.log import logger
 from http import HTTPStatus
-from urllib.parse import urlparse
 
 from fastapi import Depends, Query, Request
 from lnurl.exceptions import InvalidUrl as LnurlInvalidUrl
@@ -89,7 +88,6 @@ async def api_link_create_or_update(
     link_id=None,
     wallet: WalletTypeInfo = Depends(get_key_type),
 ):
-
     if data.min > data.max:
         raise HTTPException(
             detail="Min is greater than max.", status_code=HTTPStatus.BAD_REQUEST
