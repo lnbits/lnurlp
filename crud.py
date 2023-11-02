@@ -1,4 +1,3 @@
-import re
 from typing import List, Optional, Union
 
 from lnbits.helpers import urlsafe_short_hash

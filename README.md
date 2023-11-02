@@ -1,4 +1,5 @@
 # LNURLp - <small>[LNbits](https://github.com/lnbits/lnbits) extension</small>
+
 <small>For more about LNBits extension check [this tutorial](https://github.com/lnbits/lnbits/wiki/LNbits-Extensions)</small>
 
 ## Create a static QR code or LNaddress people can use to pay over Lightning Network
@@ -36,10 +37,10 @@ LNURL is a range of lightning-network standards that allow us to use lightning-n
 ## Update your LNURL-pay extension
 
 Now that the extensions are taken out of core LNbits we can update each extension separately without the need to reload or restart LNbits as a whole.
-This new version of the extension will give you the option to add a Lightning Address to each LNURLpay link. 
+This new version of the extension will give you the option to add a Lightning Address to each LNURLpay link.
 
 - Open your LNbits instance as super admin (not as a regular user. You will find the SuperUser-ID in your server logs on restart of LNbits. Use that to bookmark and manage LNbits from there in the future.)
-Now lets install the new version of a given extension like extensively [described in this guide](https://github.com/lnbits/lnbits/blob/main/docs/guide/extension-install.md#install-new-extension). In short:
+  Now lets install the new version of a given extension like extensively [described in this guide](https://github.com/lnbits/lnbits/blob/main/docs/guide/extension-install.md#install-new-extension). In short:
 - Go to "Mange extensions", click on "ALL", search for e.g. LNURLp, click on "Manage"
 - Open the details of the extension and click on version 0.2.1, click "Install". You´re done!
 
@@ -55,7 +56,4 @@ Now you can receive sats to your newly created LN address. You will find this in
 
 [![lnurl-details.jpg](https://i.postimg.cc/zDwq1V2X/lnurl-details.jpg)](https://postimg.cc/3WwsXJHP)
 
-
 </details>
-
-

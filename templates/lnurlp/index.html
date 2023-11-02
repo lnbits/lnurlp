@@ -4,7 +4,9 @@
   <div class="col-12 col-md-7 q-gutter-y-md">
     <q-card>
       <q-card-section>
-        <q-btn unelevated color="primary" @click="formDialog.show = true">New pay link</q-btn>
+        <q-btn unelevated color="primary" @click="formDialog.show = true"
+          >New pay link</q-btn
+        >
       </q-card-section>
     </q-card>
 
@@ -15,7 +17,13 @@
             <h5 class="text-subtitle1 q-my-none">Pay links</h5>
           </div>
         </div>
-        <q-table dense flat :data="payLinks" row-key="id" :pagination.sync="payLinksTable.pagination">
+        <q-table
+          dense
+          flat
+          :data="payLinks"
+          row-key="id"
+          :pagination.sync="payLinksTable.pagination"
+        >
           {% raw %}
           <template v-slot:header="props">
             <q-tr class="text-left" :props="props">
@@ -31,10 +39,26 @@
           <template v-slot:body="props">
             <q-tr :props="props">
               <q-td auto-width>
-                <q-btn unelevated dense size="xs" icon="launch" :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
-                  type="a" :href="props.row.pay_url" target="_blank"><q-tooltip>Shareable Page</q-tooltip></q-btn>
-                <q-btn unelevated dense size="xs" icon="visibility" :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
-                  @click="openQrCodeDialog(props.row.id)"><q-tooltip>View Link</q-tooltip></q-btn>
+                <q-btn
+                  unelevated
+                  dense
+                  size="xs"
+                  icon="launch"
+                  :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
+                  type="a"
+                  :href="props.row.pay_url"
+                  target="_blank"
+                  ><q-tooltip>Shareable Page</q-tooltip></q-btn
+                >
+                <q-btn
+                  unelevated
+                  dense
+                  size="xs"
+                  icon="visibility"
+                  :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
+                  @click="openQrCodeDialog(props.row.id)"
+                  ><q-tooltip>View Link</q-tooltip></q-btn
+                >
               </q-td>
               <q-td auto-width>{{ props.row.description }}</q-td>
               <q-td auto-width>
@@ -44,30 +68,57 @@
                 <span v-else>{{ props.row.min }} - {{ props.row.max }}</span>
               </q-td>
               <q-td>{{ props.row.currency || 'sat' }}</q-td>
-              <q-td auto-width :class="(props.row.username) ? 'text-normal' : 'text-grey'">{{ props.row.username ||
-                'None' }}</q-td>
+              <q-td
+                auto-width
+                :class="(props.row.username) ? 'text-normal' : 'text-grey'"
+                >{{ props.row.username || 'None' }}</q-td
+              >
               <q-td>
                 <q-icon v-if="props.row.webhook_url" size="14px" name="http">
                   <q-tooltip>Webhook to {{ props.row.webhook_url }}</q-tooltip>
                 </q-icon>
-                <q-icon v-if="props.row.success_text || props.row.success_url" size="14px" name="call_to_action">
+                <q-icon
+                  v-if="props.row.success_text || props.row.success_url"
+                  size="14px"
+                  name="call_to_action"
+                >
                   <q-tooltip>
                     On success, show message '{{ props.row.success_text }}'
-                    <span v-if="props.row.success_url">and URL '{{ props.row.success_url }}'</span>
+                    <span v-if="props.row.success_url"
+                      >and URL '{{ props.row.success_url }}'</span
+                    >
                   </q-tooltip>
                 </q-icon>
-                <q-icon v-if="props.row.comment_chars > 0" size="14px" name="insert_comment">
+                <q-icon
+                  v-if="props.row.comment_chars > 0"
+                  size="14px"
+                  name="insert_comment"
+                >
                   <q-tooltip>
                     {{ props.row.comment_chars }}-char comment allowed
                   </q-tooltip>
                 </q-icon>
               </q-td>
               <q-td auto-width>
-                <q-btn flat dense size="xs" @click="openUpdateDialog(props.row.id)" icon="edit" color="light-blue">
+                <q-btn
+                  flat
+                  dense
+                  size="xs"
+                  @click="openUpdateDialog(props.row.id)"
+                  icon="edit"
+                  color="light-blue"
+                >
                   <q-tooltip>Edit</q-tooltip>
                 </q-btn>
-                <q-btn flat dense size="xs" @click="deletePayLink(props.row.id)" icon="cancel"
-                  color="pink"><q-tooltip>Delete</q-tooltip></q-btn>
+                <q-btn
+                  flat
+                  dense
+                  size="xs"
+                  @click="deletePayLink(props.row.id)"
+                  icon="cancel"
+                  color="pink"
+                  ><q-tooltip>Delete</q-tooltip></q-btn
+                >
               </q-td>
             </q-tr>
           </template>
@@ -98,16 +149,35 @@
   <q-dialog v-model="formDialog.show" @hide="closeFormDialog">
     <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
       <q-form @submit="sendFormData" class="q-gutter-md">
-        <q-select filled dense emit-value v-model="formDialog.data.wallet" :options="g.user.walletOptions"
-          label="Wallet *">
+        <q-select
+          filled
+          dense
+          emit-value
+          v-model="formDialog.data.wallet"
+          :options="g.user.walletOptions"
+          label="Wallet *"
+        >
         </q-select>
-        <q-input filled dense v-model.trim="formDialog.data.description" type="text" label="Item description *">
+        <q-input
+          filled
+          dense
+          v-model.trim="formDialog.data.description"
+          type="text"
+          label="Item description *"
+        >
         </q-input>
         <div class="row">
           <div class="col">
-            <q-input filled dense v-model.trim="formDialog.data.username" type="text" label="Lightning Address" @input="formDialog.data.username = formDialog.data.username.toLowerCase()" />
+            <q-input
+              filled
+              dense
+              v-model.trim="formDialog.data.username"
+              type="text"
+              label="Lightning Address"
+              @input="formDialog.data.username = formDialog.data.username.toLowerCase()"
+            />
             <span class="label">
-            &nbsp; @ {% raw %} {{ domain }} {% endraw %}
+              &nbsp; @ {% raw %} {{ domain }} {% endraw %}
             </span>
           </div>
           <div class="col" style="margin-top: 10px">
@@ -117,64 +187,122 @@
           </div>
         </div>
         <div class="row q-col-gutter-sm q-mx-sm">
-          <q-input filled dense v-model.number="formDialog.data.min" type="number"
+          <q-input
+            filled
+            dense
+            v-model.number="formDialog.data.min"
+            type="number"
             :step="formDialog.data.currency && formDialog.data.currency !== 'satoshis' ? '0.01' : '1'"
-            :label="formDialog.fixedAmount ? 'Amount *' : 'Min *'"></q-input>
-          <q-input v-if="!formDialog.fixedAmount" filled dense v-model.number="formDialog.data.max" type="number"
-            :step="formDialog.data.currency && formDialog.data.currency !== 'satoshis' ? '0.01' : '1'" label="Max *">
+            :label="formDialog.fixedAmount ? 'Amount *' : 'Min *'"
+          ></q-input>
+          <q-input
+            v-if="!formDialog.fixedAmount"
+            filled
+            dense
+            v-model.number="formDialog.data.max"
+            type="number"
+            :step="formDialog.data.currency && formDialog.data.currency !== 'satoshis' ? '0.01' : '1'"
+            label="Max *"
+          >
           </q-input>
         </div>
         <div class="row q-col-gutter-sm">
           <div class="col">
-            <q-checkbox dense v-model="formDialog.fixedAmount" label="Fixed amount" />
+            <q-checkbox
+              dense
+              v-model="formDialog.fixedAmount"
+              label="Fixed amount"
+            />
           </div>
           <div class="col">
-            <q-select dense :options="currencies" v-model="formDialog.data.currency"
-              :display-value="formDialog.data.currency || 'satoshis'" label="Currency"
+            <q-select
+              dense
+              :options="currencies"
+              v-model="formDialog.data.currency"
+              :display-value="formDialog.data.currency || 'satoshis'"
+              label="Currency"
               :hint="'Converted to satoshis at each payment. ' + (formDialog.data.currency && fiatRates[formDialog.data.currency] ? `Currently 1 ${formDialog.data.currency} = ${fiatRates[formDialog.data.currency]} sat` : '')"
-              @input="updateFiatRate" />
+              @input="updateFiatRate"
+            />
           </div>
         </div>
-        <q-expansion-item group="advanced" icon="settings" label="Advanced options">
+        <q-expansion-item
+          group="advanced"
+          icon="settings"
+          label="Advanced options"
+        >
           <q-card>
             <q-card-section>
               <h5 class="text-caption q-mt-sm q-mb-none">LNURL</h5>
               <div class="row">
                 <div class="col-12">
-                  <q-input filled dense v-model.number="formDialog.data.comment_chars" type="number"
-                    label="Comment maximum characters" hint="Allow the payer to attach a comment.">
+                  <q-input
+                    filled
+                    dense
+                    v-model.number="formDialog.data.comment_chars"
+                    type="number"
+                    label="Comment maximum characters"
+                    hint="Allow the payer to attach a comment."
+                  >
                   </q-input>
                 </div>
               </div>
               <div class="row">
                 <div class="col-12">
-                  <q-input filled dense v-model="formDialog.data.webhook_url" type="text" label="Webhook URL (optional)"
-                    hint="A URL to be called whenever this link receives a payment."></q-input>
+                  <q-input
+                    filled
+                    dense
+                    v-model="formDialog.data.webhook_url"
+                    type="text"
+                    label="Webhook URL (optional)"
+                    hint="A URL to be called whenever this link receives a payment."
+                  ></q-input>
                 </div>
               </div>
               <div class="row" v-if="formDialog.data.webhook_url">
                 <div class="col-12">
-                  <q-input filled dense v-model="formDialog.data.webhook_headers" type="text"
+                  <q-input
+                    filled
+                    dense
+                    v-model="formDialog.data.webhook_headers"
+                    type="text"
                     label="Webhook headers (optional)"
-                    hint="Custom data as JSON string, send headers along with the webhook."></q-input>
+                    hint="Custom data as JSON string, send headers along with the webhook."
+                  ></q-input>
                 </div>
                 <div class="col-12">
-                  <q-input filled dense v-model="formDialog.data.webhook_body" type="text"
+                  <q-input
+                    filled
+                    dense
+                    v-model="formDialog.data.webhook_body"
+                    type="text"
                     label="Webhook custom data (optional)"
-                    hint="Custom data as JSON string, will get posted along with webhook 'body' field."></q-input>
+                    hint="Custom data as JSON string, will get posted along with webhook 'body' field."
+                  ></q-input>
                 </div>
               </div>
               <div class="row">
                 <div class="col-12">
-                  <q-input filled dense v-model="formDialog.data.success_text" type="text"
+                  <q-input
+                    filled
+                    dense
+                    v-model="formDialog.data.success_text"
+                    type="text"
                     label="Success message (optional)"
-                    hint="Will be shown to the user in his wallet after a successful payment."></q-input>
+                    hint="Will be shown to the user in his wallet after a successful payment."
+                  ></q-input>
                 </div>
               </div>
               <div class="row">
                 <div class="col-12">
-                  <q-input filled dense v-model="formDialog.data.success_url" type="text" label="Success URL (optional)"
-                    hint="Link will be shown to the sender after a successful payment.">
+                  <q-input
+                    filled
+                    dense
+                    v-model="formDialog.data.success_url"
+                    type="text"
+                    label="Success URL (optional)"
+                    hint="Link will be shown to the sender after a successful payment."
+                  >
                   </q-input>
                 </div>
               </div>
@@ -183,24 +311,43 @@
               <h5 class="text-caption q-mt-sm q-mb-none">Nostr</h5>
               <div class="row">
                 <div class="col-12">
-                  <q-checkbox :toggle-indeterminate="false" dense v-model="formDialog.data.zaps"
-                    label="Enable nostr zaps" />
+                  <q-checkbox
+                    :toggle-indeterminate="false"
+                    dense
+                    v-model="formDialog.data.zaps"
+                    label="Enable nostr zaps"
+                  />
                 </div>
               </div>
             </q-card-section>
           </q-card>
         </q-expansion-item>
         <div class="row q-mt-lg">
-          <q-btn v-if="formDialog.data.id" unelevated color="primary" type="submit">Update pay link</q-btn>
-          <q-btn v-else unelevated color="primary" :disable="
+          <q-btn
+            v-if="formDialog.data.id"
+            unelevated
+            color="primary"
+            type="submit"
+            >Update pay link</q-btn
+          >
+          <q-btn
+            v-else
+            unelevated
+            color="primary"
+            :disable="
                 formDialog.data.wallet == null ||
                 formDialog.data.description == null ||
                 (
                   formDialog.data.min == null ||
                   formDialog.data.min <= 0
                 )
-                " type="submit">Create pay link</q-btn>
-          <q-btn v-close-popup flat color="grey" class="q-ml-auto">Cancel</q-btn>
+                "
+            type="submit"
+            >Create pay link</q-btn
+          >
+          <q-btn v-close-popup flat color="grey" class="q-ml-auto"
+            >Cancel</q-btn
+          >
         </div>
       </q-form>
     </q-card>
@@ -210,20 +357,22 @@
     <q-card v-if="qrCodeDialog.data" class="q-pa-lg lnbits__dialog-card">
       {% raw %}
       <q-responsive :ratio="1" class="q-mx-xl q-mb-md">
-        <qrcode :value="'lightning:' + qrCodeDialog.data.lnurl" :options="{width: 800}" class="rounded-borders">
+        <qrcode
+          :value="'lightning:' + qrCodeDialog.data.lnurl"
+          :options="{width: 800}"
+          class="rounded-borders"
+        >
         </qrcode>
       </q-responsive>
       <p style="word-break: break-all">
         <strong>ID:</strong> {{ qrCodeDialog.data.id }}<br />
         <strong>Amount:</strong> {{ qrCodeDialog.data.amount }}<br />
-        <span v-if="qrCodeDialog.data.currency"><strong>{{ qrCodeDialog.data.currency }} price:</strong>
-          {{
-          fiatRates[qrCodeDialog.data.currency]
-          ? fiatRates[qrCodeDialog.data.currency] + ' sat'
-          : 'Loading...'
-          }}<br /></span>
-        <strong>Accepts comments:</strong> {{ qrCodeDialog.data.comments
-        }}<br />
+        <span v-if="qrCodeDialog.data.currency"
+          ><strong>{{ qrCodeDialog.data.currency }} price:</strong> {{
+          fiatRates[qrCodeDialog.data.currency] ?
+          fiatRates[qrCodeDialog.data.currency] + ' sat' : 'Loading...' }}<br
+        /></span>
+        <strong>Accepts comments:</strong> {{ qrCodeDialog.data.comments }}<br />
         <strong>Dispatches webhook to:</strong> {{ qrCodeDialog.data.webhook
         }}<br />
         <strong>On success:</strong> {{ qrCodeDialog.data.success }}<br />
@@ -235,17 +384,37 @@
       </p>
       {% endraw %}
       <div class="row q-mt-lg q-gutter-sm">
-        <q-btn outline color="grey" @click="copyText(qrCodeDialog.data.lnurl, 'LNURL copied to clipboard!')"
-          class="q-ml-sm">Copy LNURL</q-btn>
-        <q-btn outline color="grey" icon="link"
-          @click="copyText(qrCodeDialog.data.pay_url, 'Link copied to clipboard!')"><q-tooltip>Copy sharable
-            link</q-tooltip>
+        <q-btn
+          outline
+          color="grey"
+          @click="copyText(qrCodeDialog.data.lnurl, 'LNURL copied to clipboard!')"
+          class="q-ml-sm"
+          >Copy LNURL</q-btn
+        >
+        <q-btn
+          outline
+          color="grey"
+          icon="link"
+          @click="copyText(qrCodeDialog.data.pay_url, 'Link copied to clipboard!')"
+          ><q-tooltip>Copy sharable link</q-tooltip>
         </q-btn>
-        <q-btn outline color="grey" icon="nfc" @click="writeNfcTag(qrCodeDialog.data.lnurl)"
-          :disable="nfcTagWriting"><q-tooltip>Write to NFC</q-tooltip>
+        <q-btn
+          outline
+          color="grey"
+          icon="nfc"
+          @click="writeNfcTag(qrCodeDialog.data.lnurl)"
+          :disable="nfcTagWriting"
+          ><q-tooltip>Write to NFC</q-tooltip>
         </q-btn>
-        <q-btn outline color="grey" icon="print" type="a" :href="qrCodeDialog.data.print_url"
-          target="_blank"><q-tooltip>Print</q-tooltip></q-btn>
+        <q-btn
+          outline
+          color="grey"
+          icon="print"
+          type="a"
+          :href="qrCodeDialog.data.print_url"
+          target="_blank"
+          ><q-tooltip>Print</q-tooltip></q-btn
+        >
         <q-btn v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
       </div>
     </q-card>

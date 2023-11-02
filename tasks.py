@@ -1,23 +1,21 @@
 import asyncio
 import json
+import time
+from threading import Thread
+from typing import List
 
 import httpx
 from loguru import logger
+from websocket import WebSocketApp
 
 from lnbits.core.crud import update_payment_extra
 from lnbits.core.models import Payment
 from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
-from websocket import WebSocketApp
-from lnbits.settings import settings
-from .crud import get_pay_link
-from threading import Thread
-from . import nostr_privatekey
-from typing import List
-import time
 
+from . import nostr_privatekey
+from .crud import get_pay_link
 from .nostr.event import Event
-from .nostr.key import PrivateKey, PublicKey
 
 
 async def wait_for_paid_invoices():
