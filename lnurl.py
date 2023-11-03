@@ -84,7 +84,7 @@ async def api_lnurl_callback(
     extra = {
         "tag": "lnurlp",
         "link": link.id,
-        "extra": {},
+        "extra": request.query_params.get("amount"),
     }
 
     if comment:
