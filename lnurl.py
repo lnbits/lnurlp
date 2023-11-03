@@ -22,9 +22,11 @@ from .crud import (
     name="lnurlp.api_lnurl_lnaddr_callback",
 )
 async def api_lnurl_lnaddr_callback(
-    request: Request, link_id, amount: int = Query(...)
+    request: Request, link_id, amount: int = Query(...), webhook_data: str = Query(None)
 ):
-    return await api_lnurl_callback(request, link_id, amount, lnaddress=True)
+    return await api_lnurl_callback(
+        request, link_id, amount, webhook_data, lnaddress=True
+    )
 
 
 @lnurlp_ext.get(
@@ -33,7 +35,11 @@ async def api_lnurl_lnaddr_callback(
     name="lnurlp.api_lnurl_callback",
 )
 async def api_lnurl_callback(
-    request: Request, link_id, amount: int = Query(...), lnaddress=False
+    request: Request,
+    link_id,
+    amount: int = Query(...),
+    webhook_data: str = Query(None),
+    lnaddress=False,
 ):
     link = await increment_pay_link(link_id, served_pr=1)
     if not link:
@@ -84,7 +90,6 @@ async def api_lnurl_callback(
     if comment:
         extra["comment"] = (comment,)
 
-    webhook_data = request.query_params.get("webhook_data")
     if webhook_data:
         extra["webhook_data"] = webhook_data
 
@@ -128,7 +133,9 @@ async def api_lnurl_callback(
     status_code=HTTPStatus.OK,
     name="lnurlp.api_lnurl_response",
 )
-async def api_lnurl_response(request: Request, link_id, lnaddress=False):
+async def api_lnurl_response(
+    request: Request, link_id, webhook_data: str = Query(None), lnaddress=False
+):
     link = await increment_pay_link(link_id, served_meta=1)
     if not link:
         raise HTTPException(
@@ -145,7 +152,6 @@ async def api_lnurl_response(request: Request, link_id, lnaddress=False):
             request.url_for(
                 "lnurlp.api_lnurl_lnaddr_callback",
                 link_id=link.id,
-                webhook_data=request.query_params.get("webhook_data"),
             )
         )
     else:
@@ -153,9 +159,11 @@ async def api_lnurl_response(request: Request, link_id, lnaddress=False):
             request.url_for(
                 "lnurlp.api_lnurl_callback",
                 link_id=link.id,
-                webhook_data=request.query_params.get("webhook_data"),
             )
         )
+
+    if webhook_data:
+        callback += f"?webhook_data={webhook_data}"
 
     resp = LnurlPayResponse(
         callback=callback,
