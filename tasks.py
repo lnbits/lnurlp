@@ -40,6 +40,7 @@ async def on_invoice_paid(payment: Payment):
         logger.error("Invoice paid. But no pay link id found.")
         return
 
+
     pay_link = await get_pay_link(pay_link_id)
     if not pay_link:
         logger.error(
@@ -66,6 +67,7 @@ async def send_webhook(payment: Payment, pay_link: PayLink):
                     "payment_request": payment.bolt11,
                     "amount": payment.amount,
                     "comment": payment.extra.get("comment"),
+                    "webhook_data": payment.extra.get("webhook_data") or "",
                     "lnurlp": pay_link.id,
                     "body": json.loads(pay_link.webhook_body)
                     if pay_link.webhook_body

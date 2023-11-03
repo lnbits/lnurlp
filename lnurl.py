@@ -64,21 +64,29 @@ async def api_lnurl_callback(
     comment = request.query_params.get("comment")
     if len(comment or "") > link.comment_chars:
         return LnurlErrorResponse(
-            reason=f"Got a comment with {len(comment)} characters, but can only accept {link.comment_chars}"
+            reason=(
+                f"Got a comment with {len(comment or '')} characters, "
+                f"but can only accept {link.comment_chars}"
+            )
         ).dict()
 
     if lnaddress:
-        # for lnaddress, we have to set this otherwise the metadata won't have the identifier
+        # for lnaddress, we have to set this otherwise
+        # the metadata won't have the identifier
         link.domain = urlparse(str(request.url)).netloc
 
     extra = {
         "tag": "lnurlp",
         "link": link.id,
-        "extra": request.query_params.get("amount"),
+        "extra": {},
     }
 
     if comment:
         extra["comment"] = (comment,)
+
+    webhook_data = request.query_params.get("webhook_data")
+    if webhook_data:
+        extra["webhook_data"] = webhook_data
 
     # nip 57
     nostr = request.query_params.get("nostr")
@@ -88,13 +96,14 @@ async def api_lnurl_callback(
     if lnaddress and link.username and link.domain:
         extra["lnaddress"] = f"{link.username}@{link.domain}"
 
+    # we take the zap request as the description instead of the metadata if present
+    unhashed_description = nostr.encode() if nostr else link.lnurlpay_metadata.encode()
+
     payment_hash, payment_request = await create_invoice(
         wallet_id=link.wallet,
         amount=int(amount / 1000),
         memo=link.description,
-        unhashed_description=nostr.encode()
-        if nostr  # we take the zap request as the description instead of the LNURL metadata if present
-        else link.lnurlpay_metadata.encode(),
+        unhashed_description=unhashed_description,
         extra=extra,
     )
 
@@ -110,7 +119,7 @@ async def api_lnurl_callback(
 
 
 @lnurlp_ext.get(
-    "/api/v1/lnurl/{link_id}",  # Backwards compatibility for old LNURLs / QR codes (with long URL)
+    "/api/v1/lnurl/{link_id}",  # Backwards compatibility for old LNURLs / QR codes
     status_code=HTTPStatus.OK,
     name="lnurlp.api_lnurl_response.deprecated",
 )
@@ -129,13 +138,24 @@ async def api_lnurl_response(request: Request, link_id, lnaddress=False):
     rate = await get_fiat_rate_satoshis(link.currency) if link.currency else 1
 
     if lnaddress:
-        # for lnaddress, we have to set this otherwise the metadata won't have the identifier
+        # for lnaddress, we have to set this otherwise
+        # the metadata won't have the identifier
         link.domain = urlparse(str(request.url)).netloc
         callback = str(
-            request.url_for("lnurlp.api_lnurl_lnaddr_callback", link_id=link.id)
+            request.url_for(
+                "lnurlp.api_lnurl_lnaddr_callback",
+                link_id=link.id,
+                webhook_data=request.query_params.get("webhook_data"),
+            )
         )
     else:
-        callback = str(request.url_for("lnurlp.api_lnurl_callback", link_id=link.id))
+        callback = str(
+            request.url_for(
+                "lnurlp.api_lnurl_callback",
+                link_id=link.id,
+                webhook_data=request.query_params.get("webhook_data"),
+            )
+        )
 
     resp = LnurlPayResponse(
         callback=callback,
