@@ -2,14 +2,14 @@
 
 Vue.component(VueQrcode.name, VueQrcode)
 
-var locationPath = [
+const locationPath = [
   window.location.protocol,
   '//',
   window.location.host,
   window.location.pathname
 ].join('')
 
-var mapPayLink = obj => {
+const mapPayLink = obj => {
   obj._data = _.clone(obj)
   obj.date = Quasar.utils.date.formatDate(
     new Date(obj.time * 1000),
@@ -24,8 +24,20 @@ var mapPayLink = obj => {
 new Vue({
   el: '#vue',
   mixins: [windowMixin],
+  computed: {
+    endpoint: function() {
+      return `/lnurlp/api/v1/settings?usr=${this.g.user.id}`
+    }
+  },
   data() {
     return {
+      settings: [
+        {
+          "type": "str",
+          "description": "Nostr private key used to zap",
+          "name": "nostr_private_key",
+        }
+      ],
       domain: window.location.host,
       currencies: [],
       fiatRates: {},

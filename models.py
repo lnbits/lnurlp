@@ -10,6 +10,21 @@ from pydantic import BaseModel
 
 from lnbits.lnurl import encode as lnurl_encode
 
+from .helpers import parse_nostr_private_key
+from .nostr.key import PrivateKey
+
+
+class LnurlpSettings(BaseModel):
+    nostr_private_key: str
+
+    @property
+    def private_key(self) -> PrivateKey:
+       return parse_nostr_private_key(self.nostr_private_key)
+
+    @property
+    def public_key(self) -> str:
+        return self.private_key.public_key.hex()
+
 
 class CreatePayLinkData(BaseModel):
     description: str

@@ -13,14 +13,18 @@ from lnbits.utils.exchange_rates import currencies, get_fiat_rate_satoshis
 from . import lnurlp_ext, scheduled_tasks
 from .crud import (
     create_pay_link,
+    delete_lnurlp_settings,
     delete_pay_link,
     get_address_data,
+    get_or_create_lnurlp_settings,
     get_pay_link,
     get_pay_links,
+    update_lnurlp_settings,
     update_pay_link,
 )
+from .helpers import parse_nostr_private_key
 from .lnurl import api_lnurl_response
-from .models import CreatePayLinkData
+from .models import CreatePayLinkData, LnurlpSettings
 
 
 # redirected from /.well-known/lnurlp
@@ -178,8 +182,8 @@ async def api_check_fiat_rate(currency):
     return {"rate": rate}
 
 
-@lnurlp_ext.delete("/api/v1", status_code=HTTPStatus.OK)
-async def api_stop(wallet: WalletTypeInfo = Depends(check_admin)):
+@lnurlp_ext.delete("/api/v1", dependencies=[Depends(check_admin)])
+async def api_stop():
     for t in scheduled_tasks:
         try:
             t.cancel()
@@ -187,3 +191,24 @@ async def api_stop(wallet: WalletTypeInfo = Depends(check_admin)):
             logger.warning(ex)
 
     return {"success": True}
+
+
+@lnurlp_ext.get("/api/v1/settings", dependencies=[Depends(check_admin)])
+async def api_get_or_create_settings() -> LnurlpSettings:
+    return await get_or_create_lnurlp_settings()
+
+
+@lnurlp_ext.put("/api/v1/settings", dependencies=[Depends(check_admin)])
+async def api_update_settings(data: LnurlpSettings) -> LnurlpSettings:
+    try:
+        parse_nostr_private_key(data.nostr_private_key)
+    except Exception:
+        raise HTTPException(
+            detail="Invalid Nostr private key.", status_code=HTTPStatus.BAD_REQUEST
+        )
+    return await update_lnurlp_settings(data)
+
+
+@lnurlp_ext.delete("/api/v1/settings", dependencies=[Depends(check_admin)])
+async def api_delete_settings() -> None:
+    await delete_lnurlp_settings()

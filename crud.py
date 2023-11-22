@@ -1,12 +1,30 @@
 from typing import List, Optional, Union
 
-from lnbits.helpers import urlsafe_short_hash
+from lnbits.helpers import urlsafe_short_hash, insert_query, update_query
 
-from . import db  # , maindb
-from .models import CreatePayLinkData, PayLink
+from . import db
+from .models import CreatePayLinkData, LnurlpSettings, PayLink
+from .nostr.key import PrivateKey
 from .services import check_lnaddress_format
 
-# from loguru import logger
+
+async def get_or_create_lnurlp_settings() -> LnurlpSettings:
+    row = await db.fetchone("SELECT * FROM lnurlp.settings LIMIT 1")
+    if row:
+        return LnurlpSettings(**row)
+    else:
+        settings = LnurlpSettings(nostr_private_key=PrivateKey().hex())
+        await db.execute(insert_query("lnurlp.settings", settings), (*settings.model_dump().values(),))
+        return settings
+
+
+async def update_lnurlp_settings(settings: LnurlpSettings) -> LnurlpSettings:
+    await db.execute(update_query("lnurlp.settings", settings, where=""), (*settings.model_dump().values(),))
+    return settings
+
+
+async def delete_lnurlp_settings() -> None:
+    await db.execute("DELETE FROM lnurlp.settings")
 
 
 async def check_lnaddress_not_exists(username: str) -> bool:
