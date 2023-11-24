@@ -152,16 +152,14 @@ async def api_lnurl_response(
             request.url_for(
                 "lnurlp.api_lnurl_lnaddr_callback",
                 link_id=link.id,
-                webhook_data=webhook_data,
-            )
+            ).include_query_params(webhook_data=webhook_data)
         )
     else:
         callback = str(
             request.url_for(
                 "lnurlp.api_lnurl_callback",
                 link_id=link.id,
-                webhook_data=webhook_data,
-            )
+            ).include_query_params(webhook_data=webhook_data)
         )
 
     resp = LnurlPayResponse(
