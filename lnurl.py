@@ -39,7 +39,7 @@ async def api_lnurl_callback(
     link_id,
     amount: int = Query(...),
     webhook_data: str = Query(None),
-    lnaddress=False,
+    lnaddress: bool = False,
 ):
     link = await increment_pay_link(link_id, served_pr=1)
     if not link:
@@ -152,6 +152,7 @@ async def api_lnurl_response(
             request.url_for(
                 "lnurlp.api_lnurl_lnaddr_callback",
                 link_id=link.id,
+                webhook_data=webhook_data,
             )
         )
     else:
@@ -159,11 +160,9 @@ async def api_lnurl_response(
             request.url_for(
                 "lnurlp.api_lnurl_callback",
                 link_id=link.id,
+                webhook_data=webhook_data,
             )
         )
-
-    if webhook_data:
-        callback += f"?webhook_data={webhook_data}"
 
     resp = LnurlPayResponse(
         callback=callback,
