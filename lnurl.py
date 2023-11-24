@@ -148,22 +148,16 @@ async def api_lnurl_response(
         # for lnaddress, we have to set this otherwise
         # the metadata won't have the identifier
         link.domain = urlparse(str(request.url)).netloc
-        callback = str(
-            request.url_for(
-                "lnurlp.api_lnurl_lnaddr_callback",
-                link_id=link.id,
-            ).include_query_params(webhook_data=webhook_data)
-        )
+        url = request.url_for("lnurlp.api_lnurl_lnaddr_callback", link_id=link.id)
     else:
-        callback = str(
-            request.url_for(
-                "lnurlp.api_lnurl_callback",
-                link_id=link.id,
-            ).include_query_params(webhook_data=webhook_data)
-        )
+        url = request.url_for("lnurlp.api_lnurl_callback", link_id=link.id)
+
+    if webhook_data:
+        url = url.include_query_params(webhook_data=webhook_data)
+
 
     resp = LnurlPayResponse(
-        callback=callback,
+        callback=str(url),
         min_sendable=round(link.min * rate) * 1000,  # type: ignore
         max_sendable=round(link.max * rate) * 1000,  # type: ignore
         metadata=link.lnurlpay_metadata,
