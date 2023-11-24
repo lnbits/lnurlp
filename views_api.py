@@ -32,7 +32,7 @@ from .models import CreatePayLinkData, LnurlpSettings
 async def lnaddress(username: str, request: Request):
     address_data = await get_address_data(username)
     assert address_data, "User not found"
-    return await api_lnurl_response(request, address_data.id, lnaddress=True)
+    return await api_lnurl_response(request, address_data.id, webhook_data=None)
 
 
 @lnurlp_ext.get("/api/v1/currencies")
