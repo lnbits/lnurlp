@@ -14,12 +14,18 @@ async def get_or_create_lnurlp_settings() -> LnurlpSettings:
         return LnurlpSettings(**row)
     else:
         settings = LnurlpSettings(nostr_private_key=PrivateKey().hex())
-        await db.execute(insert_query("lnurlp.settings", settings), (*settings.model_dump().values(),))
+        await db.execute(
+            insert_query("lnurlp.settings", settings),
+            (*settings.dict().values(),)
+        )
         return settings
 
 
 async def update_lnurlp_settings(settings: LnurlpSettings) -> LnurlpSettings:
-    await db.execute(update_query("lnurlp.settings", settings, where=""), (*settings.model_dump().values(),))
+    await db.execute(
+        update_query("lnurlp.settings", settings, where=""),
+        (*settings.dict().values(),)
+    )
     return settings
 
 
