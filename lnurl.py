@@ -1,6 +1,5 @@
-import json
 from http import HTTPStatus
-from urllib.parse import urlparse
+from typing import Optional
 
 from fastapi import Query, Request
 from lnurl import LnurlErrorResponse, LnurlPayActionResponse, LnurlPayResponse
@@ -17,29 +16,15 @@ from .crud import (
 
 
 @lnurlp_ext.get(
-    "/api/v1/lnurl/cb/lnaddr/{link_id}",
-    status_code=HTTPStatus.OK,
-    name="lnurlp.api_lnurl_lnaddr_callback",
-)
-async def api_lnurl_lnaddr_callback(
-    request: Request, link_id, amount: int = Query(...), webhook_data: str = Query(None)
-):
-    return await api_lnurl_callback(
-        request, link_id, amount, webhook_data, lnaddress=True
-    )
-
-
-@lnurlp_ext.get(
     "/api/v1/lnurl/cb/{link_id}",
     status_code=HTTPStatus.OK,
     name="lnurlp.api_lnurl_callback",
 )
 async def api_lnurl_callback(
     request: Request,
-    link_id,
+    link_id: str,
     amount: int = Query(...),
     webhook_data: str = Query(None),
-    lnaddress: bool = False,
 ):
     link = await increment_pay_link(link_id, served_pr=1)
     if not link:
@@ -76,10 +61,9 @@ async def api_lnurl_callback(
             )
         ).dict()
 
-    if lnaddress:
-        # for lnaddress, we have to set this otherwise
-        # the metadata won't have the identifier
-        link.domain = urlparse(str(request.url)).netloc
+    # for lnaddress, we have to set this otherwise
+    # the metadata won't have the identifier
+    link.domain = request.url.netloc
 
     extra = {
         "tag": "lnurlp",
@@ -98,7 +82,7 @@ async def api_lnurl_callback(
     if nostr:
         extra["nostr"] = nostr  # put it here for later publishing in tasks.py
 
-    if lnaddress and link.username and link.domain:
+    if link.username and link.domain:
         extra["lnaddress"] = f"{link.username}@{link.domain}"
 
     # we take the zap request as the description instead of the metadata if present
@@ -134,7 +118,7 @@ async def api_lnurl_callback(
     name="lnurlp.api_lnurl_response",
 )
 async def api_lnurl_response(
-    request: Request, link_id, webhook_data: str = Query(None), lnaddress=False
+    request: Request, link_id, webhook_data: Optional[str] = Query(None)
 ):
     link = await increment_pay_link(link_id, served_meta=1)
     if not link:
@@ -143,18 +127,11 @@ async def api_lnurl_response(
         )
 
     rate = await get_fiat_rate_satoshis(link.currency) if link.currency else 1
-
-    if lnaddress:
-        # for lnaddress, we have to set this otherwise
-        # the metadata won't have the identifier
-        link.domain = urlparse(str(request.url)).netloc
-        url = request.url_for("lnurlp.api_lnurl_lnaddr_callback", link_id=link.id)
-    else:
-        url = request.url_for("lnurlp.api_lnurl_callback", link_id=link.id)
-
+    url = request.url_for("lnurlp.api_lnurl_callback", link_id=link.id)
     if webhook_data:
         url = url.include_query_params(webhook_data=webhook_data)
 
+    link.domain = request.url.netloc
 
     resp = LnurlPayResponse(
         callback=str(url),
