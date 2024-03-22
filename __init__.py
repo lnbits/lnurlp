@@ -1,13 +1,11 @@
 import asyncio
 from typing import List
 
-from environs import Env
 from fastapi import APIRouter
-from loguru import logger
 
 from lnbits.db import Database
 from lnbits.helpers import template_renderer
-from lnbits.tasks import catch_everything_and_restart
+from lnbits.tasks import create_permanent_unique_task
 
 
 db = Database("ext_lnurlp")
@@ -30,18 +28,13 @@ scheduled_tasks: List[asyncio.Task] = []
 
 lnurlp_ext: APIRouter = APIRouter(prefix="/lnurlp", tags=["lnurlp"])
 
-
 def lnurlp_renderer():
     return template_renderer(["lnurlp/templates"])
-
 
 from .lnurl import *  # noqa: F401,F403
 from .tasks import wait_for_paid_invoices
 from .views import *  # noqa: F401,F403
 from .views_api import *  # noqa: F401,F403
 
-
 def lnurlp_start():
-    loop = asyncio.get_event_loop()
-    task = loop.create_task(catch_everything_and_restart(wait_for_paid_invoices))
-    scheduled_tasks.append(task)
+    create_permanent_unique_task("lnurlp", wait_for_paid_invoices)
