@@ -24,7 +24,6 @@ lnurlp_redirect_paths = [
     }
 ]
 
-scheduled_tasks: List[asyncio.Task] = []
 
 lnurlp_ext: APIRouter = APIRouter(prefix="/lnurlp", tags=["lnurlp"])
 
@@ -36,5 +35,14 @@ from .tasks import wait_for_paid_invoices
 from .views import *  # noqa: F401,F403
 from .views_api import *  # noqa: F401,F403
 
+
+scheduled_tasks: List[asyncio.Task] = []
+
+
+def lnurlp_stop():
+    for task in scheduled_tasks:
+        task.cancel()
+
 def lnurlp_start():
-    create_permanent_unique_task("lnurlp", wait_for_paid_invoices)
+    task = create_permanent_unique_task("lnurlp", wait_for_paid_invoices)
+    task.append(task)
