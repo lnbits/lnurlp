@@ -45,4 +45,4 @@ def lnurlp_stop():
 
 def lnurlp_start():
     task = create_permanent_unique_task("lnurlp", wait_for_paid_invoices)
-    task.append(task)
+    scheduled_tasks.append(task)
