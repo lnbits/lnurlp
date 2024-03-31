@@ -5,7 +5,6 @@ from lnbits.helpers import urlsafe_short_hash, insert_query, update_query
 from . import db
 from .models import CreatePayLinkData, LnurlpSettings, PayLink
 from .nostr.key import PrivateKey
-from .services import check_lnaddress_format
 
 
 async def get_or_create_lnurlp_settings() -> LnurlpSettings:
@@ -33,21 +32,13 @@ async def delete_lnurlp_settings() -> None:
     await db.execute("DELETE FROM lnurlp.settings")
 
 
-async def check_lnaddress_not_exists(username: str) -> bool:
-    # check if lnaddress username exists in the database when creating a new entry
-    row = await db.fetchall(
+async def get_pay_link_by_username(username: str) -> Optional[PayLink]:
+    return await db.fetchall(
         "SELECT username FROM lnurlp.pay_links WHERE username = ?", (username,)
     )
-    if row:
-        raise Exception("Username already exists. Try a different one.")
-    else:
-        return True
 
 
 async def create_pay_link(data: CreatePayLinkData, wallet_id: str) -> PayLink:
-    if data.username:
-        await check_lnaddress_format(data.username)
-        await check_lnaddress_not_exists(data.username)
 
     link_id = urlsafe_short_hash()[:6]
 
@@ -128,9 +119,6 @@ async def get_pay_links(wallet_ids: Union[str, List[str]]) -> List[PayLink]:
 
 
 async def update_pay_link(link_id: str, **kwargs) -> Optional[PayLink]:
-    if "username" in kwargs and len(kwargs["username"] or "") > 0:
-        await check_lnaddress_format(kwargs["username"])
-        await check_lnaddress_not_exists(kwargs["username"])
 
     q = ", ".join([f"{field[0]} = ?" for field in kwargs.items()])
     await db.execute(
