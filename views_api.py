@@ -17,10 +17,12 @@ from .crud import (
     get_address_data,
     get_or_create_lnurlp_settings,
     get_pay_link,
+    get_pay_link_by_username,
     get_pay_links,
     update_lnurlp_settings,
     update_pay_link,
 )
+from .services import check_lnaddress_format
 from .helpers import parse_nostr_private_key
 from .lnurl import api_lnurl_response
 from .models import CreatePayLinkData, LnurlpSettings
@@ -83,6 +85,14 @@ async def api_link_retrieve(
     return {**link.dict(), **{"lnurl": link.lnurl(r)}}
 
 
+async def check_username_exists(username: str):
+    prev_link = await get_pay_link_by_username(username)
+    if prev_link:
+        raise HTTPException(
+            detail="Username already taken.",
+            status_code=HTTPStatus.BAD_REQUEST,
+        )
+
 @lnurlp_ext.post("/api/v1/links", status_code=HTTPStatus.CREATED)
 @lnurlp_ext.put("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_link_create_or_update(
@@ -133,6 +143,14 @@ async def api_link_create_or_update(
             status_code=HTTPStatus.BAD_REQUEST,
         )
 
+    if data.username:
+        try:
+            await check_lnaddress_format(data.username)
+        except AssertionError as ex:
+            raise HTTPException(
+                detail=f"Invalid username: {ex}", status_code=HTTPStatus.BAD_REQUEST
+            )
+
     if link_id:
         link = await get_pay_link(link_id)
 
@@ -146,9 +164,16 @@ async def api_link_create_or_update(
                 detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
             )
 
+        if data.username and data.username != link.username:
+            await check_username_exists(data.username)
+
         link = await update_pay_link(**data.dict(), link_id=link_id)
     else:
+        if data.username:
+            await check_username_exists(data.username)
+
         link = await create_pay_link(data, wallet_id=wallet.wallet.id)
+
     assert link
     return {**link.dict(), "lnurl": link.lnurl(request)}
 
