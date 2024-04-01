@@ -39,7 +39,7 @@ async def get_pay_link_by_username(username: str) -> Optional[PayLink]:
     return PayLink.from_row(row) if row else None
 
 
-async def create_pay_link(data: CreatePayLinkData, wallet_id: str) -> PayLink:
+async def create_pay_link(data: CreatePayLinkData) -> PayLink:
 
     link_id = urlsafe_short_hash()[:6]
 
@@ -69,7 +69,7 @@ async def create_pay_link(data: CreatePayLinkData, wallet_id: str) -> PayLink:
         """,
         (
             link_id,
-            wallet_id,
+            data.wallet,
             data.description,
             data.min,
             data.max,

@@ -1,12 +1,13 @@
 import json
 from http import HTTPStatus
+from typing import Optional
 
 from fastapi import Depends, Query, Request
 from lnurl.exceptions import InvalidUrl as LnurlInvalidUrl
 from starlette.exceptions import HTTPException
 
-from lnbits.core.crud import get_user
-from lnbits.decorators import WalletTypeInfo, check_admin, get_key_type
+from lnbits.core.crud import get_user, get_wallet
+from lnbits.decorators import WalletTypeInfo, check_admin, get_key_type, require_admin_key, require_invoice_key
 from lnbits.utils.exchange_rates import currencies, get_fiat_rate_satoshis
 
 from . import lnurlp_ext
@@ -68,7 +69,7 @@ async def api_links(
 
 @lnurlp_ext.get("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_link_retrieve(
-    r: Request, link_id, wallet: WalletTypeInfo = Depends(get_key_type)
+    r: Request, link_id: str, key_info: WalletTypeInfo = Depends(require_invoice_key)
 ):
     link = await get_pay_link(link_id)
 
@@ -77,7 +78,9 @@ async def api_link_retrieve(
             detail="Pay link does not exist.", status_code=HTTPStatus.NOT_FOUND
         )
 
-    if link.wallet != wallet.wallet.id:
+    link_wallet = await get_wallet(link.wallet)
+
+    if link_wallet.user != key_info.wallet.user:
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
@@ -98,8 +101,8 @@ async def check_username_exists(username: str):
 async def api_link_create_or_update(
     data: CreatePayLinkData,
     request: Request,
-    link_id=None,
-    wallet: WalletTypeInfo = Depends(get_key_type),
+    link_id: Optional[str] = None,
+    key_info: WalletTypeInfo = Depends(require_admin_key),
 ):
     if data.min > data.max:
         raise HTTPException(
@@ -151,17 +154,27 @@ async def api_link_create_or_update(
                 detail=f"Invalid username: {ex}", status_code=HTTPStatus.BAD_REQUEST
             )
 
+    # if wallet is not provided, use the wallet of the key
+    if not data.wallet:
+        data.wallet = key_info.wallet.id
+
+    new_wallet = await get_wallet(data.wallet)
+    if not new_wallet:
+        raise HTTPException(
+            detail="Wallet does not exist.", status_code=HTTPStatus.FORBIDDEN
+        )
+
+    if new_wallet.user != key_info.wallet.user:
+        raise HTTPException(
+            detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
+        )
+
     if link_id:
         link = await get_pay_link(link_id)
 
         if not link:
             raise HTTPException(
                 detail="Pay link does not exist.", status_code=HTTPStatus.NOT_FOUND
-            )
-
-        if link.wallet != wallet.wallet.id:
-            raise HTTPException(
-                detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
             )
 
         if data.username and data.username != link.username:
@@ -172,14 +185,14 @@ async def api_link_create_or_update(
         if data.username:
             await check_username_exists(data.username)
 
-        link = await create_pay_link(data, wallet_id=wallet.wallet.id)
+        link = await create_pay_link(data)
 
     assert link
     return {**link.dict(), "lnurl": link.lnurl(request)}
 
 
 @lnurlp_ext.delete("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
-async def api_link_delete(link_id, wallet: WalletTypeInfo = Depends(get_key_type)):
+async def api_link_delete(link_id: str, wallet: WalletTypeInfo = Depends(get_key_type)):
     link = await get_pay_link(link_id)
 
     if not link:

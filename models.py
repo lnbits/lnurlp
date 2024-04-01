@@ -28,6 +28,7 @@ class LnurlpSettings(BaseModel):
 
 class CreatePayLinkData(BaseModel):
     description: str
+    wallet: Optional[str] = None
     min: float = Query(1, ge=0.01)
     max: float = Query(1, ge=0.01)
     currency: str = Query(None)
