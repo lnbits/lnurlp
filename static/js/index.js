@@ -123,8 +123,7 @@ new Vue({
       const wallet = _.findWhere(this.g.user.wallets, {
         id: this.formDialog.data.wallet
       })
-      var data = _.omit(this.formDialog.data, 'wallet')
-
+      const data = _.clone(this.formDialog.data)
       if (this.formDialog.fixedAmount) data.max = data.min
       if (data.currency === 'satoshis') data.currency = null
       if (isNaN(parseInt(data.comment_chars))) data.comment_chars = 0
