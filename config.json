@@ -2,6 +2,48 @@
   "name": "Pay Links",
   "short_description": "Make reusable LNURL pay links",
   "tile": "/lnurlp/static/image/lnurl-pay.png",
-  "contributors": ["arcbtc", "eillarra", "fiatjaf", "callebtc"],
-  "min_lnbits_version": "0.12.4"
+  "min_lnbits_version": "0.12.4",
+  "contributors": [
+    {
+      "name": "arcbtc",
+      "uri": "https://github.com/arcbtc",
+      "role": "Contributor"
+    },
+    {
+      "name": "eillarra",
+      "uri": "https://github.com/eillarra",
+      "role": "Contributor"
+    },
+    {
+      "name": "fiatjaf",
+      "uri": "https://github.com/fiatjaf",
+      "role": "Contributor"
+    },
+    {
+      "name": "callebtc",
+      "uri": "https://github.com/callebtc",
+      "role": "Contributor"
+    }
+  ],
+  "images": [
+    {
+      "uri": "https://raw.githubusercontent.com/lnbits/lnurlp/main/static/1.jpg",
+      "link": "https://www.youtube.com/embed/WZpK4xfGcuY?si=_T3gCqKBU8yt6_bD"
+    },
+    {
+      "uri": "https://raw.githubusercontent.com/lnbits/lnurlp/main/static/1.png"
+    },
+    {
+      "uri": "https://raw.githubusercontent.com/lnbits/lnurlp/main/static/2.png"
+    },
+    {
+      "uri": "https://raw.githubusercontent.com/lnbits/lnurlp/main/static/3.png"
+    },
+    {
+      "uri": "https://raw.githubusercontent.com/lnbits/lnurlp/main/static/4.png"
+    }
+  ],
+  "description_md": "https://raw.githubusercontent.com/lnbits/lnurlp/main/description.md",
+  "terms_and_conditions_md": "https://raw.githubusercontent.com/lnbits/lnurlp/main/toc.md",
+  "license": "MIT"
 }
