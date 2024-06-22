@@ -374,7 +374,7 @@
         <strong>On success:</strong> {{ qrCodeDialog.data.success }}<br />
         <span v-if="qrCodeDialog.data.username">
           <strong>Lightning Address: </strong>
-          {{ qrCodeDialog.data.username }}@{{ domain }}
+          {{ qrCodeDialog.data.username }}@{{ qrCodeDialog.data.domain || domain }}
           <br />
         </span>
       </p>

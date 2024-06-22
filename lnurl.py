@@ -63,7 +63,8 @@ async def api_lnurl_callback(
 
     # for lnaddress, we have to set this otherwise
     # the metadata won't have the identifier
-    link.domain = request.url.netloc
+    if not link.domain:
+        link.domain = request.url.netloc
 
     extra = {
         "tag": "lnurlp",
@@ -131,7 +132,14 @@ async def api_lnurl_response(
     if webhook_data:
         url = url.include_query_params(webhook_data=webhook_data)
 
-    link.domain = request.url.netloc
+    if link.domain:
+        url = url.replace(
+            hostname=link.domain,
+            port=None,
+            scheme="http" if link.domain.endswith(".onion") else "https"
+        )
+    else:
+        link.domain = request.url.netloc
 
     resp = LnurlPayResponse(
         callback=str(url),

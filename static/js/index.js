@@ -36,6 +36,11 @@ new Vue({
           "type": "str",
           "description": "Nostr private key used to zap",
           "name": "nostr_private_key",
+        },
+        {
+          "type": "str",
+          "description": "Fixed domain - if set, links will always point to this domain even if the lnbits server is currently accessed from a different one (i.e. localhost or a local-network ip address).",
+          "name": "domain",
         }
       ],
       domain: window.location.host,
@@ -106,7 +111,8 @@ new Vue({
         lnurl: link.lnurl,
         pay_url: link.pay_url,
         print_url: link.print_url,
-        username: link.username
+        username: link.username,
+        domain: link.domain
       }
       this.qrCodeDialog.show = true
     },

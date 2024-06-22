@@ -16,6 +16,7 @@ from .nostr.key import PrivateKey
 
 class LnurlpSettings(BaseModel):
     nostr_private_key: str
+    domain: Optional[str]
 
     @property
     def private_key(self) -> PrivateKey:
@@ -72,7 +73,15 @@ class PayLink(BaseModel):
         return cls(**data)
 
     def lnurl(self, req: Request) -> str:
-        url = str(req.url_for("lnurlp.api_lnurl_response", link_id=self.id))
+        url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
+        if self.domain:
+            url = url.replace(
+                hostname=self.domain,
+                port=None,
+                scheme="http" if self.domain.endswith(".onion") else "https"
+            )
+        url = str(url)
+
         # Check if url is .onion and change to http
         if urlparse(url).netloc.endswith(".onion"):
             # change url string scheme to http

@@ -173,3 +173,9 @@ async def m009_add_settings(db):
         );
         """
     )
+
+async def m010_add_domain_column(db):
+    """
+    Add domain to settings table
+    """
+    await db.execute("ALTER TABLE lnurlp.settings ADD COLUMN domain TEXT;")
