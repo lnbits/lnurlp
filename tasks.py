@@ -48,10 +48,13 @@ async def on_invoice_paid(payment: Payment):
         )
         return
 
-    await send_webhook(payment, pay_link)
+    
 
     if pay_link.zaps:
-        await send_zap(payment)
+        zap_receipt = await send_zap(payment)
+        pay_link.zap_receipt = zap_receipt
+
+    await send_webhook(payment, pay_link)
 
 
 async def send_webhook(payment: Payment, pay_link: PayLink):
@@ -69,7 +72,8 @@ async def send_webhook(payment: Payment, pay_link: PayLink):
                     "comment": payment.extra.get("comment"),
                     "webhook_data": payment.extra.get("webhook_data") or "",
                     "lnurlp": pay_link.id,
-                    "body": json.loads(pay_link.webhook_body)
+                    "body": json.loads(pay_link.webhook_body),
+                    "zap_receipt": pay_link.zap_receipt
                     if pay_link.webhook_body
                     else "",
                 },
@@ -170,3 +174,5 @@ async def send_zap(payment: Payment):
         logger.debug(f"Closing websocket {ws.url}")
         ws.close()
         wst.join()
+
+    return zap_receipt
