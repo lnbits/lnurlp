@@ -72,8 +72,8 @@ async def send_webhook(payment: Payment, pay_link: PayLink):
                     "comment": payment.extra.get("comment"),
                     "webhook_data": payment.extra.get("webhook_data") or "",
                     "lnurlp": pay_link.id,
-                    "body": json.loads(pay_link.webhook_body),
-                    "zap_receipt": pay_link.zap_receipt
+                    "zap_receipt": pay_link.zap_receipt,
+                    "body": json.loads(pay_link.webhook_body)
                     if pay_link.webhook_body
                     else "",
                 },
