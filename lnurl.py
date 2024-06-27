@@ -92,7 +92,7 @@ async def api_lnurl_callback(
         wallet_id=link.wallet,
         amount=int(amount / 1000),
         memo=link.description,
-        unhashed_description=unhashed_description,
+        unhashed_description=None,
         extra=extra,
     )
 
