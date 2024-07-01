@@ -24,10 +24,12 @@ async def wait_for_paid_invoices():
 
     while True:
         payment = await invoice_queue.get()
+
         await on_invoice_paid(payment)
 
 
 async def on_invoice_paid(payment: Payment):
+
     if payment.extra.get("tag") != "lnurlp":
         return
 
