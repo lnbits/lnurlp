@@ -7,7 +7,7 @@ from starlette.exceptions import HTTPException
 
 from lnbits.core.services import create_invoice
 from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
-
+from lnbits.wallets import get_funding_source
 from . import lnurlp_ext
 from .crud import (
     get_or_create_lnurlp_settings,
@@ -92,7 +92,7 @@ async def api_lnurl_callback(
         wallet_id=link.wallet,
         amount=int(amount / 1000),
         memo=link.description,
-        unhashed_description=None,
+        unhashed_description=None if get_funding_source().__class__.__name__ == "OpenNodeWallet" else unhashed_description,
         extra=extra,
     )
 
