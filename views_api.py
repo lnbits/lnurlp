@@ -7,7 +7,8 @@ from lnurl.exceptions import InvalidUrl as LnurlInvalidUrl
 from starlette.exceptions import HTTPException
 
 from lnbits.core.crud import get_user, get_wallet
-from lnbits.decorators import WalletTypeInfo, check_admin, get_key_type, require_admin_key, require_invoice_key
+from lnbits.core.models import User
+from lnbits.decorators import WalletTypeInfo, check_admin, check_user_exists, get_key_type, require_admin_key, require_invoice_key
 from lnbits.utils.exchange_rates import currencies, get_fiat_rate_satoshis
 
 from . import lnurlp_ext
@@ -103,6 +104,7 @@ async def api_link_create_or_update(
     request: Request,
     link_id: Optional[str] = None,
     key_info: WalletTypeInfo = Depends(require_admin_key),
+    user: User = Depends(check_user_exists)
 ):
     if data.min > data.max:
         raise HTTPException(
@@ -164,7 +166,8 @@ async def api_link_create_or_update(
             detail="Wallet does not exist.", status_code=HTTPStatus.FORBIDDEN
         )
 
-    if new_wallet.user != key_info.wallet.user:
+    # admins are allowed to create/edit paylinks beloging to regular users
+    if not user.admin and new_wallet.user != key_info.wallet.user:
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
