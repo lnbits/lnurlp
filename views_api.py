@@ -7,8 +7,7 @@ from lnurl.exceptions import InvalidUrl as LnurlInvalidUrl
 from starlette.exceptions import HTTPException
 
 from lnbits.core.crud import get_user, get_wallet
-from lnbits.core.models import User
-from lnbits.decorators import WalletTypeInfo, check_admin, check_user_exists, get_key_type, require_admin_key, require_invoice_key
+from lnbits.decorators import WalletTypeInfo, check_admin, get_key_type, require_admin_key, require_invoice_key
 from lnbits.utils.exchange_rates import currencies, get_fiat_rate_satoshis
 
 from . import lnurlp_ext
