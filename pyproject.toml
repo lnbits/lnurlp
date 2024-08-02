@@ -32,6 +32,7 @@ module = [
   "pyqrcode.*",
   "shortuuid.*",
   "httpx.*",
+  "websocket.*",
 ]
 ignore_missing_imports = "True"
 
