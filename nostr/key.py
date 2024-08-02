@@ -1,13 +1,13 @@
-import secrets
 import base64
+import secrets
+
 import secp256k1
 from cffi import FFI
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
-from hashlib import sha256
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from .event import EncryptedDirectMessage, Event, EventKind
 from . import bech32
+from .event import EncryptedDirectMessage, Event, EventKind
 
 
 class PublicKey:
@@ -35,7 +35,7 @@ class PublicKey:
 
 class PrivateKey:
     def __init__(self, raw_secret: bytes = None) -> None:
-        if not raw_secret is None:
+        if raw_secret is not None:
             self.raw_secret = raw_secret
         else:
             self.raw_secret = secrets.token_bytes(32)

@@ -25,7 +25,7 @@ new Vue({
   el: '#vue',
   mixins: [windowMixin],
   computed: {
-    endpoint: function() {
+    endpoint: function () {
       return `/lnurlp/api/v1/settings?usr=${this.g.user.id}`
     }
   },
@@ -33,9 +33,9 @@ new Vue({
     return {
       settings: [
         {
-          "type": "str",
-          "description": "Nostr private key used to zap",
-          "name": "nostr_private_key",
+          type: 'str',
+          description: 'Nostr private key used to zap',
+          name: 'nostr_private_key'
         }
       ],
       domain: window.location.host,

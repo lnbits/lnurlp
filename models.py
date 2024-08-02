@@ -5,10 +5,10 @@ from urllib.parse import ParseResult, urlparse, urlunparse
 
 from fastapi import Request
 from fastapi.param_functions import Query
-from lnurl.types import LnurlPayMetadata
+from lnbits.lnurl import encode as lnurl_encode
 from pydantic import BaseModel
 
-from lnbits.lnurl import encode as lnurl_encode
+from lnurl.types import LnurlPayMetadata
 
 from .helpers import parse_nostr_private_key
 from .nostr.key import PrivateKey
@@ -19,7 +19,7 @@ class LnurlpSettings(BaseModel):
 
     @property
     def private_key(self) -> PrivateKey:
-       return parse_nostr_private_key(self.nostr_private_key)
+        return parse_nostr_private_key(self.nostr_private_key)
 
     @property
     def public_key(self) -> str:
