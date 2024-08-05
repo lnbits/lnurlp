@@ -3,7 +3,7 @@ import time
 from dataclasses import dataclass, field
 from enum import IntEnum
 from hashlib import sha256
-from typing import List
+from typing import List, Optional
 
 from secp256k1 import PublicKey
 
@@ -21,14 +21,14 @@ class EventKind(IntEnum):
 
 @dataclass
 class Event:
-    content: str = None
-    public_key: str = None
-    created_at: int = None
+    content: Optional[str] = None
+    public_key: Optional[str] = None
+    created_at: Optional[int] = None
     kind: int = EventKind.TEXT_NOTE
     tags: List[List[str]] = field(
         default_factory=list
     )  # Dataclasses require special handling when the default value is a mutable type
-    signature: str = None
+    signature: Optional[str] = None
 
     def __post_init__(self):
         if self.content is not None and not isinstance(self.content, str):
@@ -57,6 +57,9 @@ class Event:
     @property
     def id(self) -> str:
         # Always recompute the id to reflect the up-to-date state of the Event
+        assert self.public_key, "Event public key is missing"
+        assert self.created_at, "Event created_at is missing"
+        assert self.content, "Event content is missing"
         return Event.compute_id(
             self.public_key, self.created_at, self.kind, self.tags, self.content
         )
@@ -70,9 +73,11 @@ class Event:
         self.tags.append(["e", event_id])
 
     def verify(self) -> bool:
+        assert self.public_key, "Event public key is missing"
         pub_key = PublicKey(
             bytes.fromhex("02" + self.public_key), True
         )  # add 02 for schnorr (bip340)
+        assert self.signature, "Event signature is missing"
         return pub_key.schnorr_verify(
             bytes.fromhex(self.id), bytes.fromhex(self.signature), None, raw=True
         )
@@ -96,9 +101,9 @@ class Event:
 
 @dataclass
 class EncryptedDirectMessage(Event):
-    recipient_pubkey: str = None
-    cleartext_content: str = None
-    reference_event_id: str = None
+    recipient_pubkey: Optional[str] = None
+    cleartext_content: Optional[str] = None
+    reference_event_id: Optional[str] = None
 
     def __post_init__(self):
         if self.content is not None:
@@ -122,6 +127,7 @@ class EncryptedDirectMessage(Event):
     def id(self) -> str:
         if self.content is None:
             raise Exception(
-                "EncryptedDirectMessage `id` is undefined until its message is encrypted and stored in the `content` field"
+                "EncryptedDirectMessage `id` is undefined until its "
+                "message is encrypted and stored in the `content` field"
             )
         return super().id

@@ -2,9 +2,9 @@ import base64
 import secrets
 
 import secp256k1
-from cffi import FFI
 from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from typing import Optional
 
 from . import bech32
 from .event import EncryptedDirectMessage, Event, EventKind
@@ -21,20 +21,23 @@ class PublicKey:
     def hex(self) -> str:
         return self.raw_bytes.hex()
 
-    def verify_signed_message_hash(self, hash: str, sig: str) -> bool:
+    def verify_signed_message_hash(self, message_hash: str, sig: str) -> bool:
         pk = secp256k1.PublicKey(b"\x02" + self.raw_bytes, True)
-        return pk.schnorr_verify(bytes.fromhex(hash), bytes.fromhex(sig), None, True)
+        return pk.schnorr_verify(
+            bytes.fromhex(message_hash), bytes.fromhex(sig), None, True
+        )
 
     @classmethod
     def from_npub(cls, npub: str):
         """Load a PublicKey from its bech32/npub form"""
         hrp, data, spec = bech32.bech32_decode(npub)
+        assert data, "Invalid npub"
         raw_public_key = bech32.convertbits(data, 5, 8)[:-1]
         return cls(bytes(raw_public_key))
 
 
 class PrivateKey:
-    def __init__(self, raw_secret: bytes = None) -> None:
+    def __init__(self, raw_secret: Optional[bytes] = None) -> None:
         if raw_secret is not None:
             self.raw_secret = raw_secret
         else:
@@ -80,6 +83,8 @@ class PrivateKey:
         return f"{base64.b64encode(encrypted_message).decode()}?iv={base64.b64encode(iv).decode()}"
 
     def encrypt_dm(self, dm: EncryptedDirectMessage) -> None:
+        assert dm.recipient_pubkey, "Recipient public key must be set"
+        assert dm.cleartext_content, "Cleartext content must be set"
         dm.content = self.encrypt_message(
             message=dm.cleartext_content, public_key_hex=dm.recipient_pubkey
         )
@@ -102,9 +107,9 @@ class PrivateKey:
 
         return unpadded_data.decode()
 
-    def sign_message_hash(self, hash: bytes) -> str:
+    def sign_message_hash(self, message_hash: bytes) -> str:
         sk = secp256k1.PrivateKey(self.raw_secret)
-        sig = sk.schnorr_sign(hash, None, raw=True)
+        sig = sk.schnorr_sign(message_hash, None, raw=True)
         return sig.hex()
 
     def sign_event(self, event: Event) -> None:
@@ -116,32 +121,3 @@ class PrivateKey:
 
     def __eq__(self, other):
         return self.raw_secret == other.raw_secret
-
-
-def mine_vanity_key(prefix: str = None, suffix: str = None) -> PrivateKey:
-    if prefix is None and suffix is None:
-        raise ValueError("Expected at least one of 'prefix' or 'suffix' arguments")
-
-    while True:
-        sk = PrivateKey()
-        if (
-            prefix is not None
-            and not sk.public_key.bech32()[5 : 5 + len(prefix)] == prefix
-        ):
-            continue
-        if suffix is not None and not sk.public_key.bech32()[-len(suffix) :] == suffix:
-            continue
-        break
-
-    return sk
-
-
-ffi = FFI()
-
-
-@ffi.callback(
-    "int (unsigned char *, const unsigned char *, const unsigned char *, void *)"
-)
-def copy_x(output, x32, y32, data):
-    ffi.memmove(output, x32, 32)
-    return 1

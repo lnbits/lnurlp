@@ -33,6 +33,7 @@ module = [
   "shortuuid.*",
   "httpx.*",
   "websocket.*",
+  "secp256k1.*",
 ]
 ignore_missing_imports = "True"
 
