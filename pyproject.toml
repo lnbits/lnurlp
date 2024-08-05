@@ -15,13 +15,14 @@ pytest = "^7.3.2"
 mypy = "^1.5.1"
 pre-commit = "^3.2.2"
 ruff = "^0.3.2"
+types-cffi = "^1.16.0.20240331"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.mypy]
-exclude = "(nostr/*)"
+# exclude = "(nostr/*)"
 [[tool.mypy.overrides]]
 module = [
   "lnbits.*",
@@ -49,9 +50,9 @@ line-length = 88
 [tool.ruff]
 # Same as Black. + 10% rule of black
 line-length = 88
-exclude = [
-    "nostr",
-]
+# exclude = [
+#     "nostr",
+# ]
 
 [tool.ruff.lint]
 # Enable:

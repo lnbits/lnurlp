@@ -1,14 +1,14 @@
 import base64
 import secrets
-
-import secp256k1
-from cryptography.hazmat.primitives import padding
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from typing import Optional
 
-from . import bech32
-from .event import EncryptedDirectMessage, Event, EventKind
+import secp256k1
 from cffi import FFI
+from cryptography.hazmat.primitives import padding
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+from . import bech32
+from .event import EncryptedDirectMessage, EventKind
 
 
 class PublicKey:
@@ -33,7 +33,9 @@ class PublicKey:
         """Load a PublicKey from its bech32/npub form"""
         hrp, data, spec = bech32.bech32_decode(npub)
         assert data, "Invalid npub"
-        raw_public_key = bech32.convertbits(data, 5, 8)[:-1]
+        bits = bech32.convertbits(data, 5, 8)
+        assert bits, "Invalid npub"
+        raw_public_key = bits[:-1]
         return cls(bytes(raw_public_key))
 
 
@@ -45,13 +47,16 @@ class PrivateKey:
             self.raw_secret = secrets.token_bytes(32)
 
         sk = secp256k1.PrivateKey(self.raw_secret)
+        assert sk.pubkey, "Invalid public"
         self.public_key = PublicKey(sk.pubkey.serialize()[1:])
 
     @classmethod
     def from_nsec(cls, nsec: str):
         """Load a PrivateKey from its bech32/nsec form"""
         hrp, data, spec = bech32.bech32_decode(nsec)
-        raw_secret = bech32.convertbits(data, 5, 8)[:-1]
+        bits = bech32.convertbits(data, 5, 8)
+        assert bits, "Invalid nsec"
+        raw_secret = bits[:-1]
         return cls(bytes(raw_secret))
 
     def bech32(self) -> str:
@@ -81,7 +86,8 @@ class PrivateKey:
         encryptor = cipher.encryptor()
         encrypted_message = encryptor.update(padded_data) + encryptor.finalize()
 
-        return f"{base64.b64encode(encrypted_message).decode()}?iv={base64.b64encode(iv).decode()}"
+        msg = base64.b64encode(encrypted_message).decode()
+        return f"{msg}?iv={base64.b64encode(iv).decode()}"
 
     def encrypt_dm(self, dm: EncryptedDirectMessage) -> None:
         assert dm.recipient_pubkey, "Recipient public key must be set"
@@ -113,7 +119,7 @@ class PrivateKey:
         sig = sk.schnorr_sign(message_hash, None, raw=True)
         return sig.hex()
 
-    def sign_event(self, event: Event) -> None:
+    def sign_event(self, event: EncryptedDirectMessage) -> None:
         if event.kind == EventKind.ENCRYPTED_DIRECT_MESSAGE and event.content is None:
             self.encrypt_dm(event)
         if event.public_key is None:
@@ -124,7 +130,9 @@ class PrivateKey:
         return self.raw_secret == other.raw_secret
 
 
-def mine_vanity_key(prefix: str = None, suffix: str = None) -> PrivateKey:
+def mine_vanity_key(
+    prefix: Optional[str] = None, suffix: Optional[str] = None
+) -> PrivateKey:
     if prefix is None and suffix is None:
         raise ValueError("Expected at least one of 'prefix' or 'suffix' arguments")
 

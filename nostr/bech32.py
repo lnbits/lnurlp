@@ -66,7 +66,7 @@ def bech32_create_checksum(hrp, data, spec):
     """Compute the checksum values given HRP and data."""
     values = bech32_hrp_expand(hrp) + data
     const = BECH32M_CONST if spec == Encoding.BECH32M else 1
-    polymod = bech32_polymod(values + [0, 0, 0, 0, 0, 0]) ^ const
+    polymod = bech32_polymod([*values, 0, 0, 0, 0, 0, 0]) ^ const
     return [(polymod >> 5 * (5 - i)) & 31 for i in range(6)]
 
 
@@ -122,6 +122,7 @@ def convertbits(data, frombits, tobits, pad=True):
 def decode(hrp, addr):
     """Decode a segwit address."""
     hrpgot, data, spec = bech32_decode(addr)
+    assert data, "Invalid bech32 string"
     if hrpgot != hrp:
         return (None, None)
     decoded = convertbits(data[1:], 5, 8, False)
@@ -144,7 +145,9 @@ def decode(hrp, addr):
 def encode(hrp, witver, witprog):
     """Encode a segwit address."""
     spec = Encoding.BECH32 if witver == 0 else Encoding.BECH32M
-    ret = bech32_encode(hrp, [witver] + convertbits(witprog, 8, 5), spec)
+    bits = convertbits(witprog, 8, 5)
+    assert bits, "Invalid witness program"
+    ret = bech32_encode(hrp, [witver, *bits], spec)
     if decode(hrp, ret) == (None, None):
         return None
     return ret

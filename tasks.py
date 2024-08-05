@@ -14,7 +14,7 @@ from websocket import WebSocketApp
 
 from .crud import get_or_create_lnurlp_settings, get_pay_link
 from .models import PayLink
-from .nostr.event import Event
+from .nostr.event import EncryptedDirectMessage
 
 
 async def wait_for_paid_invoices():
@@ -125,7 +125,7 @@ async def send_zap(payment: Payment):
             tags.append([t, tag[0]])
     tags.append(["bolt11", payment.bolt11])
     tags.append(["description", nostr])
-    zap_receipt = Event(
+    zap_receipt = EncryptedDirectMessage(
         kind=9735, tags=tags, content=payment.extra.get("comment") or ""
     )
 
