@@ -3,12 +3,11 @@ from typing import List
 
 from fastapi import APIRouter
 
-from lnbits.db import Database
-from lnbits.helpers import template_renderer
-from lnbits.tasks import create_permanent_unique_task
-
-
-db = Database("ext_lnurlp")
+from .crud import db
+from .tasks import wait_for_paid_invoices
+from .views import lnurlp_generic_router
+from .views_api import lnurlp_api_router
+from .views_lnurl import lnurlp_lnurl_router
 
 lnurlp_static_files = [
     {
@@ -26,15 +25,9 @@ lnurlp_redirect_paths = [
 
 
 lnurlp_ext: APIRouter = APIRouter(prefix="/lnurlp", tags=["lnurlp"])
-
-def lnurlp_renderer():
-    return template_renderer(["lnurlp/templates"])
-
-from .lnurl import *  # noqa: F401,F403
-from .tasks import wait_for_paid_invoices
-from .views import *  # noqa: F401,F403
-from .views_api import *  # noqa: F401,F403
-
+lnurlp_ext.include_router(lnurlp_generic_router)
+lnurlp_ext.include_router(lnurlp_api_router)
+lnurlp_ext.include_router(lnurlp_lnurl_router)
 
 scheduled_tasks: List[asyncio.Task] = []
 
@@ -43,6 +36,19 @@ def lnurlp_stop():
     for task in scheduled_tasks:
         task.cancel()
 
+
 def lnurlp_start():
+    from lnbits.tasks import create_permanent_unique_task
+
     task = create_permanent_unique_task("lnurlp", wait_for_paid_invoices)
     scheduled_tasks.append(task)
+
+
+__all__ = [
+    "lnurlp_ext",
+    "lnurlp_static_files",
+    "lnurlp_redirect_paths",
+    "lnurlp_stop",
+    "lnurlp_start",
+    "db",
+]

@@ -4,8 +4,14 @@
   <div class="col-12 col-md-7 q-gutter-y-md">
     <q-card>
       <q-card-section>
-        <q-btn unelevated color="primary" @click="formDialog.show = true">New pay link</q-btn>
-        <lnbits-extension-settings-btn-dialog v-if="this.g.user.admin" :endpoint="endpoint" :options="settings" />
+        <q-btn unelevated color="primary" @click="formDialog.show = true"
+          >New pay link</q-btn
+        >
+        <lnbits-extension-settings-btn-dialog
+          v-if="this.g.user.admin"
+          :endpoint="endpoint"
+          :options="settings"
+        />
       </q-card-section>
     </q-card>
 

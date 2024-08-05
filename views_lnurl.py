@@ -1,21 +1,31 @@
 from http import HTTPStatus
-from typing import Optional
+from typing import Optional, Union
 
-from fastapi import Query, Request
-from lnurl import LnurlErrorResponse, LnurlPayActionResponse, LnurlPayResponse
-from starlette.exceptions import HTTPException
-
+from fastapi import APIRouter, HTTPException, Query, Request
 from lnbits.core.services import create_invoice
 from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
+from lnurl import LnurlErrorResponse, LnurlPayActionResponse, LnurlPayResponse
+from lnurl.models import MessageAction, UrlAction
+from lnurl.types import (
+    ClearnetUrl,
+    DebugUrl,
+    LightningInvoice,
+    Max144Str,
+    MilliSatoshi,
+    OnionUrl,
+)
+from pydantic import parse_obj_as
 
-from . import lnurlp_ext
 from .crud import (
+    get_address_data,
     get_or_create_lnurlp_settings,
     increment_pay_link,
 )
 
+lnurlp_lnurl_router = APIRouter()
 
-@lnurlp_ext.get(
+
+@lnurlp_lnurl_router.get(
     "/api/v1/lnurl/cb/{link_id}",
     status_code=HTTPStatus.OK,
     name="lnurlp.api_lnurl_callback",
@@ -31,23 +41,25 @@ async def api_lnurl_callback(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Pay link does not exist."
         )
-    min, max = link.min, link.max
+    mininum = link.min
+    maximum = link.max
+
     rate = await get_fiat_rate_satoshis(link.currency) if link.currency else 1
     if link.currency:
         # allow some fluctuation (as the fiat price may have changed between the calls)
-        min = rate * 995 * link.min
-        max = rate * 1010 * link.max
+        mininum = rate * 995 * link.min
+        maximum = rate * 1010 * link.max
     else:
-        min = link.min * 1000
-        max = link.max * 1000
+        mininum = link.min * 1000
+        maximum = link.max * 1000
 
     amount = amount
-    if amount < min:
+    if amount < mininum:
         return LnurlErrorResponse(
             reason=f"Amount {amount} is smaller than minimum {min}."
         ).dict()
 
-    elif amount > max:
+    elif amount > maximum:
         return LnurlErrorResponse(
             reason=f"Amount {amount} is greater than maximum {max}."
         ).dict()
@@ -72,7 +84,7 @@ async def api_lnurl_callback(
     }
 
     if comment:
-        extra["comment"] = (comment,)
+        extra["comment"] = comment
 
     if webhook_data:
         extra["webhook_data"] = webhook_data
@@ -88,7 +100,7 @@ async def api_lnurl_callback(
     # we take the zap request as the description instead of the metadata if present
     unhashed_description = nostr.encode() if nostr else link.lnurlpay_metadata.encode()
 
-    payment_hash, payment_request = await create_invoice(
+    _, payment_request = await create_invoice(
         wallet_id=link.wallet,
         amount=int(amount / 1000),
         memo=link.description,
@@ -96,23 +108,29 @@ async def api_lnurl_callback(
         extra=extra,
     )
 
-    success_action = link.success_action(payment_hash)
-    if success_action:
-        resp = LnurlPayActionResponse(
-            pr=payment_request, success_action=success_action, routes=[]  # type: ignore
+    action = None
+    if link.success_url:
+        url = parse_obj_as(
+            Union[DebugUrl, OnionUrl, ClearnetUrl],  # type: ignore
+            link.success_url,
         )
-    else:
-        resp = LnurlPayActionResponse(pr=payment_request, routes=[])  # type: ignore
+        desc = parse_obj_as(Max144Str, link.success_text)
+        return UrlAction(url=url, description=desc)
+    elif link.success_text:
+        message = parse_obj_as(Max144Str, link.success_text)
+        action = MessageAction(message=message)
 
+    invoice = parse_obj_as(LightningInvoice, LightningInvoice(payment_request))
+    resp = LnurlPayActionResponse(pr=invoice, successAction=action, routes=[])
     return resp.dict()
 
 
-@lnurlp_ext.get(
+@lnurlp_lnurl_router.get(
     "/api/v1/lnurl/{link_id}",  # Backwards compatibility for old LNURLs / QR codes
     status_code=HTTPStatus.OK,
     name="lnurlp.api_lnurl_response.deprecated",
 )
-@lnurlp_ext.get(
+@lnurlp_lnurl_router.get(
     "/{link_id}",
     status_code=HTTPStatus.OK,
     name="lnurlp.api_lnurl_response",
@@ -132,11 +150,15 @@ async def api_lnurl_response(
         url = url.include_query_params(webhook_data=webhook_data)
 
     link.domain = request.url.netloc
+    callback_url = parse_obj_as(
+        Union[DebugUrl, OnionUrl, ClearnetUrl],  # type: ignore
+        url,
+    )
 
     resp = LnurlPayResponse(
-        callback=str(url),
-        min_sendable=round(link.min * rate) * 1000,  # type: ignore
-        max_sendable=round(link.max * rate) * 1000,  # type: ignore
+        callback=callback_url,
+        minSendable=MilliSatoshi(round(link.min * rate) * 1000),
+        maxSendable=MilliSatoshi(round(link.max * rate) * 1000),
         metadata=link.lnurlpay_metadata,
     )
     params = resp.dict()
@@ -149,3 +171,11 @@ async def api_lnurl_response(
         params["allowsNostr"] = True
         params["nostrPubkey"] = settings.public_key
     return params
+
+
+# redirected from /.well-known/lnurlp
+@lnurlp_lnurl_router.get("/api/v1/well-known/{username}")
+async def lnaddress(username: str, request: Request):
+    address_data = await get_address_data(username)
+    assert address_data, "User not found"
+    return await api_lnurl_response(request, address_data.id, webhook_data=None)

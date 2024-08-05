@@ -5,17 +5,16 @@ from threading import Thread
 from typing import List
 
 import httpx
-from loguru import logger
-from websocket import WebSocketApp
-
 from lnbits.core.crud import update_payment_extra
 from lnbits.core.models import Payment
 from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
+from loguru import logger
+from websocket import WebSocketApp
 
 from .crud import get_or_create_lnurlp_settings, get_pay_link
 from .models import PayLink
-from .nostr.event import Event
+from .nostr.event import EncryptedDirectMessage
 
 
 async def wait_for_paid_invoices():
@@ -40,12 +39,9 @@ async def on_invoice_paid(payment: Payment):
         logger.error("Invoice paid. But no pay link id found.")
         return
 
-
     pay_link = await get_pay_link(pay_link_id)
     if not pay_link:
-        logger.error(
-            f"Invoice paid. But Pay link `{pay_link_id}` not found."
-        )
+        logger.error(f"Invoice paid. But Pay link `{pay_link_id}` not found.")
         return
 
     await send_webhook(payment, pay_link)
@@ -69,13 +65,17 @@ async def send_webhook(payment: Payment, pay_link: PayLink):
                     "comment": payment.extra.get("comment"),
                     "webhook_data": payment.extra.get("webhook_data") or "",
                     "lnurlp": pay_link.id,
-                    "body": json.loads(pay_link.webhook_body)
-                    if pay_link.webhook_body
-                    else "",
+                    "body": (
+                        json.loads(pay_link.webhook_body)
+                        if pay_link.webhook_body
+                        else ""
+                    ),
                 },
-                headers=json.loads(pay_link.webhook_headers)
-                if pay_link.webhook_headers
-                else None,
+                headers=(
+                    json.loads(pay_link.webhook_headers)
+                    if pay_link.webhook_headers
+                    else None
+                ),
                 timeout=40,
             )
             await mark_webhook_sent(
@@ -125,7 +125,7 @@ async def send_zap(payment: Payment):
             tags.append([t, tag[0]])
     tags.append(["bolt11", payment.bolt11])
     tags.append(["description", nostr])
-    zap_receipt = Event(
+    zap_receipt = EncryptedDirectMessage(
         kind=9735, tags=tags, content=payment.extra.get("comment") or ""
     )
 
