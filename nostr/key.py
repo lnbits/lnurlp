@@ -8,6 +8,7 @@ from typing import Optional
 
 from . import bech32
 from .event import EncryptedDirectMessage, Event, EventKind
+from cffi import FFI
 
 
 class PublicKey:
@@ -121,3 +122,32 @@ class PrivateKey:
 
     def __eq__(self, other):
         return self.raw_secret == other.raw_secret
+
+
+def mine_vanity_key(prefix: str = None, suffix: str = None) -> PrivateKey:
+    if prefix is None and suffix is None:
+        raise ValueError("Expected at least one of 'prefix' or 'suffix' arguments")
+
+    while True:
+        sk = PrivateKey()
+        if (
+            prefix is not None
+            and not sk.public_key.bech32()[5 : 5 + len(prefix)] == prefix
+        ):
+            continue
+        if suffix is not None and not sk.public_key.bech32()[-len(suffix) :] == suffix:
+            continue
+        break
+
+    return sk
+
+
+ffi = FFI()
+
+
+@ffi.callback(
+    "int (unsigned char *, const unsigned char *, const unsigned char *, void *)"
+)
+def copy_x(output, x32, y32, data):
+    ffi.memmove(output, x32, 32)
+    return 1
