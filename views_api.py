@@ -79,7 +79,10 @@ async def api_link_retrieve(
 
     link_wallet = await get_wallet(link.wallet)
 
-    if link_wallet and link_wallet.user != key_info.wallet.user:
+    # admins are allowed to read paylinks beloging to regular users
+    user = await get_user(key_info.wallet.user)
+    assert user, "User does not exist"
+    if not user.admin and link_wallet and link_wallet.user != key_info.wallet.user:
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
@@ -92,7 +95,7 @@ async def check_username_exists(username: str):
     if prev_link:
         raise HTTPException(
             detail="Username already taken.",
-            status_code=HTTPStatus.BAD_REQUEST,
+            status_code=HTTPStatus.CONFLICT,
         )
 
 
@@ -150,9 +153,10 @@ async def api_link_create_or_update(
             status_code=HTTPStatus.BAD_REQUEST,
         )
 
-    if data.username and not re.match("^[a-z0-9-_.]{3,64}$", data.username):
+    if data.username and not re.match("^[a-z0-9-_.]{1,210}$", data.username):
         raise HTTPException(
-            detail=f"Invalid username: {data.username}",
+            detail=f"Invalid username: {data.username}. "
+            "Only letters a-z0-9-_. allowed, min 1 and max 210 characters!",
             status_code=HTTPStatus.BAD_REQUEST,
         )
 
@@ -166,7 +170,10 @@ async def api_link_create_or_update(
             detail="Wallet does not exist.", status_code=HTTPStatus.FORBIDDEN
         )
 
-    if new_wallet.user != key_info.wallet.user:
+    # admins are allowed to create/edit paylinks beloging to regular users
+    user = await get_user(key_info.wallet.user)
+    assert user, "User does not exist"
+    if not user.admin and new_wallet.user != key_info.wallet.user:
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
@@ -202,7 +209,10 @@ async def api_link_delete(link_id: str, wallet: WalletTypeInfo = Depends(get_key
             detail="Pay link does not exist.", status_code=HTTPStatus.NOT_FOUND
         )
 
-    if link.wallet != wallet.wallet.id:
+    # admins are allowed to delete paylinks beloging to regular users
+    user = await get_user(wallet.wallet.user)
+    assert user, "User does not exist"
+    if not user.admin and link.wallet != wallet.wallet.id:
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
