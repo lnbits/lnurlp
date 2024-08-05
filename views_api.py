@@ -81,8 +81,8 @@ async def api_link_retrieve(
 
     # admins are allowed to read paylinks beloging to regular users
     user = await get_user(key_info.wallet.user)
-    assert user, "User does not exist"
-    if not user.admin and link_wallet and link_wallet.user != key_info.wallet.user:
+    admin_user = user.admin if user else False
+    if not admin_user and link_wallet and link_wallet.user != key_info.wallet.user:
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
@@ -172,8 +172,8 @@ async def api_link_create_or_update(
 
     # admins are allowed to create/edit paylinks beloging to regular users
     user = await get_user(key_info.wallet.user)
-    assert user, "User does not exist"
-    if not user.admin and new_wallet.user != key_info.wallet.user:
+    admin_user = user.admin if user else False
+    if not admin_user and new_wallet.user != key_info.wallet.user:
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
@@ -211,8 +211,8 @@ async def api_link_delete(link_id: str, wallet: WalletTypeInfo = Depends(get_key
 
     # admins are allowed to delete paylinks beloging to regular users
     user = await get_user(wallet.wallet.user)
-    assert user, "User does not exist"
-    if not user.admin and link.wallet != wallet.wallet.id:
+    admin_user = user.admin if user else False
+    if not admin_user and link.wallet != wallet.wallet.id:
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
