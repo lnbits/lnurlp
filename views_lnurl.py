@@ -112,7 +112,7 @@ async def api_lnurl_callback(
     if link.success_url:
         url = parse_obj_as(
             Union[DebugUrl, OnionUrl, ClearnetUrl],  # type: ignore
-            link.success_url,
+            str(link.success_url),
         )
         desc = parse_obj_as(Max144Str, link.success_text)
         return UrlAction(url=url, description=desc)
@@ -152,7 +152,7 @@ async def api_lnurl_response(
     link.domain = request.url.netloc
     callback_url = parse_obj_as(
         Union[DebugUrl, OnionUrl, ClearnetUrl],  # type: ignore
-        url,
+        str(url),
     )
 
     resp = LnurlPayResponse(
