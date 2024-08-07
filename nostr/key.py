@@ -91,9 +91,8 @@ class PrivateKey:
 
     def encrypt_dm(self, dm: EncryptedDirectMessage) -> None:
         assert dm.recipient_pubkey, "Recipient public key must be set"
-        assert dm.cleartext_content, "Cleartext content must be set"
         dm.content = self.encrypt_message(
-            message=dm.cleartext_content, public_key_hex=dm.recipient_pubkey
+            message=dm.cleartext_content or "", public_key_hex=dm.recipient_pubkey
         )
 
     def decrypt_message(self, encoded_message: str, public_key_hex: str) -> str:
