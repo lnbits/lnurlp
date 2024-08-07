@@ -125,8 +125,15 @@ async def send_zap(payment: Payment):
             tags.append([t, tag[0]])
     tags.append(["bolt11", payment.bolt11])
     tags.append(["description", nostr])
+
+    pubkey = next((pk[1] for pk in tags if pk[0] == "p"), None)
+    assert pubkey, "Cannot create zap receipt. Recepient pubkey is missing."
     zap_receipt = EncryptedDirectMessage(
-        kind=9735, tags=tags, content=payment.extra.get("comment") or ""
+        kind=9735,
+        recipient_pubkey=pubkey,
+        tags=tags,
+        content=payment.extra.get("comment") or "",
+        cleartext_content=payment.extra.get("comment") or "",
     )
 
     settings = await get_or_create_lnurlp_settings()
