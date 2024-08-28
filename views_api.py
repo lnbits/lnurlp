@@ -1,7 +1,7 @@
 import json
 from http import HTTPStatus
 from typing import Optional
-
+import httpx
 from fastapi import Depends, Query, Request
 from lnurl.exceptions import InvalidUrl as LnurlInvalidUrl
 from starlette.exceptions import HTTPException
@@ -9,7 +9,7 @@ from starlette.exceptions import HTTPException
 from lnbits.core.crud import get_user, get_wallet
 from lnbits.decorators import WalletTypeInfo, check_admin, get_key_type, require_admin_key, require_invoice_key
 from lnbits.utils.exchange_rates import currencies, get_fiat_rate_satoshis
-
+from lnurl import decode as decode_lnurl
 from . import lnurlp_ext
 from .crud import (
     create_pay_link,
@@ -26,7 +26,7 @@ from .crud import (
 from .services import check_lnaddress_format
 from .helpers import parse_nostr_private_key
 from .lnurl import api_lnurl_response
-from .models import CreatePayLinkData, LnurlpSettings
+from .models import CreatePayLinkData, LnurlpSettings, PayLnurlWData
 
 
 # redirected from /.well-known/lnurlp
@@ -238,3 +238,66 @@ async def api_update_settings(data: LnurlpSettings) -> LnurlpSettings:
 @lnurlp_ext.delete("/api/v1/settings", dependencies=[Depends(check_admin)])
 async def api_delete_settings() -> None:
     await delete_lnurlp_settings()
+
+
+
+@lnurlp_ext.post(
+    "/api/v1/links/{link_id}/invoices/{payment_request}/pay", status_code=HTTPStatus.OK
+)
+async def api_link_pay_invoice(
+    lnurl_data: PayLnurlWData, payment_request: str, link_id: str
+):
+    tpos = await get_pay_link(link_id)
+
+    if not tpos:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Link does not exist."
+        )
+
+    lnurl = (
+        lnurl_data.lnurl.replace("lnurlw://", "")
+        .replace("lightning://", "")
+        .replace("LIGHTNING://", "")
+        .replace("lightning:", "")
+        .replace("LIGHTNING:", "")
+    )
+
+    if lnurl.lower().startswith("lnurl"):
+        lnurl = decode_lnurl(lnurl)
+    else:
+        lnurl = "https://" + lnurl
+
+    async with httpx.AsyncClient() as client:
+        try:
+            headers = {"user-agent": "lnbits/lnurlp"}
+            r = await client.get(lnurl, follow_redirects=True, headers=headers)
+            if r.is_error:
+                lnurl_response = {"success": False, "detail": "Error loading"}
+            else:
+                resp = r.json()
+                if resp["tag"] != "withdrawRequest":
+                    lnurl_response = {"success": False, "detail": "Wrong tag type"}
+                else:
+                    r2 = await client.get(
+                        resp["callback"],
+                        follow_redirects=True,
+                        headers=headers,
+                        params={
+                            "k1": resp["k1"],
+                            "pr": payment_request,
+                        },
+                    )
+                    resp2 = r2.json()
+                    if r2.is_error:
+                        lnurl_response = {
+                            "success": False,
+                            "detail": "Error loading callback",
+                        }
+                    elif resp2["status"] == "ERROR":
+                        lnurl_response = {"success": False, "detail": resp2["reason"]}
+                    else:
+                        lnurl_response = {"success": True, "detail": resp2}
+        except (httpx.ConnectError, httpx.RequestError):
+            lnurl_response = {"success": False, "detail": "Unexpected error occurred"}
+
+    return lnurl_response

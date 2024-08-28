@@ -106,3 +106,8 @@ class PayLink(BaseModel):
             metadata = [["text/plain", self.description]]
 
         return LnurlPayMetadata(json.dumps(metadata))
+
+
+
+class PayLnurlWData(BaseModel):
+    lnurl: str
