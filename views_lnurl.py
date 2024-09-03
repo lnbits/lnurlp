@@ -108,7 +108,7 @@ async def api_lnurl_callback(
         extra=extra,
     )
 
-    action = None
+    action: Optional[Union[MessageAction, UrlAction]] = None
     if link.success_url:
         url = parse_obj_as(
             Union[DebugUrl, OnionUrl, ClearnetUrl],  # type: ignore
