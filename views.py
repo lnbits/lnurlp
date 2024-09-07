@@ -1,7 +1,6 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.templating import Jinja2Templates
 from lnbits.core.models import User
 from lnbits.decorators import check_user_exists
 from lnbits.helpers import template_renderer
@@ -15,9 +14,6 @@ lnurlp_generic_router = APIRouter()
 
 def lnurlp_renderer():
     return template_renderer(["lnurlp/templates"])
-
-
-templates = Jinja2Templates(directory="templates")
 
 
 @lnurlp_generic_router.get("/", response_class=HTMLResponse)

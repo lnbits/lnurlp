@@ -8,7 +8,6 @@ from lnbits.core.crud import get_user, get_wallet
 from lnbits.core.models import WalletTypeInfo
 from lnbits.decorators import (
     check_admin,
-    get_key_type,
     require_admin_key,
     require_invoice_key,
 )
@@ -41,13 +40,13 @@ async def api_list_currencies_available():
 @lnurlp_api_router.get("/api/v1/links", status_code=HTTPStatus.OK)
 async def api_links(
     req: Request,
-    wallet: WalletTypeInfo = Depends(get_key_type),
+    key_info: WalletTypeInfo = Depends(require_invoice_key),
     all_wallets: bool = Query(False),
 ):
-    wallet_ids = [wallet.wallet.id]
+    wallet_ids = [key_info.wallet.id]
 
     if all_wallets:
-        user = await get_user(wallet.wallet.user)
+        user = await get_user(key_info.wallet.user)
         wallet_ids = user.wallet_ids if user else []
 
     try:
@@ -189,7 +188,10 @@ async def api_link_create_or_update(
         if data.username and data.username != link.username:
             await check_username_exists(data.username)
 
-        link = await update_pay_link(**data.dict(), link_id=link_id)
+        for k, v in data.dict().items():
+            setattr(link, k, v)
+
+        link = await update_pay_link(link)
     else:
         if data.username:
             await check_username_exists(data.username)
@@ -201,7 +203,9 @@ async def api_link_create_or_update(
 
 
 @lnurlp_api_router.delete("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
-async def api_link_delete(link_id: str, wallet: WalletTypeInfo = Depends(get_key_type)):
+async def api_link_delete(
+    link_id: str, key_info: WalletTypeInfo = Depends(require_admin_key)
+):
     link = await get_pay_link(link_id)
 
     if not link:
@@ -210,9 +214,9 @@ async def api_link_delete(link_id: str, wallet: WalletTypeInfo = Depends(get_key
         )
 
     # admins are allowed to delete paylinks beloging to regular users
-    user = await get_user(wallet.wallet.user)
+    user = await get_user(key_info.wallet.user)
     admin_user = user.admin if user else False
-    if not admin_user and link.wallet != wallet.wallet.id:
+    if not admin_user and link.wallet != key_info.wallet.id:
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )

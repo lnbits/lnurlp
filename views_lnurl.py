@@ -19,7 +19,8 @@ from pydantic import parse_obj_as
 from .crud import (
     get_address_data,
     get_or_create_lnurlp_settings,
-    increment_pay_link,
+    get_pay_link,
+    update_pay_link,
 )
 
 lnurlp_lnurl_router = APIRouter()
@@ -36,11 +37,13 @@ async def api_lnurl_callback(
     amount: int = Query(...),
     webhook_data: str = Query(None),
 ):
-    link = await increment_pay_link(link_id, served_pr=1)
+    link = await get_pay_link(link_id)
     if not link:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Pay link does not exist."
         )
+    link.served_pr = 1
+    await update_pay_link(link)
     mininum = link.min
     maximum = link.max
 
@@ -136,13 +139,15 @@ async def api_lnurl_callback(
     name="lnurlp.api_lnurl_response",
 )
 async def api_lnurl_response(
-    request: Request, link_id, webhook_data: Optional[str] = Query(None)
+    request: Request, link_id: str, webhook_data: Optional[str] = Query(None)
 ):
-    link = await increment_pay_link(link_id, served_meta=1)
+    link = await get_pay_link(link_id)
     if not link:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Pay link does not exist."
         )
+    link.served_meta = 1
+    await update_pay_link(link)
 
     rate = await get_fiat_rate_satoshis(link.currency) if link.currency else 1
     url = request.url_for("lnurlp.api_lnurl_callback", link_id=link.id)

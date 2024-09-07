@@ -15,16 +15,14 @@ async def get_or_create_lnurlp_settings() -> LnurlpSettings:
         return LnurlpSettings(**row)
     else:
         settings = LnurlpSettings(nostr_private_key=PrivateKey().hex())
-        await db.execute(
-            insert_query("lnurlp.settings", settings), (*settings.dict().values(),)
-        )
+        await db.execute(insert_query("lnurlp.settings", settings), settings.dict())
         return settings
 
 
 async def update_lnurlp_settings(settings: LnurlpSettings) -> LnurlpSettings:
     await db.execute(
         update_query("lnurlp.settings", settings, where=""),
-        (*settings.dict().values(),),
+        settings.dict(),
     )
     return settings
 
@@ -35,109 +33,76 @@ async def delete_lnurlp_settings() -> None:
 
 async def get_pay_link_by_username(username: str) -> Optional[PayLink]:
     row = await db.fetchone(
-        "SELECT * FROM lnurlp.pay_links WHERE username = ?", (username,)
+        "SELECT * FROM lnurlp.pay_links WHERE username = :username",
+        {"username": username},
     )
-    return PayLink.from_row(row) if row else None
+    return PayLink(**row) if row else None
 
 
 async def create_pay_link(data: CreatePayLinkData) -> PayLink:
 
     link_id = urlsafe_short_hash()[:6]
 
-    result = await db.execute(
-        """
-        INSERT INTO lnurlp.pay_links (
-            id,
-            wallet,
-            description,
-            min,
-            max,
-            served_meta,
-            served_pr,
-            webhook_url,
-            webhook_headers,
-            webhook_body,
-            success_text,
-            success_url,
-            comment_chars,
-            currency,
-            fiat_base_multiplier,
-            username,
-            zaps
+    assert data.wallet, "Wallet is required"
 
-        )
-        VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            link_id,
-            data.wallet,
-            data.description,
-            data.min,
-            data.max,
-            data.webhook_url,
-            data.webhook_headers,
-            data.webhook_body,
-            data.success_text,
-            data.success_url,
-            data.comment_chars,
-            data.currency,
-            data.fiat_base_multiplier,
-            data.username,
-            data.zaps,
-        ),
+    link = PayLink(
+        id=link_id,
+        wallet=data.wallet,
+        description=data.description,
+        min=data.min,
+        max=data.max,
+        served_meta=0,
+        served_pr=0,
+        username=data.username,
+        zaps=data.zaps,
+        domain=None,
+        webhook_url=data.webhook_url,
+        webhook_headers=data.webhook_headers,
+        webhook_body=data.webhook_body,
+        success_text=data.success_text,
+        success_url=data.success_url,
+        currency=data.currency,
+        comment_chars=data.comment_chars,
+        fiat_base_multiplier=data.fiat_base_multiplier,
     )
-    assert result
 
-    link = await get_pay_link(link_id)
-    assert link, "Newly created link couldn't be retrieved"
+    await db.execute(insert_query("lnurlp.pay_links", link), link.dict())
     return link
 
 
 async def get_address_data(username: str) -> Optional[PayLink]:
     row = await db.fetchone(
-        "SELECT * FROM lnurlp.pay_links WHERE username = ?", (username,)
+        "SELECT * FROM lnurlp.pay_links WHERE username = :username",
+        {"username": username},
     )
-    return PayLink.from_row(row) if row else None
+    return PayLink(**row) if row else None
 
 
 async def get_pay_link(link_id: str) -> Optional[PayLink]:
-    row = await db.fetchone("SELECT * FROM lnurlp.pay_links WHERE id = ?", (link_id,))
-    return PayLink.from_row(row) if row else None
+    row = await db.fetchone(
+        "SELECT * FROM lnurlp.pay_links WHERE id = :id", {"id": link_id}
+    )
+    return PayLink(**row) if row else None
 
 
 async def get_pay_links(wallet_ids: Union[str, List[str]]) -> List[PayLink]:
     if isinstance(wallet_ids, str):
         wallet_ids = [wallet_ids]
 
-    q = ",".join(["?"] * len(wallet_ids))
+    q = ",".join([f"'{wallet_id}'" for wallet_id in wallet_ids])
     rows = await db.fetchall(
-        f"""
-        SELECT * FROM lnurlp.pay_links WHERE wallet IN ({q})
-        ORDER BY Id
-        """,
-        (*wallet_ids,),
+        f"SELECT * FROM lnurlp.pay_links WHERE wallet IN ({q}) ORDER BY Id"
     )
-    return [PayLink.from_row(row) for row in rows]
+    return [PayLink(**row) for row in rows]
 
 
-async def update_pay_link(link_id: str, **kwargs) -> Optional[PayLink]:
-
-    q = ", ".join([f"{field[0]} = ?" for field in kwargs.items()])
+async def update_pay_link(link: PayLink) -> PayLink:
     await db.execute(
-        f"UPDATE lnurlp.pay_links SET {q} WHERE id = ?", (*kwargs.values(), link_id)
+        update_query("lnurlp.pay_links", link),
+        link.dict(),
     )
-    row = await db.fetchone("SELECT * FROM lnurlp.pay_links WHERE id = ?", (link_id,))
-    return PayLink.from_row(row) if row else None
-
-
-async def increment_pay_link(link_id: str, **kwargs) -> Optional[PayLink]:
-    q = ", ".join([f"{field[0]} = {field[0]} + ?" for field in kwargs.items()])
-    await db.execute(
-        f"UPDATE lnurlp.pay_links SET {q} WHERE id = ?", (*kwargs.values(), link_id)
-    )
-    row = await db.fetchone("SELECT * FROM lnurlp.pay_links WHERE id = ?", (link_id,))
-    return PayLink.from_row(row) if row else None
+    return link
 
 
 async def delete_pay_link(link_id: str) -> None:
-    await db.execute("DELETE FROM lnurlp.pay_links WHERE id = ?", (link_id,))
+    await db.execute("DELETE FROM lnurlp.pay_links WHERE id = :id", {"id": link_id})
