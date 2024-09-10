@@ -1,27 +1,33 @@
 from http import HTTPStatus
 
-from fastapi import Depends, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.templating import Jinja2Templates
+from lnbits.core.models import User
+from lnbits.decorators import check_user_exists
+from lnbits.helpers import template_renderer
 from starlette.exceptions import HTTPException
 from starlette.responses import HTMLResponse
 
-from lnbits.core.models import User
-from lnbits.decorators import check_user_exists
-
-from . import lnurlp_ext, lnurlp_renderer
 from .crud import get_pay_link
+
+lnurlp_generic_router = APIRouter()
+
+
+def lnurlp_renderer():
+    return template_renderer(["lnurlp/templates"])
+
 
 templates = Jinja2Templates(directory="templates")
 
 
-@lnurlp_ext.get("/", response_class=HTMLResponse)
+@lnurlp_generic_router.get("/", response_class=HTMLResponse)
 async def index(request: Request, user: User = Depends(check_user_exists)):
     return lnurlp_renderer().TemplateResponse(
         "lnurlp/index.html", {"request": request, "user": user.dict()}
     )
 
 
-@lnurlp_ext.get("/link/{link_id}", response_class=HTMLResponse)
+@lnurlp_generic_router.get("/link/{link_id}", response_class=HTMLResponse)
 async def display(request: Request, link_id):
     link = await get_pay_link(link_id)
     if not link:
@@ -32,7 +38,7 @@ async def display(request: Request, link_id):
     return lnurlp_renderer().TemplateResponse("lnurlp/display.html", ctx)
 
 
-@lnurlp_ext.get("/print/{link_id}", response_class=HTMLResponse)
+@lnurlp_generic_router.get("/print/{link_id}", response_class=HTMLResponse)
 async def print_qr(request: Request, link_id):
     link = await get_pay_link(link_id)
     if not link:

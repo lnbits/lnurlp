@@ -1,13 +1,14 @@
-import secrets
 import base64
+import secrets
+from typing import Optional
+
 import secp256k1
 from cffi import FFI
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
-from hashlib import sha256
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from .event import EncryptedDirectMessage, Event, EventKind
 from . import bech32
+from .event import EncryptedDirectMessage, EventKind
 
 
 class PublicKey:
@@ -21,33 +22,41 @@ class PublicKey:
     def hex(self) -> str:
         return self.raw_bytes.hex()
 
-    def verify_signed_message_hash(self, hash: str, sig: str) -> bool:
+    def verify_signed_message_hash(self, message_hash: str, sig: str) -> bool:
         pk = secp256k1.PublicKey(b"\x02" + self.raw_bytes, True)
-        return pk.schnorr_verify(bytes.fromhex(hash), bytes.fromhex(sig), None, True)
+        return pk.schnorr_verify(
+            bytes.fromhex(message_hash), bytes.fromhex(sig), None, True
+        )
 
     @classmethod
     def from_npub(cls, npub: str):
         """Load a PublicKey from its bech32/npub form"""
         hrp, data, spec = bech32.bech32_decode(npub)
-        raw_public_key = bech32.convertbits(data, 5, 8)[:-1]
+        assert data, "Invalid npub"
+        bits = bech32.convertbits(data, 5, 8)
+        assert bits, "Invalid npub"
+        raw_public_key = bits[:-1]
         return cls(bytes(raw_public_key))
 
 
 class PrivateKey:
-    def __init__(self, raw_secret: bytes = None) -> None:
-        if not raw_secret is None:
+    def __init__(self, raw_secret: Optional[bytes] = None) -> None:
+        if raw_secret is not None:
             self.raw_secret = raw_secret
         else:
             self.raw_secret = secrets.token_bytes(32)
 
         sk = secp256k1.PrivateKey(self.raw_secret)
+        assert sk.pubkey, "Invalid public"
         self.public_key = PublicKey(sk.pubkey.serialize()[1:])
 
     @classmethod
     def from_nsec(cls, nsec: str):
         """Load a PrivateKey from its bech32/nsec form"""
         hrp, data, spec = bech32.bech32_decode(nsec)
-        raw_secret = bech32.convertbits(data, 5, 8)[:-1]
+        bits = bech32.convertbits(data, 5, 8)
+        assert bits, "Invalid nsec"
+        raw_secret = bits[:-1]
         return cls(bytes(raw_secret))
 
     def bech32(self) -> str:
@@ -77,11 +86,13 @@ class PrivateKey:
         encryptor = cipher.encryptor()
         encrypted_message = encryptor.update(padded_data) + encryptor.finalize()
 
-        return f"{base64.b64encode(encrypted_message).decode()}?iv={base64.b64encode(iv).decode()}"
+        msg = base64.b64encode(encrypted_message).decode()
+        return f"{msg}?iv={base64.b64encode(iv).decode()}"
 
     def encrypt_dm(self, dm: EncryptedDirectMessage) -> None:
+        assert dm.recipient_pubkey, "Recipient public key must be set"
         dm.content = self.encrypt_message(
-            message=dm.cleartext_content, public_key_hex=dm.recipient_pubkey
+            message=dm.cleartext_content or "", public_key_hex=dm.recipient_pubkey
         )
 
     def decrypt_message(self, encoded_message: str, public_key_hex: str) -> str:
@@ -102,12 +113,12 @@ class PrivateKey:
 
         return unpadded_data.decode()
 
-    def sign_message_hash(self, hash: bytes) -> str:
+    def sign_message_hash(self, message_hash: bytes) -> str:
         sk = secp256k1.PrivateKey(self.raw_secret)
-        sig = sk.schnorr_sign(hash, None, raw=True)
+        sig = sk.schnorr_sign(message_hash, None, raw=True)
         return sig.hex()
 
-    def sign_event(self, event: Event) -> None:
+    def sign_event(self, event: EncryptedDirectMessage) -> None:
         if event.kind == EventKind.ENCRYPTED_DIRECT_MESSAGE and event.content is None:
             self.encrypt_dm(event)
         if event.public_key is None:
@@ -118,7 +129,9 @@ class PrivateKey:
         return self.raw_secret == other.raw_secret
 
 
-def mine_vanity_key(prefix: str = None, suffix: str = None) -> PrivateKey:
+def mine_vanity_key(
+    prefix: Optional[str] = None, suffix: Optional[str] = None
+) -> PrivateKey:
     if prefix is None and suffix is None:
         raise ValueError("Expected at least one of 'prefix' or 'suffix' arguments")
 

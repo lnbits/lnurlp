@@ -15,7 +15,7 @@ from lnbits.tasks import register_invoice_listener
 
 from .crud import get_or_create_lnurlp_settings, get_pay_link
 from .models import PayLink
-from .nostr.event import Event
+from .nostr.event import EncryptedDirectMessage
 
 
 async def wait_for_paid_invoices():
@@ -40,24 +40,20 @@ async def on_invoice_paid(payment: Payment):
         logger.error("Invoice paid. But no pay link id found.")
         return
 
-
     pay_link = await get_pay_link(pay_link_id)
     if not pay_link:
-        logger.error(
-            f"Invoice paid. But Pay link `{pay_link_id}` not found."
-        )
+        logger.error(f"Invoice paid. But Pay link `{pay_link_id}` not found.")
         return
-
-    
 
     if pay_link.zaps:
         zap_receipt = await send_zap(payment)
-        pay_link.zap_receipt = zap_receipt
 
-    await send_webhook(payment, pay_link)
+    await send_webhook(
+        payment, pay_link, zap_receipt.to_message() if zap_receipt else None
+    )
 
 
-async def send_webhook(payment: Payment, pay_link: PayLink):
+async def send_webhook(payment: Payment, pay_link: PayLink, zap_receipt=None):
     if not pay_link.webhook_url:
         return
 
@@ -72,14 +68,18 @@ async def send_webhook(payment: Payment, pay_link: PayLink):
                     "comment": payment.extra.get("comment"),
                     "webhook_data": payment.extra.get("webhook_data") or "",
                     "lnurlp": pay_link.id,
-                    "zap_receipt": pay_link.zap_receipt,
-                    "body": json.loads(pay_link.webhook_body)
-                    if pay_link.webhook_body
-                    else "",
+                    "body": (
+                        json.loads(pay_link.webhook_body)
+                        if pay_link.webhook_body
+                        else ""
+                    ),
+                    "zap_receipt": zap_receipt or "",
                 },
-                headers=json.loads(pay_link.webhook_headers)
-                if pay_link.webhook_headers
-                else None,
+                headers=(
+                    json.loads(pay_link.webhook_headers)
+                    if pay_link.webhook_headers
+                    else None
+                ),
                 timeout=40,
             )
             await mark_webhook_sent(
@@ -129,8 +129,15 @@ async def send_zap(payment: Payment):
             tags.append([t, tag[0]])
     tags.append(["bolt11", payment.bolt11])
     tags.append(["description", nostr])
-    zap_receipt = Event(
-        kind=9735, tags=tags, content=payment.extra.get("comment") or ""
+
+    pubkey = next((pk[1] for pk in tags if pk[0] == "p"), None)
+    assert pubkey, "Cannot create zap receipt. Recepient pubkey is missing."
+    zap_receipt = EncryptedDirectMessage(
+        kind=9735,
+        recipient_pubkey=pubkey,
+        tags=tags,
+        content=payment.extra.get("comment") or "",
+        cleartext_content=payment.extra.get("comment") or "",
     )
 
     settings = await get_or_create_lnurlp_settings()
