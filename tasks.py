@@ -5,12 +5,13 @@ from threading import Thread
 from typing import List
 
 import httpx
+from loguru import logger
+from websocket import WebSocketApp
+
 from lnbits.core.crud import update_payment_extra
 from lnbits.core.models import Payment
 from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
-from loguru import logger
-from websocket import WebSocketApp
 
 from .crud import get_or_create_lnurlp_settings, get_pay_link
 from .models import PayLink
@@ -44,13 +45,15 @@ async def on_invoice_paid(payment: Payment):
         logger.error(f"Invoice paid. But Pay link `{pay_link_id}` not found.")
         return
 
-    await send_webhook(payment, pay_link)
-
     if pay_link.zaps:
-        await send_zap(payment)
+        zap_receipt = await send_zap(payment)
+
+    await send_webhook(
+        payment, pay_link, zap_receipt.to_message() if zap_receipt else None
+    )
 
 
-async def send_webhook(payment: Payment, pay_link: PayLink):
+async def send_webhook(payment: Payment, pay_link: PayLink, zap_receipt=None):
     if not pay_link.webhook_url:
         return
 
@@ -70,6 +73,7 @@ async def send_webhook(payment: Payment, pay_link: PayLink):
                         if pay_link.webhook_body
                         else ""
                     ),
+                    "zap_receipt": zap_receipt or "",
                 },
                 headers=(
                     json.loads(pay_link.webhook_headers)
@@ -177,3 +181,5 @@ async def send_zap(payment: Payment):
         logger.debug(f"Closing websocket {ws.url}")
         ws.close()
         wst.join()
+
+    return zap_receipt
