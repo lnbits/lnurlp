@@ -59,7 +59,7 @@ class Event:
         # Always recompute the id to reflect the up-to-date state of the Event
         assert self.public_key, "Event public key is missing"
         assert self.created_at, "Event created_at is missing"
-        assert self.content, "Event content is missing"
+        assert self.content is not None, "Event content is missing"
         return Event.compute_id(
             self.public_key, self.created_at, self.kind, self.tags, self.content
         )
