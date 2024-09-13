@@ -5,13 +5,12 @@ from threading import Thread
 from typing import List
 
 import httpx
-from loguru import logger
-from websocket import WebSocketApp
-
 from lnbits.core.crud import update_payment_extra
 from lnbits.core.models import Payment
 from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
+from loguru import logger
+from websocket import WebSocketApp
 
 from .crud import get_or_create_lnurlp_settings, get_pay_link
 from .models import PayLink
@@ -45,6 +44,7 @@ async def on_invoice_paid(payment: Payment):
         logger.error(f"Invoice paid. But Pay link `{pay_link_id}` not found.")
         return
 
+    zap_receipt = None
     if pay_link.zaps:
         zap_receipt = await send_zap(payment)
 
