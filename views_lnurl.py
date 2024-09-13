@@ -14,6 +14,7 @@ from lnurl.types import (
     MilliSatoshi,
     OnionUrl,
 )
+from loguru import logger
 from pydantic import parse_obj_as
 
 from .crud import (
@@ -91,6 +92,7 @@ async def api_lnurl_callback(
 
     # nip 57
     nostr = request.query_params.get("nostr")
+    logger.debug(f"t2. query_params.nostr: {nostr}")
     if nostr:
         extra["nostr"] = nostr  # put it here for later publishing in tasks.py
 

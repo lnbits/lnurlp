@@ -113,6 +113,7 @@ async def mark_webhook_sent(
 # NIP-57 - load the zap request
 async def send_zap(payment: Payment):
     nostr = payment.extra.get("nostr")
+    logger.debug(f"t1. send_zap extra.nostr: {nostr}")
     if not nostr:
         return
 
