@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from . import bech32
-from .event import EncryptedDirectMessage, EventKind
+from .event import EncryptedDirectMessage, Event
 
 
 class PublicKey:
@@ -118,9 +118,7 @@ class PrivateKey:
         sig = sk.schnorr_sign(message_hash, None, raw=True)
         return sig.hex()
 
-    def sign_event(self, event: EncryptedDirectMessage) -> None:
-        if event.kind == EventKind.ENCRYPTED_DIRECT_MESSAGE and event.content is None:
-            self.encrypt_dm(event)
+    def sign_event(self, event: Event) -> None:
         if event.public_key is None:
             event.public_key = self.public_key.hex()
         event.signature = self.sign_message_hash(bytes.fromhex(event.id))

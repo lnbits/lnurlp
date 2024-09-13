@@ -14,7 +14,7 @@ from websocket import WebSocketApp
 
 from .crud import get_or_create_lnurlp_settings, get_pay_link
 from .models import PayLink
-from .nostr.event import EncryptedDirectMessage
+from .nostr.event import Event
 
 
 async def wait_for_paid_invoices():
@@ -132,12 +132,10 @@ async def send_zap(payment: Payment):
 
     pubkey = next((pk[1] for pk in tags if pk[0] == "p"), None)
     assert pubkey, "Cannot create zap receipt. Recepient pubkey is missing."
-    zap_receipt = EncryptedDirectMessage(
+    zap_receipt = Event(
         kind=9735,
-        recipient_pubkey=pubkey,
         tags=tags,
-        content=payment.extra.get("comment") or "",
-        cleartext_content=payment.extra.get("comment") or "",
+        content="",
     )
 
     settings = await get_or_create_lnurlp_settings()
