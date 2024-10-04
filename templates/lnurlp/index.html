@@ -25,9 +25,9 @@
         <q-table
           dense
           flat
-          :data="payLinks"
+          :rows="payLinks"
           row-key="id"
-          :pagination.sync="payLinksTable.pagination"
+          v-model:pagination="payLinksTable.pagination"
         >
           {% raw %}
           <template v-slot:header="props">
@@ -53,6 +53,7 @@
                   type="a"
                   :href="props.row.pay_url"
                   target="_blank"
+                  class="q-ml-sm"
                   ><q-tooltip>Shareable Page</q-tooltip></q-btn
                 >
                 <q-btn
@@ -61,6 +62,7 @@
                   size="xs"
                   icon="visibility"
                   :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
+                  class="q-ml-sm"
                   @click="openQrCodeDialog(props.row.id)"
                   ><q-tooltip>View Link</q-tooltip></q-btn
                 >
