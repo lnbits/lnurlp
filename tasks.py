@@ -27,6 +27,9 @@ async def wait_for_paid_invoices():
 
 
 async def on_invoice_paid(payment: Payment):
+    if not payment.extra:
+        return
+
     if payment.extra.get("tag") != "lnurlp":
         return
 
@@ -108,7 +111,7 @@ async def mark_webhook_sent(
 
 # NIP-57 - load the zap request
 async def send_zap(payment: Payment):
-    nostr = payment.extra.get("nostr")
+    nostr = payment.extra.get("nostr") if payment.extra else None
     if not nostr:
         return
 
