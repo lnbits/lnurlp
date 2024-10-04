@@ -9,10 +9,11 @@ const locationPath = [
 
 const mapPayLink = obj => {
   obj._data = _.clone(obj)
-  obj.date = Quasar.utils.date.formatDate(
+  obj.date = Quasar.date.formatDate(
     new Date(obj.time * 1000),
     'YYYY-MM-DD HH:mm'
   )
+
   obj.amount = new Intl.NumberFormat(LOCALE).format(obj.amount)
   obj.print_url = [locationPath, 'print/', obj.id].join('')
   obj.pay_url = [locationPath, 'link/', obj.id].join('')
