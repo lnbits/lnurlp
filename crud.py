@@ -94,7 +94,7 @@ async def get_pay_links(wallet_ids: Union[str, List[str]]) -> List[PayLink]:
 
 
 async def update_pay_link(link: PayLink) -> PayLink:
-    await db.update("lnurlp.pay_links")
+    await db.update("lnurlp.pay_links", link)
     return link
 
 
