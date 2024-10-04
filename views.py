@@ -19,7 +19,7 @@ def lnurlp_renderer():
 @lnurlp_generic_router.get("/", response_class=HTMLResponse)
 async def index(request: Request, user: User = Depends(check_user_exists)):
     return lnurlp_renderer().TemplateResponse(
-        "lnurlp/index.html", {"request": request, "user": user.dict()}
+        "lnurlp/index.html", {"request": request, "user": user.json()}
     )
 
 

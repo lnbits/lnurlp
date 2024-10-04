@@ -1,7 +1,7 @@
 from typing import List, Optional, Union
 
 from lnbits.db import Database
-from lnbits.helpers import insert_query, update_query, urlsafe_short_hash
+from lnbits.helpers import urlsafe_short_hash
 
 from .models import CreatePayLinkData, LnurlpSettings, PayLink
 from .nostr.key import PrivateKey
@@ -15,15 +15,12 @@ async def get_or_create_lnurlp_settings() -> LnurlpSettings:
         return LnurlpSettings(**row)
     else:
         settings = LnurlpSettings(nostr_private_key=PrivateKey().hex())
-        await db.execute(insert_query("lnurlp.settings", settings), settings.dict())
+        await db.insert("lnurlp.settings", settings)
         return settings
 
 
 async def update_lnurlp_settings(settings: LnurlpSettings) -> LnurlpSettings:
-    await db.execute(
-        update_query("lnurlp.settings", settings, where=""),
-        settings.dict(),
-    )
+    await db.update("lnurlp.settings", settings)
     return settings
 
 
@@ -66,7 +63,7 @@ async def create_pay_link(data: CreatePayLinkData) -> PayLink:
         fiat_base_multiplier=data.fiat_base_multiplier,
     )
 
-    await db.execute(insert_query("lnurlp.pay_links", link), link.dict())
+    await db.insert("lnurlp.pay_links", link)
     return link
 
 
@@ -97,10 +94,7 @@ async def get_pay_links(wallet_ids: Union[str, List[str]]) -> List[PayLink]:
 
 
 async def update_pay_link(link: PayLink) -> PayLink:
-    await db.execute(
-        update_query("lnurlp.pay_links", link),
-        link.dict(),
-    )
+    await db.update("lnurlp.pay_links")
     return link
 
 
