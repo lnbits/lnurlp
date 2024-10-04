@@ -174,3 +174,10 @@ async def m009_add_settings(db):
         );
         """
     )
+
+
+async def m010_add_pay_link_domain(db):
+    """
+    Add domain to pay links
+    """
+    await db.execute("ALTER TABLE lnurlp.pay_links ADD COLUMN domain TEXT;")
