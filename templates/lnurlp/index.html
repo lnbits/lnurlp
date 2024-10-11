@@ -29,7 +29,6 @@
           row-key="id"
           v-model:pagination="payLinksTable.pagination"
         >
-          {% raw %}
           <template v-slot:header="props">
             <q-tr class="text-left" :props="props">
               <q-th auto-width></q-th>
@@ -67,22 +66,28 @@
                   ><q-tooltip>View Link</q-tooltip></q-btn
                 >
               </q-td>
-              <q-td auto-width>{{ props.row.description }}</q-td>
+              <q-td auto-width v-text="props.row.description"></q-td>
               <q-td auto-width>
-                <span v-if="props.row.min == props.row.max">
-                  {{ props.row.min }}
-                </span>
-                <span v-else>{{ props.row.min }} - {{ props.row.max }}</span>
+                <span
+                  v-if="props.row.min == props.row.max"
+                  v-text="props.row.min"
+                ></span>
+                <span
+                  v-else
+                  v-text="props.row.min + ' - ' + props.row.max"
+                ></span>
               </q-td>
-              <q-td>{{ props.row.currency || 'sat' }}</q-td>
+              <q-td v-text="props.row.currency || 'sat'"></q-td>
               <q-td
                 auto-width
                 :class="(props.row.username) ? 'text-normal' : 'text-grey'"
-                >{{ props.row.username || 'None' }}</q-td
-              >
+                v-text="props.row.username || 'None'"
+              ></q-td>
               <q-td>
                 <q-icon v-if="props.row.webhook_url" size="14px" name="http">
-                  <q-tooltip>Webhook to {{ props.row.webhook_url }}</q-tooltip>
+                  <q-tooltip
+                    >Webhook to <span v-text="props.row.webhook_url"></span
+                  ></q-tooltip>
                 </q-icon>
                 <q-icon
                   v-if="props.row.success_text || props.row.success_url"
@@ -90,9 +95,13 @@
                   name="call_to_action"
                 >
                   <q-tooltip>
-                    On success, show message '{{ props.row.success_text }}'
+                    On success, show message '<span
+                      v-text="props.row.success_text"
+                    ></span
+                    >'
                     <span v-if="props.row.success_url"
-                      >and URL '{{ props.row.success_url }}'</span
+                      >and URL '<span v-text="props.row.success_url"></span
+                      >'</span
                     >
                   </q-tooltip>
                 </q-icon>
@@ -102,7 +111,8 @@
                   name="insert_comment"
                 >
                   <q-tooltip>
-                    {{ props.row.comment_chars }}-char comment allowed
+                    <span v-text="props.row.comment_chars"></span>-char comment
+                    allowed
                   </q-tooltip>
                 </q-icon>
               </q-td>
@@ -129,7 +139,6 @@
               </q-td>
             </q-tr>
           </template>
-          {% endraw %}
         </q-table>
       </q-card-section>
     </q-card>
@@ -186,7 +195,7 @@
           </div>
           <div class="col" style="margin-top: 10px">
             <span class="label">
-              &nbsp; @ {% raw %} {{ domain }} {% endraw %}
+              &nbsp;@&nbsp;<span v-text="domain"></span>
             </span>
           </div>
         </div>
@@ -359,30 +368,37 @@
 
   <q-dialog v-model="qrCodeDialog.show" position="top">
     <q-card v-if="qrCodeDialog.data" class="q-pa-lg lnbits__dialog-card">
-      {% raw %}
-      <q-responsive :ratio="1" class="q-mx-xl q-mb-md">
-        <lnbits-qrcode :value="'lightning:' + qrCodeDialog.data.lnurl">
-        </lnbits-qrcode>
-      </q-responsive>
+      <lnbits-qrcode
+        :value="'lightning:' + qrCodeDialog.data.lnurl"
+      ></lnbits-qrcode>
       <p style="word-break: break-all">
-        <strong>ID:</strong> {{ qrCodeDialog.data.id }}<br />
-        <strong>Amount:</strong> {{ qrCodeDialog.data.amount }}<br />
+        <strong>ID:</strong> <span v-text="qrCodeDialog.data.id"></span><br />
+        <strong>Amount:</strong> <span v-text="qrCodeDialog.data.amount"></span
+        ><br />
+
         <span v-if="qrCodeDialog.data.currency"
-          ><strong>{{ qrCodeDialog.data.currency }} price:</strong> {{
-          fiatRates[qrCodeDialog.data.currency] ?
-          fiatRates[qrCodeDialog.data.currency] + ' sat' : 'Loading...' }}<br
+          ><strong
+            ><span v-text="qrCodeDialog.data.currency"></span> price:</strong
+          >
+          <span
+            v-if="fiatRates[qrCodeDialog.data.currency]"
+            v-text="fiatRates[qrCodeDialog.data.currency] + 'sat'"
+          ></span>
+          <span v-else>Loading...</span>
+          <br
         /></span>
-        <strong>Accepts comments:</strong> {{ qrCodeDialog.data.comments }}<br />
-        <strong>Dispatches webhook to:</strong> {{ qrCodeDialog.data.webhook
-        }}<br />
-        <strong>On success:</strong> {{ qrCodeDialog.data.success }}<br />
+        <strong>Accepts comments:</strong>
+        <span v-text="qrCodeDialog.data.comments"></span><br />
+        <strong>Dispatches webhook to:</strong>
+        <span v-text="qrCodeDialog.data.webhook"></span><br />
+        <strong>On success:</strong>
+        <span v-text="qrCodeDialog.data.success"></span><br />
         <span v-if="qrCodeDialog.data.username">
           <strong>Lightning Address: </strong>
-          {{ qrCodeDialog.data.username }}@{{ domain }}
+          <span v-text="qrCodeDialog.data.username+'@'+domain"></span>
           <br />
         </span>
       </p>
-      {% endraw %}
       <div class="row q-mt-lg q-gutter-sm">
         <q-btn
           outline
