@@ -10,9 +10,11 @@ db = Database("ext_lnurlp")
 
 
 async def get_or_create_lnurlp_settings() -> LnurlpSettings:
-    row = await db.fetchone("SELECT * FROM lnurlp.settings LIMIT 1")
-    if row:
-        return LnurlpSettings(**row)
+    settings = await db.fetchone(
+        "SELECT * FROM lnurlp.settings LIMIT 1", model=LnurlpSettings
+    )
+    if settings:
+        return settings
     else:
         settings = LnurlpSettings(nostr_private_key=PrivateKey().hex())
         await db.insert("lnurlp.settings", settings)
@@ -20,7 +22,7 @@ async def get_or_create_lnurlp_settings() -> LnurlpSettings:
 
 
 async def update_lnurlp_settings(settings: LnurlpSettings) -> LnurlpSettings:
-    await db.update("lnurlp.settings", settings)
+    await db.update("lnurlp.settings", settings, "")
     return settings
 
 
@@ -29,11 +31,11 @@ async def delete_lnurlp_settings() -> None:
 
 
 async def get_pay_link_by_username(username: str) -> Optional[PayLink]:
-    row = await db.fetchone(
+    return await db.fetchone(
         "SELECT * FROM lnurlp.pay_links WHERE username = :username",
         {"username": username},
+        PayLink,
     )
-    return PayLink(**row) if row else None
 
 
 async def create_pay_link(data: CreatePayLinkData) -> PayLink:
@@ -68,29 +70,29 @@ async def create_pay_link(data: CreatePayLinkData) -> PayLink:
 
 
 async def get_address_data(username: str) -> Optional[PayLink]:
-    row = await db.fetchone(
+    return await db.fetchone(
         "SELECT * FROM lnurlp.pay_links WHERE username = :username",
         {"username": username},
+        PayLink,
     )
-    return PayLink(**row) if row else None
 
 
 async def get_pay_link(link_id: str) -> Optional[PayLink]:
-    row = await db.fetchone(
-        "SELECT * FROM lnurlp.pay_links WHERE id = :id", {"id": link_id}
+    return await db.fetchone(
+        "SELECT * FROM lnurlp.pay_links WHERE id = :id",
+        {"id": link_id},
+        PayLink,
     )
-    return PayLink(**row) if row else None
 
 
 async def get_pay_links(wallet_ids: Union[str, List[str]]) -> List[PayLink]:
     if isinstance(wallet_ids, str):
         wallet_ids = [wallet_ids]
-
     q = ",".join([f"'{wallet_id}'" for wallet_id in wallet_ids])
-    rows = await db.fetchall(
-        f"SELECT * FROM lnurlp.pay_links WHERE wallet IN ({q}) ORDER BY Id"
+    return await db.fetchall(
+        f"SELECT * FROM lnurlp.pay_links WHERE wallet IN ({q}) ORDER BY Id",
+        model=PayLink,
     )
-    return [PayLink(**row) for row in rows]
 
 
 async def update_pay_link(link: PayLink) -> PayLink:

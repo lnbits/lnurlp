@@ -7,7 +7,6 @@ from typing import List
 import httpx
 from lnbits.core.crud import update_payment_extra
 from lnbits.core.models import Payment
-from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
 from loguru import logger
 from websocket import WebSocketApp
@@ -19,7 +18,7 @@ from .nostr.event import Event
 
 async def wait_for_paid_invoices():
     invoice_queue = asyncio.Queue()
-    register_invoice_listener(invoice_queue, get_current_extension_name())
+    register_invoice_listener(invoice_queue, "ext_lnurlp")
 
     while True:
         payment = await invoice_queue.get()
@@ -27,10 +26,8 @@ async def wait_for_paid_invoices():
 
 
 async def on_invoice_paid(payment: Payment):
-    if not payment.extra:
-        return
 
-    if payment.extra.get("tag") != "lnurlp":
+    if not payment.extra or payment.extra.get("tag") != "lnurlp":
         return
 
     if payment.extra.get("wh_status"):
@@ -68,8 +65,10 @@ async def send_webhook(payment: Payment, pay_link: PayLink, zap_receipt=None):
                     "payment_hash": payment.payment_hash,
                     "payment_request": payment.bolt11,
                     "amount": payment.amount,
-                    "comment": payment.extra.get("comment"),
-                    "webhook_data": payment.extra.get("webhook_data") or "",
+                    "comment": payment.extra.get("comment") if payment.extra else None,
+                    "webhook_data": (
+                        payment.extra.get("webhook_data") if payment.extra else None
+                    ),
                     "lnurlp": pay_link.id,
                     "body": (
                         json.loads(pay_link.webhook_body)
@@ -83,7 +82,7 @@ async def send_webhook(payment: Payment, pay_link: PayLink, zap_receipt=None):
                     if pay_link.webhook_headers
                     else None
                 ),
-                timeout=40,
+                timeout=6,
             )
             await mark_webhook_sent(
                 payment.payment_hash,
