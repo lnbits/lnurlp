@@ -1,7 +1,5 @@
 /* globals Quasar, Vue, _, VueQrcode, windowMixin, LNbits, LOCALE */
 
-Vue.component(VueQrcode.name, VueQrcode)
-
 const locationPath = [
   window.location.protocol,
   '//',
@@ -11,19 +9,17 @@ const locationPath = [
 
 const mapPayLink = obj => {
   obj._data = _.clone(obj)
-  obj.date = Quasar.utils.date.formatDate(
-    new Date(obj.time * 1000),
-    'YYYY-MM-DD HH:mm'
-  )
+  obj.date = LNbits.utils.formatDate(obj.time)
+
   obj.amount = new Intl.NumberFormat(LOCALE).format(obj.amount)
   obj.print_url = [locationPath, 'print/', obj.id].join('')
   obj.pay_url = [locationPath, 'link/', obj.id].join('')
   return obj
 }
 
-new Vue({
+window.app = Vue.createApp({
   el: '#vue',
-  mixins: [windowMixin],
+  mixins: [window.windowMixin],
   computed: {
     endpoint: function () {
       return `/lnurlp/api/v1/settings?usr=${this.g.user.id}`
@@ -240,7 +236,7 @@ new Vue({
     }
   },
   created() {
-    if (this.g.user.wallets.length) {
+    if (this.g.user.wallets?.length) {
       var getPayLinks = this.getPayLinks
       getPayLinks()
       this.checker = setInterval(() => {

@@ -5,9 +5,8 @@ from threading import Thread
 from typing import List
 
 import httpx
-from lnbits.core.crud import update_payment_extra
+from lnbits.core.crud import get_payment, update_payment
 from lnbits.core.models import Payment
-from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
 from loguru import logger
 from websocket import WebSocketApp
@@ -19,7 +18,7 @@ from .nostr.event import Event
 
 async def wait_for_paid_invoices():
     invoice_queue = asyncio.Queue()
-    register_invoice_listener(invoice_queue, get_current_extension_name())
+    register_invoice_listener(invoice_queue, "ext_lnurlp")
 
     while True:
         payment = await invoice_queue.get()
@@ -27,7 +26,8 @@ async def wait_for_paid_invoices():
 
 
 async def on_invoice_paid(payment: Payment):
-    if payment.extra.get("tag") != "lnurlp":
+
+    if not payment.extra or payment.extra.get("tag") != "lnurlp":
         return
 
     if payment.extra.get("wh_status"):
@@ -65,8 +65,10 @@ async def send_webhook(payment: Payment, pay_link: PayLink, zap_receipt=None):
                     "payment_hash": payment.payment_hash,
                     "payment_request": payment.bolt11,
                     "amount": payment.amount,
-                    "comment": payment.extra.get("comment"),
-                    "webhook_data": payment.extra.get("webhook_data") or "",
+                    "comment": payment.extra.get("comment") if payment.extra else None,
+                    "webhook_data": (
+                        payment.extra.get("webhook_data") if payment.extra else None
+                    ),
                     "lnurlp": pay_link.id,
                     "body": (
                         json.loads(pay_link.webhook_body)
@@ -80,7 +82,7 @@ async def send_webhook(payment: Payment, pay_link: PayLink, zap_receipt=None):
                     if pay_link.webhook_headers
                     else None
                 ),
-                timeout=40,
+                timeout=6,
             )
             await mark_webhook_sent(
                 payment.payment_hash,
@@ -99,20 +101,19 @@ async def send_webhook(payment: Payment, pay_link: PayLink, zap_receipt=None):
 async def mark_webhook_sent(
     payment_hash: str, status: int, is_success: bool, reason_phrase="", text=""
 ) -> None:
-    await update_payment_extra(
-        payment_hash,
-        {
-            "wh_status": status,  # keep for backwards compability
-            "wh_success": is_success,
-            "wh_message": reason_phrase,
-            "wh_response": text,
-        },
-    )
+    payment = await get_payment(payment_hash)
+    extra = payment.extra or {}
+    extra["wh_status"] = status  # keep for backwards compability
+    extra["wh_success"] = is_success
+    extra["wh_message"] = reason_phrase
+    extra["wh_response"] = text
+    payment.extra = extra
+    await update_payment(payment)
 
 
 # NIP-57 - load the zap request
 async def send_zap(payment: Payment):
-    nostr = payment.extra.get("nostr")
+    nostr = payment.extra.get("nostr") if payment.extra else None
     if not nostr:
         return
 
