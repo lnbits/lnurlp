@@ -4,7 +4,7 @@ from http import HTTPStatus
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, Request
-from lnbits.core.crud import get_user, get_wallet
+from lnbits.core.crud import get_user_by_id, get_wallet
 from lnbits.core.models import WalletTypeInfo
 from lnbits.decorators import (
     check_admin,
@@ -46,7 +46,7 @@ async def api_links(
     wallet_ids = [key_info.wallet.id]
 
     if all_wallets:
-        user = await get_user(key_info.wallet.user)
+        user = await get_user_by_id(key_info.wallet.user)
         wallet_ids = user.wallet_ids if user else []
 
     try:
@@ -79,7 +79,7 @@ async def api_link_retrieve(
     link_wallet = await get_wallet(link.wallet)
 
     # admins are allowed to read paylinks beloging to regular users
-    user = await get_user(key_info.wallet.user)
+    user = await get_user_by_id(key_info.wallet.user)
     admin_user = user.admin if user else False
     if not admin_user and link_wallet and link_wallet.user != key_info.wallet.user:
         raise HTTPException(
@@ -170,7 +170,7 @@ async def api_link_create_or_update(
         )
 
     # admins are allowed to create/edit paylinks beloging to regular users
-    user = await get_user(key_info.wallet.user)
+    user = await get_user_by_id(key_info.wallet.user)
     admin_user = user.admin if user else False
     if not admin_user and new_wallet.user != key_info.wallet.user:
         raise HTTPException(
@@ -214,7 +214,7 @@ async def api_link_delete(
         )
 
     # admins are allowed to delete paylinks beloging to regular users
-    user = await get_user(key_info.wallet.user)
+    user = await get_user_by_id(key_info.wallet.user)
     admin_user = user.admin if user else False
     if not admin_user and link.wallet != key_info.wallet.id:
         raise HTTPException(

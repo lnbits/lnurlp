@@ -5,7 +5,7 @@ from threading import Thread
 from typing import List
 
 import httpx
-from lnbits.core.crud import update_payment_extra
+from lnbits.core.crud import get_payment, update_payment
 from lnbits.core.models import Payment
 from lnbits.tasks import register_invoice_listener
 from loguru import logger
@@ -101,15 +101,14 @@ async def send_webhook(payment: Payment, pay_link: PayLink, zap_receipt=None):
 async def mark_webhook_sent(
     payment_hash: str, status: int, is_success: bool, reason_phrase="", text=""
 ) -> None:
-    await update_payment_extra(
-        payment_hash,
-        {
-            "wh_status": status,  # keep for backwards compability
-            "wh_success": is_success,
-            "wh_message": reason_phrase,
-            "wh_response": text,
-        },
-    )
+    payment = await get_payment(payment_hash)
+    extra = payment.extra or {}
+    extra["wh_status"] = status  # keep for backwards compability
+    extra["wh_success"] = is_success
+    extra["wh_message"] = reason_phrase
+    extra["wh_response"] = text
+    payment.extra = extra
+    await update_payment(payment)
 
 
 # NIP-57 - load the zap request
