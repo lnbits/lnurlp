@@ -2,7 +2,7 @@
   "name": "Pay Links",
   "short_description": "Make reusable LNURL pay links",
   "tile": "/lnurlp/static/image/lnurl-pay.png",
-  "min_lnbits_version": "0.12.4",
+  "min_lnbits_version": "1.0.0",
   "contributors": [
     {
       "name": "arcbtc",

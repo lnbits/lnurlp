@@ -1,7 +1,7 @@
 {% extends "print.html" %} {% block page %}
 <div class="row justify-center">
   <div class="qr">
-    <qrcode value="lightning:{{ lnurl }}" :options="{width}"></qrcode>
+    <lnbits-qrcode value="lightning:{{ lnurl }}"></lnbits-qrcode>
   </div>
 </div>
 {% endblock %} {% block styles %}
@@ -12,14 +12,12 @@
 </style>
 {% endblock %} {% block scripts %}
 <script>
-  Vue.component(VueQrcode.name, VueQrcode)
-
-  new Vue({
+  window.app = Vue.createApp({
     el: '#vue',
-    created: function () {
+    created() {
       window.print()
     },
-    data: function () {
+    data() {
       return {width: window.innerWidth * 0.5}
     }
   })
