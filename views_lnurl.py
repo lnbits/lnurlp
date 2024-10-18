@@ -103,7 +103,7 @@ async def api_lnurl_callback(
     # we take the zap request as the description instead of the metadata if present
     unhashed_description = nostr.encode() if nostr else link.lnurlpay_metadata.encode()
 
-    _, payment_request = await create_invoice(
+    payment = await create_invoice(
         wallet_id=link.wallet,
         amount=int(amount / 1000),
         memo=link.description,
@@ -123,7 +123,7 @@ async def api_lnurl_callback(
         message = parse_obj_as(Max144Str, link.success_text)
         action = MessageAction(message=message)
 
-    invoice = parse_obj_as(LightningInvoice, LightningInvoice(payment_request))
+    invoice = parse_obj_as(LightningInvoice, LightningInvoice(payment.bolt11))
     resp = LnurlPayActionResponse(pr=invoice, successAction=action, routes=[])
     return resp.dict()
 
