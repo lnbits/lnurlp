@@ -1,9 +1,7 @@
 import json
-from sqlite3 import Row
 from typing import Optional
 
-from fastapi import Request
-from fastapi.param_functions import Query
+from fastapi import Query, Request
 from lnurl import encode as lnurl_encode
 from lnurl.types import LnurlPayMetadata
 from pydantic import BaseModel
@@ -60,14 +58,6 @@ class PayLink(BaseModel):
     comment_chars: int
     max: float
     fiat_base_multiplier: int
-
-    @classmethod
-    def from_row(cls, row: Row) -> "PayLink":
-        data = dict(row)
-        if data["currency"] and data["fiat_base_multiplier"]:
-            data["min"] /= data["fiat_base_multiplier"]
-            data["max"] /= data["fiat_base_multiplier"]
-        return cls(**data)
 
     def lnurl(self, req: Request) -> str:
         url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
