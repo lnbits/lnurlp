@@ -37,7 +37,6 @@ window.app = Vue.createApp({
       domain: window.location.host,
       currencies: [],
       fiatRates: {},
-      checker: null,
       payLinks: [],
       payLinksTable: {
         pagination: {
@@ -70,7 +69,6 @@ window.app = Vue.createApp({
           this.payLinks = response.data.map(mapPayLink)
         })
         .catch(err => {
-          clearInterval(this.checker)
           LNbits.utils.notifyApiError(err)
         })
     },
@@ -178,7 +176,7 @@ window.app = Vue.createApp({
               '/lnurlp/api/v1/links/' + linkId,
               _.findWhere(this.g.user.wallets, {id: link.wallet}).adminkey
             )
-            .then(response => {
+            .then(() => {
               this.payLinks = _.reject(this.payLinks, obj => obj.id === linkId)
             })
             .catch(err => {
@@ -237,11 +235,7 @@ window.app = Vue.createApp({
   },
   created() {
     if (this.g.user.wallets?.length) {
-      var getPayLinks = this.getPayLinks
-      getPayLinks()
-      this.checker = setInterval(() => {
-        getPayLinks()
-      }, 20000)
+      this.getPayLinks()
     }
     LNbits.api
       .request('GET', '/lnurlp/api/v1/currencies')
