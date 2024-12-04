@@ -44,20 +44,20 @@ async def api_lnurl_callback(
         )
     link.served_pr = 1
     await update_pay_link(link)
-    mininum = link.min
+    minimum = link.min
     maximum = link.max
 
     rate = await get_fiat_rate_satoshis(link.currency) if link.currency else 1
     if link.currency:
         # allow some fluctuation (as the fiat price may have changed between the calls)
-        mininum = rate * 995 * link.min
+        minimum = rate * 995 * link.min
         maximum = rate * 1010 * link.max
     else:
-        mininum = link.min * 1000
+        minimum = link.min * 1000
         maximum = link.max * 1000
 
     amount = amount
-    if amount < mininum:
+    if amount < minimum:
         return LnurlErrorResponse(
             reason=f"Amount {amount} is smaller than minimum {min}."
         ).dict()
