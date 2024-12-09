@@ -174,3 +174,13 @@ async def m009_add_settings(db):
         );
         """
     )
+
+async def m010_add_allow_insecure_http_to_settings(db):
+    """
+    Add extension settings table
+    """
+    await db.execute(
+        """
+        ALTER TABLE lnurlp.settings ADD COLUMN allow_insecure_http BOOLEAN;
+        """
+    )

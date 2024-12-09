@@ -8,7 +8,7 @@ from lnbits.helpers import template_renderer
 from starlette.exceptions import HTTPException
 from starlette.responses import HTMLResponse
 
-from .crud import get_pay_link
+from .crud import get_pay_link, get_or_create_lnurlp_settings
 
 lnurlp_generic_router = APIRouter()
 
@@ -34,7 +34,8 @@ async def display(request: Request, link_id):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Pay link does not exist."
         )
-    ctx = {"request": request, "lnurl": link.lnurl(req=request)}
+    settings = await get_or_create_lnurlp_settings()
+    ctx = {"request": request, "lnurl": link.lnurl(req=request, allow_insecure_http=settings.allow_insecure_http)}
     return lnurlp_renderer().TemplateResponse("lnurlp/display.html", ctx)
 
 
@@ -45,5 +46,6 @@ async def print_qr(request: Request, link_id):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Pay link does not exist."
         )
-    ctx = {"request": request, "lnurl": link.lnurl(req=request)}
+    settings = await get_or_create_lnurlp_settings()
+    ctx = {"request": request, "lnurl": link.lnurl(req=request, allow_insecure_http=settings.allow_insecure_http)}
     return lnurlp_renderer().TemplateResponse("lnurlp/print_qr.html", ctx)

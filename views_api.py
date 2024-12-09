@@ -51,8 +51,9 @@ async def api_links(
         wallet_ids = user.wallet_ids if user else []
 
     try:
+        settings = await get_or_create_lnurlp_settings()
         return [
-            {**link.dict(), "lnurl": link.lnurl(req)}
+            {**link.dict(), "lnurl": link.lnurl(req, settings.allow_insecure_http)}
             for link in await get_pay_links(wallet_ids)
         ]
 
@@ -87,7 +88,8 @@ async def api_link_retrieve(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
 
-    return {**link.dict(), **{"lnurl": link.lnurl(r)}}
+    settings = await get_or_create_lnurlp_settings()
+    return {**link.dict(), **{"lnurl": link.lnurl(r, settings.allow_insecure_http)}}
 
 
 async def check_username_exists(username: str):
@@ -197,7 +199,8 @@ async def api_link_create_or_update(
         link = await create_pay_link(data)
 
     assert link
-    return {**link.dict(), "lnurl": link.lnurl(request)}
+    settings = await get_or_create_lnurlp_settings()
+    return {**link.dict(), "lnurl": link.lnurl(request, settings.allow_insecure_http)}
 
 
 @lnurlp_api_router.delete("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)

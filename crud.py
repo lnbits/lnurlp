@@ -14,7 +14,7 @@ async def get_or_create_lnurlp_settings() -> LnurlpSettings:
     if row:
         return LnurlpSettings(**row)
     else:
-        settings = LnurlpSettings(nostr_private_key=PrivateKey().hex())
+        settings = LnurlpSettings(nostr_private_key=PrivateKey().hex(),allow_insecure_http=False)
         await db.execute(
             insert_query("lnurlp.settings", settings), (*settings.dict().values(),)
         )

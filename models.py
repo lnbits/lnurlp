@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import Request
 from fastapi.param_functions import Query
 from lnurl import encode as lnurl_encode
+from lnurl.helpers import url_encode
 from lnurl.types import LnurlPayMetadata
 from pydantic import BaseModel
 
@@ -14,6 +15,7 @@ from .nostr.key import PrivateKey
 
 class LnurlpSettings(BaseModel):
     nostr_private_key: str
+    allow_insecure_http: bool | None
 
     @property
     def private_key(self) -> PrivateKey:
@@ -69,14 +71,14 @@ class PayLink(BaseModel):
             data["max"] /= data["fiat_base_multiplier"]
         return cls(**data)
 
-    def lnurl(self, req: Request) -> str:
+    def lnurl(self, req: Request, allow_insecure_http = False) -> str:
         url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
         url_str = str(url)
         if url.netloc.endswith(".onion"):
             # change url string scheme to http
             url_str = url_str.replace("https://", "http://")
 
-        return lnurl_encode(url_str)
+        return url_encode(url_str) if allow_insecure_http else lnurl_encode(url_str)
 
     @property
     def lnurlpay_metadata(self) -> LnurlPayMetadata:

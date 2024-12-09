@@ -36,6 +36,11 @@ new Vue({
           type: 'str',
           description: 'Nostr private key used to zap',
           name: 'nostr_private_key'
+        },
+        {
+          type: 'bool',
+          description: 'Allow insecure http: advance usage only, local domain names encoded in lightning-addresses and lnurls may be broken, and communication may be insecure.',
+          name: 'allow_insecure_http'
         }
       ],
       domain: window.location.host,
