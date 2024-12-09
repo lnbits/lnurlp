@@ -24,7 +24,8 @@ from .crud import (
 )
 
 class InsecureClearnetUrl(Url):
-    allowed_schemes = {"http"}
+    tld_required = False
+    allowed_schemes = {"http", "https"}
 
 lnurlp_lnurl_router = APIRouter()
 
