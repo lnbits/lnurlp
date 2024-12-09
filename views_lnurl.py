@@ -7,6 +7,7 @@ from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
 from lnurl import LnurlErrorResponse, LnurlPayActionResponse, LnurlPayResponse
 from lnurl.models import MessageAction, UrlAction
 from lnurl.types import (
+    Url,
     ClearnetUrl,
     DebugUrl,
     LightningInvoice,
@@ -21,6 +22,9 @@ from .crud import (
     get_or_create_lnurlp_settings,
     increment_pay_link,
 )
+
+class InsecureClearnetUrl(Url):
+    allowed_schemes = {"http"}
 
 lnurlp_lnurl_router = APIRouter()
 
@@ -110,8 +114,9 @@ async def api_lnurl_callback(
 
     action: Optional[Union[MessageAction, UrlAction]] = None
     if link.success_url:
+        settings = await get_or_create_lnurlp_settings()
         url = parse_obj_as(
-            Union[DebugUrl, OnionUrl, ClearnetUrl],  # type: ignore
+            Union[DebugUrl, OnionUrl, ClearnetUrl, InsecureClearnetUrl] if settings.allow_insecure_http else Union[DebugUrl, OnionUrl, ClearnetUrl],  # type: ignore
             str(link.success_url),
         )
         desc = parse_obj_as(Max144Str, link.success_text)
@@ -150,8 +155,9 @@ async def api_lnurl_response(
         url = url.include_query_params(webhook_data=webhook_data)
 
     link.domain = request.url.netloc
+    settings = await get_or_create_lnurlp_settings()
     callback_url = parse_obj_as(
-        Union[DebugUrl, OnionUrl, ClearnetUrl],  # type: ignore
+        Union[DebugUrl, OnionUrl, ClearnetUrl, InsecureClearnetUrl] if settings.allow_insecure_http else Union[DebugUrl, OnionUrl, ClearnetUrl],  # type: ignore
         str(url),
     )
 
@@ -167,7 +173,6 @@ async def api_lnurl_response(
         params["commentAllowed"] = link.comment_chars
 
     if link.zaps:
-        settings = await get_or_create_lnurlp_settings()
         params["allowsNostr"] = True
         params["nostrPubkey"] = settings.public_key
     return params
