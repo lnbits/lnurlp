@@ -27,6 +27,9 @@ class InsecureClearnetUrl(Url):
     tld_required = False
     allowed_schemes = {"http", "https"}
 
+class InsecureLnurlPayResponse(LnurlPayResponse):
+    callback: Union[ClearnetUrl, OnionUrl, DebugUrl, InsecureClearnetUrl]
+
 lnurlp_lnurl_router = APIRouter()
 
 
@@ -162,12 +165,20 @@ async def api_lnurl_response(
         str(url),
     )
 
-    resp = LnurlPayResponse(
-        callback=callback_url,
-        minSendable=MilliSatoshi(round(link.min * rate) * 1000),
-        maxSendable=MilliSatoshi(round(link.max * rate) * 1000),
-        metadata=link.lnurlpay_metadata,
-    )
+    if settings.allow_insecure_http:
+        resp = InsecureLnurlPayResponse(
+            callback=callback_url,
+            minSendable=MilliSatoshi(round(link.min * rate) * 1000),
+            maxSendable=MilliSatoshi(round(link.max * rate) * 1000),
+            metadata=link.lnurlpay_metadata,
+        )
+    else:
+        resp = LnurlPayResponse(
+            callback=callback_url,
+            minSendable=MilliSatoshi(round(link.min * rate) * 1000),
+            maxSendable=MilliSatoshi(round(link.max * rate) * 1000),
+            metadata=link.lnurlpay_metadata,
+        )
     params = resp.dict()
 
     if link.comment_chars > 0:
