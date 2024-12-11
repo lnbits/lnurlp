@@ -30,6 +30,7 @@ class InsecureClearnetUrl(Url):
 class InsecureLnurlPayResponse(LnurlPayResponse):
     callback: Union[ClearnetUrl, OnionUrl, DebugUrl, InsecureClearnetUrl]
 
+
 lnurlp_lnurl_router = APIRouter()
 
 
