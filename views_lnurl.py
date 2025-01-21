@@ -48,7 +48,7 @@ async def api_lnurl_callback(
     maximum = link.max
 
     rate = await get_fiat_rate_satoshis(link.currency) if link.currency else 1
-    if link.currency:
+    if link.currency and link.currency != "sat":
         # allow some fluctuation (as the fiat price may have changed between the calls)
         minimum = rate * 995 * link.min
         maximum = rate * 1010 * link.max
