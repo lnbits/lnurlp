@@ -2,6 +2,7 @@ import json
 from typing import Optional
 
 from fastapi import Query, Request
+from lnbits.helpers import normalize_path
 from lnurl import encode as lnurl_encode
 from lnurl.types import LnurlPayMetadata
 from pydantic import BaseModel
@@ -61,7 +62,7 @@ class PayLink(BaseModel):
 
     def lnurl(self, req: Request) -> str:
         url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
-        url_str = str(url)
+        url_str = normalize_path(str(url))
         if url.netloc.endswith(".onion"):
             # change url string scheme to http
             url_str = url_str.replace("https://", "http://")
