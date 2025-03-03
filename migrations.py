@@ -1,8 +1,6 @@
 from time import time
 
 from lnbits.db import Connection
-from loguru import logger
-from sqlalchemy.exc import OperationalError
 
 
 async def m001_initial(db):
@@ -194,27 +192,23 @@ async def m011_add_created_at(db: Connection):
     """
     Add created_at to pay links
     """
-    try:
-        await db.execute(
-            f"""ALTER TABLE lnurlp.pay_links ADD COLUMN
-            created_at TIMESTAMP NOT NULL DEFAULT {db.timestamp_column_default}"""
-        )
-        await db.execute(
-            f"""ALTER TABLE lnurlp.pay_links ADD COLUMN
-            updated_at TIMESTAMP NOT NULL DEFAULT {db.timestamp_column_default}"""
-        )
 
-        now = int(time())
-        await db.execute(
-            f"""
-            UPDATE lnurlp.pay_links
-            SET created_at = {db.timestamp_placeholder('now')},
-                updated_at = {db.timestamp_placeholder('now')}
-            WHERE created_at IS NULL AND updated_at IS NULL
-            """,
-            {"now": now},
-        )
+    await db.execute(
+        f"""ALTER TABLE lnurlp.pay_links ADD COLUMN
+        created_at TIMESTAMP NOT NULL DEFAULT {db.timestamp_column_default}"""
+    )
+    await db.execute(
+        f"""ALTER TABLE lnurlp.pay_links ADD COLUMN
+        updated_at TIMESTAMP NOT NULL DEFAULT {db.timestamp_column_default}"""
+    )
 
-    except OperationalError as exc:
-        logger.error(f"Migration 10 failed: {exc}")
-        pass
+    now = int(time())
+    await db.execute(
+        f"""
+        UPDATE lnurlp.pay_links
+        SET created_at = {db.timestamp_placeholder('now')},
+            updated_at = {db.timestamp_placeholder('now')}
+        WHERE created_at IS NULL AND updated_at IS NULL
+        """,
+        {"now": now},
+    )
