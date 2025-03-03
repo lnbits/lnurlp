@@ -62,7 +62,8 @@ class PayLink(BaseModel):
 
     def lnurl(self, req: Request) -> str:
         url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
-        url_str = normalize_path(str(url))
+        url = url.replace(path=normalize_path(url.path))
+        url_str = str(url)
         if url.netloc.endswith(".onion"):
             # change url string scheme to http
             url_str = url_str.replace("https://", "http://")
