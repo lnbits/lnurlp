@@ -4,6 +4,9 @@ from http import HTTPStatus
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, Request
+from lnurl.exceptions import InvalidUrl as LnurlInvalidUrl
+from starlette.exceptions import HTTPException
+
 from lnbits.core.crud import get_user, get_wallet
 from lnbits.core.models import WalletTypeInfo
 from lnbits.decorators import (
@@ -12,8 +15,6 @@ from lnbits.decorators import (
     require_invoice_key,
 )
 from lnbits.utils.exchange_rates import currencies, get_fiat_rate_satoshis
-from lnurl.exceptions import InvalidUrl as LnurlInvalidUrl
-from starlette.exceptions import HTTPException
 
 from .crud import (
     create_pay_link,

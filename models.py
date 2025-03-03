@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from typing import Optional
 
 from fastapi import Query, Request
@@ -58,6 +59,8 @@ class PayLink(BaseModel):
     comment_chars: int
     max: float
     fiat_base_multiplier: int
+    created_at: datetime
+    updated_at: datetime
 
     def lnurl(self, req: Request) -> str:
         url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
