@@ -3,6 +3,7 @@ from typing import Optional, Union
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from lnbits.core.services import create_invoice
+from lnbits.helpers import normalize_path
 from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
 from lnurl import LnurlErrorResponse, LnurlPayActionResponse, LnurlPayResponse
 from lnurl.models import MessageAction, UrlAction
@@ -151,6 +152,7 @@ async def api_lnurl_response(
 
     rate = await get_fiat_rate_satoshis(link.currency) if link.currency else 1
     url = request.url_for("lnurlp.api_lnurl_callback", link_id=link.id)
+    url = url.replace(path=normalize_path(url.path))
     if webhook_data:
         url = url.include_query_params(webhook_data=webhook_data)
 
