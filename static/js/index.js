@@ -69,7 +69,8 @@ window.app = Vue.createApp({
             label: 'Created',
             align: 'left',
             field: 'created_at',
-            sortable: true
+            sortable: true,
+            sort: (a, b) => new Date(a) - new Date(b)
           },
           {
             name: 'username',
