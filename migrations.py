@@ -1,3 +1,8 @@
+from time import time
+
+from lnbits.db import Connection
+
+
 async def m001_initial(db):
     """
     Initial pay table.
@@ -181,3 +186,29 @@ async def m010_add_pay_link_domain(db):
     Add domain to pay links
     """
     await db.execute("ALTER TABLE lnurlp.pay_links ADD COLUMN domain TEXT;")
+
+
+async def m011_add_created_at(db: Connection):
+    """
+    Add created_at to pay links
+    """
+
+    await db.execute(
+        f"""ALTER TABLE lnurlp.pay_links ADD COLUMN
+        created_at TIMESTAMP DEFAULT {db.timestamp_column_default}"""
+    )
+    await db.execute(
+        f"""ALTER TABLE lnurlp.pay_links ADD COLUMN
+        updated_at TIMESTAMP DEFAULT {db.timestamp_column_default}"""
+    )
+
+    now = int(time())
+    await db.execute(
+        f"""
+        UPDATE lnurlp.pay_links
+        SET created_at = {db.timestamp_placeholder('now')},
+            updated_at = {db.timestamp_placeholder('now')}
+        WHERE created_at IS NULL AND updated_at IS NULL
+        """,
+        {"now": now},
+    )

@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import List, Optional, Union
 
 from lnbits.db import Database
@@ -39,10 +40,10 @@ async def get_pay_link_by_username(username: str) -> Optional[PayLink]:
 
 
 async def create_pay_link(data: CreatePayLinkData) -> PayLink:
-
     link_id = urlsafe_short_hash()[:6]
 
     assert data.wallet, "Wallet is required"
+    now = datetime.now(timezone.utc)
 
     link = PayLink(
         id=link_id,
@@ -63,6 +64,8 @@ async def create_pay_link(data: CreatePayLinkData) -> PayLink:
         currency=data.currency,
         comment_chars=data.comment_chars,
         fiat_base_multiplier=data.fiat_base_multiplier,
+        created_at=now,
+        updated_at=now,
     )
 
     await db.insert("lnurlp.pay_links", link)
@@ -96,6 +99,7 @@ async def get_pay_links(wallet_ids: Union[str, List[str]]) -> List[PayLink]:
 
 
 async def update_pay_link(link: PayLink) -> PayLink:
+    link.updated_at = datetime.now(timezone.utc)
     await db.update("lnurlp.pay_links", link)
     return link
 
