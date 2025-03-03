@@ -195,11 +195,11 @@ async def m011_add_created_at(db: Connection):
 
     await db.execute(
         f"""ALTER TABLE lnurlp.pay_links ADD COLUMN
-        created_at TIMESTAMP NOT NULL DEFAULT {db.timestamp_column_default}"""
+        created_at TIMESTAMP DEFAULT {db.timestamp_column_default}"""
     )
     await db.execute(
         f"""ALTER TABLE lnurlp.pay_links ADD COLUMN
-        updated_at TIMESTAMP NOT NULL DEFAULT {db.timestamp_column_default}"""
+        updated_at TIMESTAMP DEFAULT {db.timestamp_column_default}"""
     )
 
     now = int(time())
