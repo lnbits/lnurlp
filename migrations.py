@@ -1,9 +1,8 @@
 from time import time
 
+from lnbits.db import Connection
 from loguru import logger
 from sqlalchemy.exc import OperationalError
-
-from lnbits.db import Connection
 
 
 async def m001_initial(db):
@@ -197,11 +196,11 @@ async def m011_add_created_at(db: Connection):
     """
     try:
         await db.execute(
-            f"""ALTER TABLE lnurlp.pay_links ADD COLUMN 
+            f"""ALTER TABLE lnurlp.pay_links ADD COLUMN
             created_at TIMESTAMP NOT NULL DEFAULT {db.timestamp_column_default}"""
         )
         await db.execute(
-            f"""ALTER TABLE lnurlp.pay_links ADD COLUMN 
+            f"""ALTER TABLE lnurlp.pay_links ADD COLUMN
             updated_at TIMESTAMP NOT NULL DEFAULT {db.timestamp_column_default}"""
         )
 
