@@ -9,9 +9,9 @@ const locationPath = [
 
 const mapPayLink = obj => {
   obj._data = _.clone(obj)
-  obj.date = LNbits.utils.formatDate(obj.time)
+  obj.created_at = LNbits.utils.formatDateString(obj.created_at)
+  obj.updated_at = LNbits.utils.formatDateString(obj.updated_at)
 
-  obj.amount = new Intl.NumberFormat(LOCALE).format(obj.amount)
   obj.print_url = [locationPath, 'print/', obj.id].join('')
   obj.pay_url = [locationPath, 'link/', obj.id].join('')
   return obj
@@ -39,6 +39,48 @@ window.app = Vue.createApp({
       fiatRates: {},
       payLinks: [],
       payLinksTable: {
+        columns: [
+          {
+            name: 'description',
+            label: 'Description',
+            align: 'left',
+            field: 'description'
+          },
+          {
+            name: 'amount',
+            label: 'Amount',
+            align: 'left',
+            format: (_, row) => {
+              const min = row.min
+              const max = row.max
+              if (min === max) return `${min}`
+              return `${min} - ${max}`
+            }
+          },
+          {
+            name: 'currency',
+            label: 'Currency',
+            align: 'left',
+            field: 'currency',
+            format: val => val ?? 'sat'
+          },
+          {
+            name: 'created_at',
+            label: 'Created',
+            align: 'left',
+            field: 'created_at',
+            sortable: true
+          },
+          {
+            name: 'username',
+            label: 'Username',
+            align: 'left',
+            field: 'username',
+            sortable: true,
+            format: val => val ?? 'None',
+            classes: val => (val ? 'text-normal' : 'text-grey')
+          }
+        ],
         pagination: {
           rowsPerPage: 10
         }
