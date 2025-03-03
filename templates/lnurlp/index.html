@@ -33,13 +33,8 @@
           <template v-slot:header="props">
             <q-tr class="text-left" :props="props">
               <q-th auto-width></q-th>
-              <q-th
-                auto-width
-                v-for="col in props.cols"
-                :key="col.name"
-                :props="props"
-                v-text="col.label"
-              >
+              <q-th v-for="col in props.cols" :key="col.name" :props="props">
+                <span v-text="col.label"></span>
               </q-th>
               <q-th auto-width></q-th>
               <q-th auto-width></q-th>

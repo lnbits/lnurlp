@@ -41,6 +41,13 @@ window.app = Vue.createApp({
       payLinksTable: {
         columns: [
           {
+            name: 'created_at',
+            label: 'Created',
+            align: 'left',
+            field: 'created_at',
+            sortable: true
+          },
+          {
             name: 'description',
             label: 'Description',
             align: 'left',
@@ -63,13 +70,6 @@ window.app = Vue.createApp({
             align: 'left',
             field: 'currency',
             format: val => val ?? 'sat'
-          },
-          {
-            name: 'created_at',
-            label: 'Created',
-            align: 'left',
-            field: 'created_at',
-            sortable: true
           },
           {
             name: 'username',
