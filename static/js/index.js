@@ -14,6 +14,11 @@ const mapPayLink = obj => {
 
   obj.print_url = [locationPath, 'print/', obj.id].join('')
   obj.pay_url = [locationPath, 'link/', obj.id].join('')
+  
+  // Store warning for display
+  obj.hasWarning = !!obj.warning
+  obj.warningMessage = obj.warning || ''
+  
   return obj
 }
 
@@ -23,6 +28,32 @@ window.app = Vue.createApp({
   computed: {
     endpoint: function () {
       return `/lnurlp/api/v1/settings?usr=${this.g.user.id}`
+    },
+    showUrlWarning: function () {
+      const protocol = window.location.protocol
+      const hostname = window.location.hostname
+      
+      // Don't show warning for HTTPS
+      if (protocol === 'https:') return false
+      
+      // Don't show warning for Tor onion addresses
+      if (hostname.endsWith('.onion')) return false
+      
+      // Show warning for everything else (HTTP, localhost, etc.)
+      return true
+    },
+    urlWarningMessage: function () {
+      const hostname = window.location.hostname
+      
+      if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+        return 'You are accessing this page via localhost. LNURL pay links created here will only work locally and may not work with external wallets.'
+      } else if (hostname.match(/^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[01])\./)) {
+        return `You are accessing this page via an internal IP address (${hostname}). LNURL pay links created here will only work within your local network.`
+      } else if (hostname.endsWith('.local')) {
+        return `You are accessing this page via a local network address (${hostname}). LNURL pay links may not work with external wallets.`
+      } else {
+        return 'You are accessing this page via HTTP (not HTTPS). LNURL pay links created here may not work with most wallets. Use HTTPS or Tor onion addresses for best compatibility.'
+      }
     }
   },
   data() {
@@ -189,6 +220,15 @@ window.app = Vue.createApp({
           this.payLinks.push(mapPayLink(response.data))
           this.formDialog.show = false
           this.resetFormData()
+          // Show warning if present
+          if (response.data.warning) {
+            this.$q.notify({
+              type: 'warning',
+              message: `Pay link updated with warning: ${response.data.warning}`,
+              timeout: 8000,
+              actions: [{icon: 'close', color: 'white'}]
+            })
+          }
         })
         .catch(err => {
           LNbits.utils.notifyApiError(err)
@@ -201,6 +241,15 @@ window.app = Vue.createApp({
           this.getPayLinks()
           this.formDialog.show = false
           this.resetFormData()
+          // Show warning if present
+          if (response.data.warning) {
+            this.$q.notify({
+              type: 'warning',
+              message: `Pay link created with warning: ${response.data.warning}`,
+              timeout: 8000,
+              actions: [{icon: 'close', color: 'white'}]
+            })
+          }
         })
         .catch(err => {
           LNbits.utils.notifyApiError(err)

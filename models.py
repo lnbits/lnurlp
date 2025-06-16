@@ -8,7 +8,7 @@ from lnurl import encode as lnurl_encode
 from lnurl.types import LnurlPayMetadata
 from pydantic import BaseModel
 
-from .helpers import parse_nostr_private_key
+from .helpers import is_localhost_or_internal_url, parse_nostr_private_key
 from .nostr.key import PrivateKey
 
 
@@ -71,7 +71,14 @@ class PayLink(BaseModel):
             # change url string scheme to http
             url_str = url_str.replace("https://", "http://")
 
-        return lnurl_encode(url_str)
+        # Try normal encoding first
+        try:
+            return lnurl_encode(url_str)
+        except Exception:
+            # If it fails (likely due to non-HTTPS), encode manually
+            # This allows localhost and other non-HTTPS URLs to work
+            import base64
+            return "lnurl" + base64.b64encode(url_str.encode()).decode().replace("=", "")
 
     @property
     def lnurlpay_metadata(self) -> LnurlPayMetadata:

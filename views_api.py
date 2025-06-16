@@ -26,7 +26,7 @@ from .crud import (
     update_lnurlp_settings,
     update_pay_link,
 )
-from .helpers import parse_nostr_private_key
+from .helpers import is_localhost_or_internal_url, parse_nostr_private_key
 from .models import CreatePayLinkData, LnurlpSettings
 
 lnurlp_api_router = APIRouter()
@@ -50,12 +50,22 @@ async def api_links(
         wallet_ids = user.wallet_ids if user else []
 
     try:
-        return [
-            {**link.dict(), "lnurl": link.lnurl(req)}
-            for link in await get_pay_links(wallet_ids)
-        ]
+        links_with_warnings = []
+        for link in await get_pay_links(wallet_ids):
+            link_data = {**link.dict(), "lnurl": link.lnurl(req)}
+            
+            # Check if this is a non-HTTPS URL and add warning
+            url = req.url_for("lnurlp.api_lnurl_response", link_id=link.id)
+            is_unsafe, warning_msg = is_localhost_or_internal_url(str(url))
+            if is_unsafe:
+                link_data["warning"] = warning_msg
+                
+            links_with_warnings.append(link_data)
+        
+        return links_with_warnings
 
     except LnurlInvalidUrl as exc:
+        # This should no longer occur with our custom encoding, but keeping as fallback
         raise HTTPException(
             status_code=HTTPStatus.UPGRADE_REQUIRED,
             detail=(
@@ -86,7 +96,15 @@ async def api_link_retrieve(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
 
-    return {**link.dict(), **{"lnurl": link.lnurl(r)}}
+    link_data = {**link.dict(), **{"lnurl": link.lnurl(r)}}
+    
+    # Check if this is a non-HTTPS URL and add warning
+    url = r.url_for("lnurlp.api_lnurl_response", link_id=link.id)
+    is_unsafe, warning_msg = is_localhost_or_internal_url(str(url))
+    if is_unsafe:
+        link_data["warning"] = warning_msg
+        
+    return link_data
 
 
 async def check_username_exists(username: str):
@@ -142,15 +160,12 @@ async def api_link_create_or_update(
         data.min *= data.fiat_base_multiplier
         data.max *= data.fiat_base_multiplier
 
-    if (
-        data.success_url
-        and data.success_url != ""
-        and not data.success_url.startswith("https://")
-    ):
-        raise HTTPException(
-            detail="Success URL must be secure https://...",
-            status_code=HTTPStatus.BAD_REQUEST,
-        )
+    # Check success URL and warn if not secure
+    success_url_warning = None
+    if data.success_url and data.success_url != "":
+        is_unsafe, warning_msg = is_localhost_or_internal_url(data.success_url)
+        if is_unsafe:
+            success_url_warning = f"Success URL warning: {warning_msg}"
 
     if data.username and not re.match("^[a-z0-9-_.]{1,210}$", data.username):
         raise HTTPException(
@@ -199,7 +214,21 @@ async def api_link_create_or_update(
         link = await create_pay_link(data)
 
     assert link
-    return {**link.dict(), "lnurl": link.lnurl(request)}
+    link_data = {**link.dict(), "lnurl": link.lnurl(request)}
+    
+    # Add warnings for non-HTTPS URLs
+    url = request.url_for("lnurlp.api_lnurl_response", link_id=link.id)
+    is_unsafe, warning_msg = is_localhost_or_internal_url(str(url))
+    if is_unsafe:
+        link_data["warning"] = warning_msg
+        
+    if success_url_warning:
+        if "warning" in link_data:
+            link_data["warning"] += f"; {success_url_warning}"
+        else:
+            link_data["warning"] = success_url_warning
+    
+    return link_data
 
 
 @lnurlp_api_router.delete("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)

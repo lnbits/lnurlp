@@ -154,6 +154,13 @@
   <q-dialog v-model="formDialog.show" @hide="closeFormDialog">
     <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
       <q-form @submit="sendFormData" class="q-gutter-md">
+        <!-- Warning banner for non-HTTPS/non-Tor URLs -->
+        <q-banner v-if="showUrlWarning" class="text-white bg-orange" rounded>
+          <template v-slot:avatar>
+            <q-icon name="warning" color="white" />
+          </template>
+          <span v-text="urlWarningMessage"></span>
+        </q-banner>
         <q-select
           filled
           dense

@@ -6,6 +6,41 @@
 
 LNURL is a range of lightning-network standards that allow us to use lightning-network differently. An LNURL-pay is a link that wallets use to fetch an invoice from a server on-demand. The link or QR code is fixed, but each time it is read by a compatible wallet a new invoice is issued by the service and sent to the wallet.
 
+## Development Setup
+
+### Docker Development Environment
+
+For local development and testing, you can use the included Docker Compose setup:
+
+```bash
+# Start the development environment
+docker compose up -d
+
+# Access LNbits at http://localhost:5002
+# View logs
+docker compose logs -f
+
+# Stop the environment
+docker compose down
+```
+
+This setup includes:
+- LNbits with the LNURLP extension mounted for development
+- PostgreSQL database for persistence
+- FakeWallet backend for testing payments
+- Port 5002 to avoid conflicts with other services
+
+### Localhost and HTTP Support
+
+This extension supports localhost and HTTP addresses for development purposes. When creating LNURL pay links on non-HTTPS or local addresses, you'll see warning messages explaining the limitations:
+
+- **Localhost addresses** (`localhost`, `127.0.0.1`) will only work locally
+- **Internal IP addresses** (`192.168.x.x`, `10.x.x.x`) will only work within your local network  
+- **HTTP addresses** may not work with most wallets (HTTPS recommended)
+- **Tor onion addresses** work with both HTTP and HTTPS
+
+For production use, always use HTTPS or Tor onion addresses for maximum wallet compatibility.
+
 [**Wallets supporting LNURL**](https://github.com/fiatjaf/awesome-lnurl#wallets)
 
 ## Usage
