@@ -5,15 +5,17 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from lnbits.core.services import create_invoice
 from lnbits.helpers import normalize_path
 from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
-from lnurl import LnurlErrorResponse, LnurlPayActionResponse, LnurlPayResponse
+from lnurl import (
+    LnurlErrorResponse,
+    LnurlPayActionResponse,
+    LnurlPayResponse,
+    MilliSatoshi,
+)
 from lnurl.models import MessageAction, UrlAction
 from lnurl.types import (
-    ClearnetUrl,
-    DebugUrl,
+    CallbackUrl,
     LightningInvoice,
     Max144Str,
-    MilliSatoshi,
-    OnionUrl,
 )
 from pydantic import parse_obj_as
 
@@ -37,7 +39,7 @@ async def api_lnurl_callback(
     link_id: str,
     amount: int = Query(...),
     webhook_data: str = Query(None),
-):
+) -> LnurlErrorResponse | LnurlPayActionResponse:
     link = await get_pay_link(link_id)
     if not link:
         raise HTTPException(
@@ -61,12 +63,12 @@ async def api_lnurl_callback(
     if amount < minimum:
         return LnurlErrorResponse(
             reason=f"Amount {amount} is smaller than minimum {min}."
-        ).dict()
+        )
 
     elif amount > maximum:
         return LnurlErrorResponse(
             reason=f"Amount {amount} is greater than maximum {max}."
-        ).dict()
+        )
 
     comment = request.query_params.get("comment")
     if len(comment or "") > link.comment_chars:
@@ -75,7 +77,7 @@ async def api_lnurl_callback(
                 f"Got a comment with {len(comment or '')} characters, "
                 f"but can only accept {link.comment_chars}"
             )
-        ).dict()
+        )
 
     # for lnaddress, we have to set this otherwise
     # the metadata won't have the identifier
@@ -114,19 +116,20 @@ async def api_lnurl_callback(
 
     action: Optional[Union[MessageAction, UrlAction]] = None
     if link.success_url:
-        url = parse_obj_as(
-            Union[DebugUrl, OnionUrl, ClearnetUrl],  # type: ignore
-            str(link.success_url),
-        )
+        url = parse_obj_as(CallbackUrl, str(link.success_url))
         desc = parse_obj_as(Max144Str, link.success_text)
         action = UrlAction(url=url, description=desc)
     elif link.success_text:
         message = parse_obj_as(Max144Str, link.success_text)
         action = MessageAction(message=message)
+    else:
+        # TODO: bug in lnurl library, no action fails validation
+        message = parse_obj_as(Max144Str, "Thank you!")
+        action = MessageAction(message=message)
 
     invoice = parse_obj_as(LightningInvoice, LightningInvoice(payment.bolt11))
     resp = LnurlPayActionResponse(pr=invoice, successAction=action, routes=[])
-    return resp.dict()
+    return resp
 
 
 @lnurlp_lnurl_router.get(
@@ -157,10 +160,7 @@ async def api_lnurl_response(
         url = url.include_query_params(webhook_data=webhook_data)
 
     link.domain = request.url.netloc
-    callback_url = parse_obj_as(
-        Union[DebugUrl, OnionUrl, ClearnetUrl],  # type: ignore
-        str(url),
-    )
+    callback_url = parse_obj_as(CallbackUrl, str(url))
 
     resp = LnurlPayResponse(
         callback=callback_url,
