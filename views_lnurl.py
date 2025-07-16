@@ -3,7 +3,6 @@ from typing import Optional, Union
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from lnbits.core.services import create_invoice
-from lnbits.helpers import normalize_path
 from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
 from lnurl import (
     LnurlErrorResponse,
@@ -117,18 +116,15 @@ async def api_lnurl_callback(
     action: Optional[Union[MessageAction, UrlAction]] = None
     if link.success_url:
         url = parse_obj_as(CallbackUrl, str(link.success_url))
-        desc = parse_obj_as(Max144Str, link.success_text)
+        text =  link.success_text or f"Link to {link.success_url}"
+        desc = parse_obj_as(Max144Str, text)
         action = UrlAction(url=url, description=desc)
     elif link.success_text:
         message = parse_obj_as(Max144Str, link.success_text)
         action = MessageAction(message=message)
-    else:
-        # TODO: bug in lnurl library, no action fails validation
-        message = parse_obj_as(Max144Str, "Thank you!")
-        action = MessageAction(message=message)
 
     invoice = parse_obj_as(LightningInvoice, LightningInvoice(payment.bolt11))
-    resp = LnurlPayActionResponse(pr=invoice, successAction=action, routes=[])
+    resp = LnurlPayActionResponse(pr=invoice, successAction=action)
     return resp
 
 
@@ -136,6 +132,7 @@ async def api_lnurl_callback(
     "/api/v1/lnurl/{link_id}",  # Backwards compatibility for old LNURLs / QR codes
     status_code=HTTPStatus.OK,
     name="lnurlp.api_lnurl_response.deprecated",
+    deprecated=True,
 )
 @lnurlp_lnurl_router.get(
     "/{link_id}",
@@ -155,7 +152,6 @@ async def api_lnurl_response(
 
     rate = await get_fiat_rate_satoshis(link.currency) if link.currency else 1
     url = request.url_for("lnurlp.api_lnurl_callback", link_id=link.id)
-    url = url.replace(path=normalize_path(url.path))
     if webhook_data:
         url = url.include_query_params(webhook_data=webhook_data)
 
