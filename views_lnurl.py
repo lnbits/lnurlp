@@ -5,17 +5,16 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from lnbits.core.services import create_invoice
 from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
 from lnurl import (
+    CallbackUrl,
+    LightningInvoice,
     LnurlErrorResponse,
     LnurlPayActionResponse,
     LnurlPayResponse,
     LnurlPaySuccessActionTag,
-    MilliSatoshi,
-)
-from lnurl.models import MessageAction, UrlAction
-from lnurl.types import (
-    CallbackUrl,
-    LightningInvoice,
     Max144Str,
+    MessageAction,
+    MilliSatoshi,
+    UrlAction,
 )
 from pydantic import parse_obj_as
 
