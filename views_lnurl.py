@@ -8,6 +8,7 @@ from lnurl import (
     LnurlErrorResponse,
     LnurlPayActionResponse,
     LnurlPayResponse,
+    LnurlPaySuccessActionTag,
     MilliSatoshi,
 )
 from lnurl.models import MessageAction, UrlAction
@@ -116,15 +117,16 @@ async def api_lnurl_callback(
 
     if link.success_url:
         url = parse_obj_as(CallbackUrl, str(link.success_url))
-        text =  link.success_text or f"Link to {link.success_url}"
+        text = link.success_text or f"Link to {link.success_url}"
         desc = parse_obj_as(Max144Str, text)
-        action = UrlAction(url=url, description=desc)
+        action = UrlAction(tag=LnurlPaySuccessActionTag.url, url=url, description=desc)
         return LnurlPayActionResponse(pr=invoice, successAction=action)
 
     if link.success_text:
         message = parse_obj_as(Max144Str, link.success_text)
-        action = MessageAction(message=message)
-        return LnurlPayActionResponse(pr=invoice, successAction=action)
+        return LnurlPayActionResponse(
+            pr=invoice, successAction=MessageAction(message=message)
+        )
 
     return LnurlPayActionResponse(pr=invoice)
 
@@ -164,15 +166,20 @@ async def api_lnurl_response(
         minSendable=MilliSatoshi(round(link.min * rate) * 1000),
         maxSendable=MilliSatoshi(round(link.max * rate) * 1000),
         metadata=link.lnurlpay_metadata,
+        # todo library bug should not be in issue to onot specify
+        payerData=None,
+        commentAllowed=None,
+        allowsNostr=None,
+        nostrPubkey=None,
     )
 
     if link.comment_chars > 0:
-        res.commentAllowed = link.comment_chars
+        res.comment_allowed = link.comment_chars
 
     if link.zaps:
         settings = await get_or_create_lnurlp_settings()
-        res.allowsNostr = True
-        res.nostrPubkey = settings.public_key
+        res.allows_nostr = True
+        res.nostr_pubkey = settings.public_key
 
     return res
 
