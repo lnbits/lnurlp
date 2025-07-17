@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Optional, Union
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from lnbits.core.services import create_invoice
@@ -112,20 +112,21 @@ async def api_lnurl_callback(
         unhashed_description=unhashed_description,
         extra=extra,
     )
+    invoice = parse_obj_as(LightningInvoice, LightningInvoice(payment.bolt11))
 
-    action: Optional[Union[MessageAction, UrlAction]] = None
     if link.success_url:
         url = parse_obj_as(CallbackUrl, str(link.success_url))
         text =  link.success_text or f"Link to {link.success_url}"
         desc = parse_obj_as(Max144Str, text)
         action = UrlAction(url=url, description=desc)
-    elif link.success_text:
+        return LnurlPayActionResponse(pr=invoice, successAction=action)
+
+    if link.success_text:
         message = parse_obj_as(Max144Str, link.success_text)
         action = MessageAction(message=message)
+        return LnurlPayActionResponse(pr=invoice, successAction=action)
 
-    invoice = parse_obj_as(LightningInvoice, LightningInvoice(payment.bolt11))
-    resp = LnurlPayActionResponse(pr=invoice, successAction=action)
-    return resp
+    return LnurlPayActionResponse(pr=invoice)
 
 
 @lnurlp_lnurl_router.get(
@@ -141,7 +142,7 @@ async def api_lnurl_callback(
 )
 async def api_lnurl_response(
     request: Request, link_id: str, webhook_data: Optional[str] = Query(None)
-):
+) -> LnurlPayResponse:
     link = await get_pay_link(link_id)
     if not link:
         raise HTTPException(
@@ -158,27 +159,27 @@ async def api_lnurl_response(
     link.domain = request.url.netloc
     callback_url = parse_obj_as(CallbackUrl, str(url))
 
-    resp = LnurlPayResponse(
+    res = LnurlPayResponse(
         callback=callback_url,
         minSendable=MilliSatoshi(round(link.min * rate) * 1000),
         maxSendable=MilliSatoshi(round(link.max * rate) * 1000),
         metadata=link.lnurlpay_metadata,
     )
-    params = resp.dict()
 
     if link.comment_chars > 0:
-        params["commentAllowed"] = link.comment_chars
+        res.commentAllowed = link.comment_chars
 
     if link.zaps:
         settings = await get_or_create_lnurlp_settings()
-        params["allowsNostr"] = True
-        params["nostrPubkey"] = settings.public_key
-    return params
+        res.allowsNostr = True
+        res.nostrPubkey = settings.public_key
+
+    return res
 
 
 # redirected from /.well-known/lnurlp
 @lnurlp_lnurl_router.get("/api/v1/well-known/{username}")
-async def lnaddress(username: str, request: Request):
+async def lnaddress(username: str, request: Request) -> LnurlPayResponse:
     address_data = await get_address_data(username)
     assert address_data, "User not found"
     return await api_lnurl_response(request, address_data.id, webhook_data=None)
