@@ -132,13 +132,11 @@ async def api_lnurl_callback(
 
 @lnurlp_lnurl_router.get(
     "/api/v1/lnurl/{link_id}",  # Backwards compatibility for old LNURLs / QR codes
-    status_code=HTTPStatus.OK,
     name="lnurlp.api_lnurl_response.deprecated",
     deprecated=True,
 )
 @lnurlp_lnurl_router.get(
     "/{link_id}",
-    status_code=HTTPStatus.OK,
     name="lnurlp.api_lnurl_response",
 )
 async def api_lnurl_response(

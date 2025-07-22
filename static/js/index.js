@@ -104,7 +104,7 @@ window.app = Vue.createApp({
   },
   methods: {
     setBech32() {
-        const url = this.url + this.qrCodeDialog.data.id;
+        const url = window.location.origin + "/lnurlp/" + this.qrCodeDialog.data.id;
         const bytes = new TextEncoder().encode(url);
         const bech32 = NostrTools.nip19.encodeBytes("lnurl", bytes)
         this.lnurl = `lightning:${bech32.toUpperCase()}`;
@@ -290,8 +290,8 @@ window.app = Vue.createApp({
           if (value == 'bech32') {
               this.setBech32();
           } else if (value == 'lud17') {
-              const lnurl = this.url + this.qrCodeDialog.data.id;
-              this.lnurl = lnurl.replace('https://', 'lnurlp://')
+              const url = window.location.origin + "/lnurlp/" + this.qrCodeDialog.data.id;
+              this.lnurl = url.replace('https://', 'lnurlp://')
           }
       },
   },
