@@ -13,16 +13,8 @@
           narrow-indicator
           inline-label
         >
-          <q-tab
-            name="bech32"
-            icon="qr_code"
-            label="bech32"
-          ></q-tab>
-          <q-tab
-            name="lud17"
-            icon="link"
-            label="url (lud17)"
-          ></q-tab>
+          <q-tab name="bech32" icon="qr_code" label="bech32"></q-tab>
+          <q-tab name="lud17" icon="link" label="url (lud17)"></q-tab>
         </q-tabs>
       </q-card-section>
       <q-card-section class="q-pa-none">
@@ -65,31 +57,31 @@
     el: '#vue',
     mixins: [window.windowMixin],
     data() {
-        return {
-            tab: 'bech32',
-            url: window.location.origin + '/lnurlp/{{ link_id }}',
-            lnurl: '',
-        }
+      return {
+        tab: 'bech32',
+        url: window.location.origin + '/lnurlp/{{ link_id }}',
+        lnurl: ''
+      }
     },
     methods: {
-        setBech32() {
-            const bytes = new TextEncoder().encode(this.url);
-            const bech32 = NostrTools.nip19.encodeBytes("lnurl", bytes)
-            this.lnurl = `lightning:${bech32.toUpperCase()}`;
-        },
+      setBech32() {
+        const bytes = new TextEncoder().encode(this.url)
+        const bech32 = NostrTools.nip19.encodeBytes('lnurl', bytes)
+        this.lnurl = `lightning:${bech32.toUpperCase()}`
+      }
     },
     watch: {
-        tab(value) {
-            if (value == 'bech32') {
-                this.setBech32();
-            } else if (value == 'lud17') {
-                this.lnurl = this.url.replace('https://', 'lnurlp://')
-            }
-        },
+      tab(value) {
+        if (value == 'bech32') {
+          this.setBech32()
+        } else if (value == 'lud17') {
+          this.lnurl = this.url.replace('https://', 'lnurlp://')
+        }
+      }
     },
     created() {
-        this.setBech32();
-    },
+      this.setBech32()
+    }
   })
 </script>
 {% endblock %}

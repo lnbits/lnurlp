@@ -104,10 +104,11 @@ window.app = Vue.createApp({
   },
   methods: {
     setBech32() {
-        const url = window.location.origin + "/lnurlp/" + this.qrCodeDialog.data.id;
-        const bytes = new TextEncoder().encode(url);
-        const bech32 = NostrTools.nip19.encodeBytes("lnurl", bytes)
-        this.lnurl = `lightning:${bech32.toUpperCase()}`;
+      const url =
+        window.location.origin + '/lnurlp/' + this.qrCodeDialog.data.id
+      const bytes = new TextEncoder().encode(url)
+      const bech32 = NostrTools.nip19.encodeBytes('lnurl', bytes)
+      this.lnurl = `lightning:${bech32.toUpperCase()}`
     },
     getPayLinks() {
       LNbits.api
@@ -153,7 +154,7 @@ window.app = Vue.createApp({
         print_url: link.print_url,
         username: link.username
       }
-      this.setBech32();
+      this.setBech32()
       this.qrCodeDialog.show = true
     },
     openUpdateDialog(linkId) {
@@ -286,14 +287,15 @@ window.app = Vue.createApp({
     }
   },
   watch: {
-      tab(value) {
-          if (value == 'bech32') {
-              this.setBech32();
-          } else if (value == 'lud17') {
-              const url = window.location.origin + "/lnurlp/" + this.qrCodeDialog.data.id;
-              this.lnurl = url.replace('https://', 'lnurlp://')
-          }
-      },
+    tab(value) {
+      if (value == 'bech32') {
+        this.setBech32()
+      } else if (value == 'lud17') {
+        const url =
+          window.location.origin + '/lnurlp/' + this.qrCodeDialog.data.id
+        this.lnurl = url.replace('https://', 'lnurlp://')
+      }
+    }
   },
   created() {
     if (this.g.user.wallets?.length) {

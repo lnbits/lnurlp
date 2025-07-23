@@ -357,7 +357,7 @@
 
   <q-dialog v-model="qrCodeDialog.show" position="top">
     <q-card v-if="qrCodeDialog.data" class="q-pa-lg lnbits__dialog-card">
-        <q-card-section>
+      <q-card-section>
         <q-tabs
           v-model="tab"
           dense
@@ -368,16 +368,8 @@
           narrow-indicator
           inline-label
         >
-          <q-tab
-            name="bech32"
-            icon="qr_code"
-            label="bech32"
-          ></q-tab>
-          <q-tab
-            name="lud17"
-            icon="link"
-            label="url (lud17)"
-          ></q-tab>
+          <q-tab name="bech32" icon="qr_code" label="bech32"></q-tab>
+          <q-tab name="lud17" icon="link" label="url (lud17)"></q-tab>
         </q-tabs>
       </q-card-section>
       <lnbits-qrcode :value="lnurl"></lnbits-qrcode>
