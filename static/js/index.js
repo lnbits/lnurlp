@@ -27,6 +27,9 @@ window.app = Vue.createApp({
   },
   data() {
     return {
+      tab: 'bech32',
+      url: window.location.origin + '/lnurlp/api/v1/lnurl/',
+      lnurl: '',
       settings: [
         {
           type: 'str',
@@ -100,6 +103,13 @@ window.app = Vue.createApp({
     }
   },
   methods: {
+    setBech32() {
+      const url =
+        window.location.origin + '/lnurlp/' + this.qrCodeDialog.data.id
+      const bytes = new TextEncoder().encode(url)
+      const bech32 = NostrTools.nip19.encodeBytes('lnurl', bytes)
+      this.lnurl = `lightning:${bech32.toUpperCase()}`
+    },
     getPayLinks() {
       LNbits.api
         .request(
@@ -144,6 +154,7 @@ window.app = Vue.createApp({
         print_url: link.print_url,
         username: link.username
       }
+      this.setBech32()
       this.qrCodeDialog.show = true
     },
     openUpdateDialog(linkId) {
@@ -275,12 +286,23 @@ window.app = Vue.createApp({
       }
     }
   },
+  watch: {
+    tab(value) {
+      if (value == 'bech32') {
+        this.setBech32()
+      } else if (value == 'lud17') {
+        const url =
+          window.location.origin + '/lnurlp/' + this.qrCodeDialog.data.id
+        this.lnurl = url.replace('https://', 'lnurlp://')
+      }
+    }
+  },
   created() {
     if (this.g.user.wallets?.length) {
       this.getPayLinks()
     }
     LNbits.api
-      .request('GET', '/lnurlp/api/v1/currencies')
+      .request('GET', '/api/v1/currencies')
       .then(response => {
         this.currencies = ['satoshis', ...response.data]
       })

@@ -357,9 +357,22 @@
 
   <q-dialog v-model="qrCodeDialog.show" position="top">
     <q-card v-if="qrCodeDialog.data" class="q-pa-lg lnbits__dialog-card">
-      <lnbits-qrcode
-        :value="'lightning:' + qrCodeDialog.data.lnurl"
-      ></lnbits-qrcode>
+      <q-card-section>
+        <q-tabs
+          v-model="tab"
+          dense
+          class="text-grey"
+          active-color="primary"
+          indicator-color="primary"
+          align="justify"
+          narrow-indicator
+          inline-label
+        >
+          <q-tab name="bech32" icon="qr_code" label="bech32"></q-tab>
+          <q-tab name="lud17" icon="link" label="url (lud17)"></q-tab>
+        </q-tabs>
+      </q-card-section>
+      <lnbits-qrcode :value="lnurl"></lnbits-qrcode>
       <p style="word-break: break-all">
         <strong>ID:</strong> <span v-text="qrCodeDialog.data.id"></span><br />
         <strong>Amount:</strong> <span v-text="qrCodeDialog.data.amount"></span
@@ -392,7 +405,7 @@
         <q-btn
           outline
           color="grey"
-          @click="copyText(qrCodeDialog.data.lnurl, 'LNURL copied to clipboard!')"
+          @click="copyText(lnurl, 'LNURL copied to clipboard!')"
           class="q-ml-sm"
           >Copy LNURL</q-btn
         >
@@ -407,7 +420,7 @@
           outline
           color="grey"
           icon="nfc"
-          @click="writeNfcTag(qrCodeDialog.data.lnurl)"
+          @click="writeNfcTag(lnurl)"
           :disable="nfcTagWriting"
           ><q-tooltip>Write to NFC</q-tooltip>
         </q-btn>

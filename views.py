@@ -30,7 +30,7 @@ async def display(request: Request, link_id):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Pay link does not exist."
         )
-    ctx = {"request": request, "lnurl": link.lnurl(req=request)}
+    ctx = {"request": request, "link_id": link.id}
     return lnurlp_renderer().TemplateResponse("lnurlp/display.html", ctx)
 
 
