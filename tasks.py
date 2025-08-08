@@ -175,10 +175,7 @@ async def send_zap(payment: Payment):
             wss += [ws]
             wsts += [wst]
 
-    await asyncio.sleep(10)
-    for ws, wst in zip(wss, wsts):
-        logger.debug(f"Closing websocket {ws.url}")
-        ws.close()
-        wst.join()
+    # The threads will run in the background. No need to block the event loop waiting for them.
+    # The previous asyncio.sleep(10) and the loop with wst.join() have been removed.
 
     return zap_receipt
