@@ -39,6 +39,7 @@ class CreatePayLinkData(BaseModel):
     fiat_base_multiplier: int = Query(100, ge=1)
     username: str = Query(None)
     zaps: Optional[bool] = Query(False)
+    disposable: bool | None = Query(True)
 
 
 class PayLink(BaseModel):
@@ -62,6 +63,8 @@ class PayLink(BaseModel):
     fiat_base_multiplier: int
     created_at: datetime
     updated_at: datetime
+
+    disposable: bool
 
     def lnurl(self, req: Request) -> str:
         url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)

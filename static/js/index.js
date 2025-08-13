@@ -11,7 +11,6 @@ const mapPayLink = obj => {
   obj._data = _.clone(obj)
   obj.created_at = LNbits.utils.formatDateString(obj.created_at)
   obj.updated_at = LNbits.utils.formatDateString(obj.updated_at)
-
   obj.print_url = [locationPath, 'print/', obj.id].join('')
   obj.pay_url = [locationPath, 'link/', obj.id].join('')
   return obj

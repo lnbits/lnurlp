@@ -212,3 +212,9 @@ async def m011_add_created_at(db: Connection):
         """,
         {"now": now},
     )
+
+
+async def m012_add_disposable(db: Connection):
+    await db.execute(
+        "ALTER TABLE lnurlp.pay_links ADD COLUMN disposable BOOLEAN DEFAULT TRUE"
+    )

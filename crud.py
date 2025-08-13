@@ -66,6 +66,7 @@ async def create_pay_link(data: CreatePayLinkData) -> PayLink:
         fiat_base_multiplier=data.fiat_base_multiplier,
         created_at=now,
         updated_at=now,
+        disposable=data.disposable if data.disposable is not None else True,
     )
 
     await db.insert("lnurlp.pay_links", link)
