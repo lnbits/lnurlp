@@ -87,7 +87,7 @@ async def api_link_create_or_update(
             detail="Min is greater than max.", status_code=HTTPStatus.BAD_REQUEST
         )
 
-    if data.currency is None:
+    if not data.currency:
         if round(data.min) != data.min or round(data.max) != data.max or data.min < 1:
             raise HTTPException(
                 detail="Must use full satoshis.", status_code=HTTPStatus.BAD_REQUEST
