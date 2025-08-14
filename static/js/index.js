@@ -239,7 +239,7 @@ window.app = Vue.createApp({
     },
     updateFiatRate(currency) {
       LNbits.api
-        .request('GET', '/lnurlp/api/v1/rate/' + currency, null)
+        .request('GET', '/api/v1/rate/' + currency, null)
         .then(response => {
           let rates = _.clone(this.fiatRates)
           rates[currency] = response.data.rate

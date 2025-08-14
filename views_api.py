@@ -11,7 +11,6 @@ from lnbits.decorators import (
     require_admin_key,
     require_invoice_key,
 )
-from lnbits.utils.exchange_rates import currencies, get_fiat_rate_satoshis
 from lnurl.exceptions import InvalidUrl as LnurlInvalidUrl
 from starlette.exceptions import HTTPException
 
@@ -30,11 +29,6 @@ from .helpers import parse_nostr_private_key
 from .models import CreatePayLinkData, LnurlpSettings
 
 lnurlp_api_router = APIRouter()
-
-
-@lnurlp_api_router.get("/api/v1/currencies")
-async def api_list_currencies_available():
-    return list(currencies.keys())
 
 
 @lnurlp_api_router.get("/api/v1/links", status_code=HTTPStatus.OK)
@@ -223,16 +217,6 @@ async def api_link_delete(
 
     await delete_pay_link(link_id)
     return {"success": True}
-
-
-@lnurlp_api_router.get("/api/v1/rate/{currency}", status_code=HTTPStatus.OK)
-async def api_check_fiat_rate(currency):
-    try:
-        rate = await get_fiat_rate_satoshis(currency)
-    except AssertionError:
-        rate = None
-
-    return {"rate": rate}
 
 
 @lnurlp_api_router.get("/api/v1/settings", dependencies=[Depends(check_admin)])
