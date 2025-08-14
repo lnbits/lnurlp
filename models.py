@@ -1,9 +1,7 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import Query, Request
-from lnbits.helpers import normalize_path
-from lnurl import encode as lnurl_encode
+from fastapi import Query
 from pydantic import BaseModel, Field
 
 from .helpers import parse_nostr_private_key
@@ -62,14 +60,6 @@ class PayLink(BaseModel):
     fiat_base_multiplier: int | None = None
 
     disposable: bool
+
     # TODO deprecated, unused in the code, should be deleted from db.
     domain: Optional[str] = None
-
-    def lnurl(self, req: Request) -> str:
-        url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
-        url = url.replace(path=normalize_path(url.path))
-        url_str = str(url)
-        if url.netloc.endswith(".onion"):
-            # change url string scheme to http
-            url_str = url_str.replace("https://", "http://")
-        return lnurl_encode(url_str)

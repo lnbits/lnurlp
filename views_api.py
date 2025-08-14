@@ -3,16 +3,14 @@ import re
 from http import HTTPStatus
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query
 from lnbits.core.crud import get_user, get_wallet
-from lnbits.core.models import WalletTypeInfo
+from lnbits.core.models import SimpleStatus, WalletTypeInfo
 from lnbits.decorators import (
     check_admin,
     require_admin_key,
     require_invoice_key,
 )
-from lnurl.exceptions import InvalidUrl as LnurlInvalidUrl
-from starlette.exceptions import HTTPException
 
 from .crud import (
     create_pay_link,
@@ -26,43 +24,29 @@ from .crud import (
     update_pay_link,
 )
 from .helpers import parse_nostr_private_key
-from .models import CreatePayLinkData, LnurlpSettings
+from .models import CreatePayLinkData, LnurlpSettings, PayLink
 
 lnurlp_api_router = APIRouter()
 
 
 @lnurlp_api_router.get("/api/v1/links", status_code=HTTPStatus.OK)
 async def api_links(
-    req: Request,
     key_info: WalletTypeInfo = Depends(require_invoice_key),
     all_wallets: bool = Query(False),
-):
+) -> list[PayLink]:
     wallet_ids = [key_info.wallet.id]
-
     if all_wallets:
         user = await get_user(key_info.wallet.user)
         wallet_ids = user.wallet_ids if user else []
 
-    try:
-        return [
-            {**link.dict(), "lnurl": link.lnurl(req)}
-            for link in await get_pay_links(wallet_ids)
-        ]
-
-    except LnurlInvalidUrl as exc:
-        raise HTTPException(
-            status_code=HTTPStatus.UPGRADE_REQUIRED,
-            detail=(
-                "LNURLs need to be delivered over a publicly "
-                "accessible `https` domain or Tor onion."
-            ),
-        ) from exc
+    links = await get_pay_links(wallet_ids)
+    return links
 
 
 @lnurlp_api_router.get("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_link_retrieve(
-    r: Request, link_id: str, key_info: WalletTypeInfo = Depends(require_invoice_key)
-):
+    link_id: str, key_info: WalletTypeInfo = Depends(require_invoice_key)
+) -> PayLink:
     link = await get_pay_link(link_id)
 
     if not link:
@@ -79,8 +63,7 @@ async def api_link_retrieve(
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
-
-    return {**link.dict(), **{"lnurl": link.lnurl(r)}}
+    return link
 
 
 async def check_username_exists(username: str):
@@ -96,10 +79,9 @@ async def check_username_exists(username: str):
 @lnurlp_api_router.put("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_link_create_or_update(
     data: CreatePayLinkData,
-    request: Request,
     link_id: Optional[str] = None,
     key_info: WalletTypeInfo = Depends(require_admin_key),
-):
+) -> PayLink:
     if data.min > data.max:
         raise HTTPException(
             detail="Min is greater than max.", status_code=HTTPStatus.BAD_REQUEST
@@ -192,14 +174,13 @@ async def api_link_create_or_update(
 
         link = await create_pay_link(data)
 
-    assert link
-    return {**link.dict(), "lnurl": link.lnurl(request)}
+    return link
 
 
 @lnurlp_api_router.delete("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_link_delete(
     link_id: str, key_info: WalletTypeInfo = Depends(require_admin_key)
-):
+) -> SimpleStatus:
     link = await get_pay_link(link_id)
 
     if not link:
@@ -207,7 +188,7 @@ async def api_link_delete(
             detail="Pay link does not exist.", status_code=HTTPStatus.NOT_FOUND
         )
 
-    # admins are allowed to delete paylinks beloging to regular users
+    # admins are allowed to delete paylinks belonging to regular users
     user = await get_user(key_info.wallet.user)
     admin_user = user.admin if user else False
     if not admin_user and link.wallet != key_info.wallet.id:
@@ -216,7 +197,7 @@ async def api_link_delete(
         )
 
     await delete_pay_link(link_id)
-    return {"success": True}
+    return SimpleStatus(success=True, message="Deleted Pay link")
 
 
 @lnurlp_api_router.get("/api/v1/settings", dependencies=[Depends(check_admin)])
