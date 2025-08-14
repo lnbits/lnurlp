@@ -55,7 +55,6 @@ async def create_pay_link(data: CreatePayLinkData) -> PayLink:
         served_pr=0,
         username=data.username,
         zaps=data.zaps,
-        domain=None,
         webhook_url=data.webhook_url,
         webhook_headers=data.webhook_headers,
         webhook_body=data.webhook_body,
