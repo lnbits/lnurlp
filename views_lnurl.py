@@ -61,12 +61,12 @@ async def api_lnurl_callback(
     amount = amount
     if amount < minimum:
         return LnurlErrorResponse(
-            reason=f"Amount {amount} is smaller than minimum {min}."
+            reason=f"Amount {amount} is smaller than minimum {minimum}."
         )
 
     elif amount > maximum:
         return LnurlErrorResponse(
-            reason=f"Amount {amount} is greater than maximum {max}."
+            reason=f"Amount {amount} is greater than maximum {maximum}."
         )
 
     comment = request.query_params.get("comment")
