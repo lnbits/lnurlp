@@ -2,9 +2,7 @@ import json
 from datetime import datetime
 from typing import Optional
 
-from fastapi import Query, Request
-from lnbits.helpers import normalize_path
-from lnurl import encode as lnurl_encode
+from fastapi import Query
 from lnurl.types import LnurlPayMetadata
 from pydantic import BaseModel
 
@@ -62,16 +60,6 @@ class PayLink(BaseModel):
     fiat_base_multiplier: int
     created_at: datetime
     updated_at: datetime
-
-    def lnurl(self, req: Request) -> str:
-        url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
-        url = url.replace(path=normalize_path(url.path))
-        url_str = str(url)
-        if url.netloc.endswith(".onion"):
-            # change url string scheme to http
-            url_str = url_str.replace("https://", "http://")
-
-        return lnurl_encode(url_str)
 
     @property
     def lnurlpay_metadata(self) -> LnurlPayMetadata:
