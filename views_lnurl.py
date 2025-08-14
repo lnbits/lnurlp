@@ -119,15 +119,19 @@ async def api_lnurl_callback(
         text = link.success_text or f"Link to {link.success_url}"
         desc = parse_obj_as(Max144Str, text)
         action = UrlAction(tag=LnurlPaySuccessActionTag.url, url=url, description=desc)
-        return LnurlPayActionResponse(pr=invoice, successAction=action)
+        return LnurlPayActionResponse(
+            pr=invoice, successAction=action, disposable=link.disposable
+        )
 
     if link.success_text:
         message = parse_obj_as(Max144Str, link.success_text)
         return LnurlPayActionResponse(
-            pr=invoice, successAction=MessageAction(message=message)
+            pr=invoice,
+            successAction=MessageAction(message=message),
+            disposable=link.disposable,
         )
 
-    return LnurlPayActionResponse(pr=invoice)
+    return LnurlPayActionResponse(pr=invoice, disposable=link.disposable)
 
 
 @lnurlp_lnurl_router.get(

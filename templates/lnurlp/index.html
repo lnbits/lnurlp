@@ -235,6 +235,18 @@
         >
           <q-card>
             <q-card-section>
+              <h5 class="text-caption q-mt-sm q-mb-none">
+                LUD-11: Disposable and storeable payRequests.
+              </h5>
+              <div class="row">
+                <div class="col-12">
+                  <q-checkbox
+                    dense
+                    v-model="formDialog.data.disposable"
+                    label="If enabled, the LNURL will not be stored (default)."
+                  />
+                </div>
+              </div>
               <h5 class="text-caption q-mt-sm q-mb-none">LNURL</h5>
               <div class="row">
                 <div class="col-12">
