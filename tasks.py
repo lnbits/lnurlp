@@ -1,6 +1,5 @@
 import asyncio
 import json
-from typing import List
 
 import httpx
 import websockets
@@ -157,11 +156,12 @@ async def send_zap(payment: Payment):
         relays = relays[:50]
 
     # Create a list of tasks to run concurrently
-    tasks = [send_to_relay(relay, zap_receipt.to_message()) for relay in relays]
 
     # Run all tasks concurrently. This is a "fire-and-forget" approach.
     # We don't need to wait for all of them to complete here.
-    for task in tasks:
-        asyncio.create_task(task)
+    _ = [
+        asyncio.create_task(send_to_relay(relay, zap_receipt.to_message()))
+        for relay in relays
+    ]
 
     return zap_receipt
