@@ -97,11 +97,13 @@ async def api_lnurl_callback(
     if nostr:
         extra["nostr"] = nostr  # put it here for later publishing in tasks.py
 
-    _metadata = [["text/plain", link.description]]
     if link.username:
         identifier = f"{link.username}@{request.url.netloc}"
-        _metadata.append(["text/identifier", identifier])
+        text = f"Payment to {link.username}"
+        _metadata = [["text/plain", text], ["text/identifier", identifier]]
         extra["lnaddress"] = identifier
+    else:
+        _metadata = [["text/plain", link.description]]
 
     metadata = LnurlPayMetadata(json.dumps(_metadata))
 
@@ -164,10 +166,12 @@ async def api_lnurl_response(
 
     callback_url = parse_obj_as(CallbackUrl, str(url))
 
-    metadata = [["text/plain", link.description]]
     if link.username:
         identifier = f"{link.username}@{request.url.netloc}"
-        metadata.append(["text/identifier", identifier])
+        text = f"Payment to {link.username}"
+        metadata = [["text/plain", text], ["text/identifier", identifier]]
+    else:
+        metadata = [["text/plain", link.description]]
 
     res = LnurlPayResponse(
         callback=callback_url,
