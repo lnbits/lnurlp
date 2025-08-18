@@ -1615,14 +1615,14 @@ valkey = ["valkey (>=6)"]
 
 [[package]]
 name = "lnbits"
-version = "1.3.0rc1"
+version = "1.3.0rc3"
 description = "LNbits, free and open-source Lightning wallet and accounts system."
 optional = false
 python-versions = "<3.13,>=3.10"
 groups = ["main"]
 files = [
-    {file = "lnbits-1.3.0rc1-py3-none-any.whl", hash = "sha256:e3a2ab25dd78584a28ae192c6ea98bd698a4b19a1b1482324cbbebec1b68cfea"},
-    {file = "lnbits-1.3.0rc1.tar.gz", hash = "sha256:dad0d3c18727d195fe82f3dc8d5e38035de6b13bd406185fe20cba16e588444d"},
+    {file = "lnbits-1.3.0rc3-py3-none-any.whl", hash = "sha256:d3fc4f643314011a1b1050f84e16c540369d0ad2f3b290c72a617da479ed75c0"},
+    {file = "lnbits-1.3.0rc3.tar.gz", hash = "sha256:dcc3e58062353e2012b9535446f23ac7ea012e5c12813220cb6ac38a7b7a8eb3"},
 ]
 
 [package.dependencies]
@@ -1643,7 +1643,7 @@ httpx = "0.27.0"
 itsdangerous = "2.2.0"
 jinja2 = "3.1.6"
 jsonpath-ng = ">=1.7.0,<2.0.0"
-lnurl = "0.6.8"
+lnurl = "0.7.2"
 loguru = "0.7.3"
 nostr-sdk = ">=0.42.1,<0.43.0"
 packaging = "25.0"
@@ -1676,14 +1676,14 @@ migration = ["psycopg2-binary (==2.9.10)"]
 
 [[package]]
 name = "lnurl"
-version = "0.6.8"
+version = "0.7.2"
 description = "LNURL implementation for Python."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "lnurl-0.6.8-py3-none-any.whl", hash = "sha256:4fff53efcdd401cf4169676bd1ab85e9e241a762a9a5407ee11e6a6e120e8279"},
-    {file = "lnurl-0.6.8.tar.gz", hash = "sha256:de64a47179980a4b52cd6b89ad377cda14502f1998f53724490683f6f5c4ed90"},
+    {file = "lnurl-0.7.2-py3-none-any.whl", hash = "sha256:4323ac398d49e5b883000c166b4c2448df2acad2eddca99f656c67f7b97cd80f"},
+    {file = "lnurl-0.7.2.tar.gz", hash = "sha256:9f0881cb5909512cadb35d238c27347d6a8afcec10b2b7aadd560083fd210c0b"},
 ]
 
 [package.dependencies]
@@ -3571,4 +3571,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.12 | ~3.11"
-content-hash = "afeffa7eb524cd7c492332dd82f478b44205dbdc3452a7de9694986b4c07983b"
+content-hash = "75afffd289b93f5d7faef35f9d6fdbfd84772dddba9e02ae4ee76cef4c429a0b"
