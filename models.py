@@ -1,10 +1,9 @@
-import json
 from datetime import datetime, timezone
+from typing import Optional
 
 from fastapi import Query, Request
 from lnbits.helpers import normalize_path
 from lnurl import encode as lnurl_encode
-from lnurl.types import LnurlPayMetadata
 from pydantic import BaseModel, Field
 
 from .helpers import parse_nostr_private_key
@@ -54,7 +53,6 @@ class PayLink(BaseModel):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     username: str | None = None
     zaps: bool | None = None
-    domain: str | None = None
     webhook_url: str | None = None
     webhook_headers: str | None = None
     webhook_body: str | None = None
@@ -64,6 +62,8 @@ class PayLink(BaseModel):
     fiat_base_multiplier: int | None = None
 
     disposable: bool
+    # TODO deprecated, unused in the code, should be deleted from db.
+    domain: Optional[str] = None
 
     def lnurl(self, req: Request) -> str:
         url = req.url_for("lnurlp.api_lnurl_response", link_id=self.id)
@@ -73,14 +73,3 @@ class PayLink(BaseModel):
             # change url string scheme to http
             url_str = url_str.replace("https://", "http://")
         return lnurl_encode(url_str)
-
-    @property
-    def lnurlpay_metadata(self) -> LnurlPayMetadata:
-        if self.domain and self.username:
-            text = f"Payment to {self.username}"
-            identifier = f"{self.username}@{self.domain}"
-            metadata = [["text/plain", text], ["text/identifier", identifier]]
-        else:
-            metadata = [["text/plain", self.description]]
-
-        return LnurlPayMetadata(json.dumps(metadata))

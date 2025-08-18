@@ -1,3 +1,4 @@
+import json
 from http import HTTPStatus
 from typing import Optional
 
@@ -9,6 +10,7 @@ from lnurl import (
     LightningInvoice,
     LnurlErrorResponse,
     LnurlPayActionResponse,
+    LnurlPayMetadata,
     LnurlPayResponse,
     LnurlPaySuccessActionTag,
     Max144Str,
@@ -78,10 +80,6 @@ async def api_lnurl_callback(
             )
         )
 
-    # for lnaddress, we have to set this otherwise
-    # the metadata won't have the identifier
-    link.domain = request.url.netloc
-
     extra = {
         "tag": "lnurlp",
         "link": link.id,
@@ -99,11 +97,18 @@ async def api_lnurl_callback(
     if nostr:
         extra["nostr"] = nostr  # put it here for later publishing in tasks.py
 
-    if link.username and link.domain:
-        extra["lnaddress"] = f"{link.username}@{link.domain}"
+    if link.username:
+        identifier = f"{link.username}@{request.url.netloc}"
+        text = f"Payment to {link.username}"
+        _metadata = [["text/plain", text], ["text/identifier", identifier]]
+        extra["lnaddress"] = identifier
+    else:
+        _metadata = [["text/plain", link.description]]
+
+    metadata = LnurlPayMetadata(json.dumps(_metadata))
 
     # we take the zap request as the description instead of the metadata if present
-    unhashed_description = nostr.encode() if nostr else link.lnurlpay_metadata.encode()
+    unhashed_description = nostr.encode() if nostr else metadata.encode()
 
     payment = await create_invoice(
         wallet_id=link.wallet,
@@ -159,19 +164,20 @@ async def api_lnurl_response(
     if webhook_data:
         url = url.include_query_params(webhook_data=webhook_data)
 
-    link.domain = request.url.netloc
     callback_url = parse_obj_as(CallbackUrl, str(url))
+
+    if link.username:
+        identifier = f"{link.username}@{request.url.netloc}"
+        text = f"Payment to {link.username}"
+        metadata = [["text/plain", text], ["text/identifier", identifier]]
+    else:
+        metadata = [["text/plain", link.description]]
 
     res = LnurlPayResponse(
         callback=callback_url,
         minSendable=MilliSatoshi(round(link.min * rate) * 1000),
         maxSendable=MilliSatoshi(round(link.max * rate) * 1000),
-        metadata=link.lnurlpay_metadata,
-        # todo library bug should not be in issue to onot specify
-        payerData=None,
-        commentAllowed=None,
-        allowsNostr=None,
-        nostrPubkey=None,
+        metadata=LnurlPayMetadata(json.dumps(metadata)),
     )
 
     if link.comment_chars > 0:
