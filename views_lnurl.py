@@ -178,11 +178,6 @@ async def api_lnurl_response(
         minSendable=MilliSatoshi(round(link.min * rate) * 1000),
         maxSendable=MilliSatoshi(round(link.max * rate) * 1000),
         metadata=LnurlPayMetadata(json.dumps(metadata)),
-        # todo library bug should not be in issue to onot specify
-        payerData=None,
-        commentAllowed=None,
-        allowsNostr=None,
-        nostrPubkey=None,
     )
 
     if link.comment_chars > 0:
