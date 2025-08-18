@@ -92,6 +92,7 @@ window.app = Vue.createApp({
         show: false,
         fixedAmount: true,
         data: {
+          disposable: true,
           zaps: false
         }
       },
