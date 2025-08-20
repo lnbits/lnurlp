@@ -196,6 +196,7 @@
             type="number"
             :step="formDialog.data.currency && formDialog.data.currency !== 'satoshis' ? '0.01' : '1'"
             :label="formDialog.fixedAmount ? 'Amount *' : 'Min *'"
+            :hint="formDialog.data.currency && fiatRates[formDialog.data.currency] && formDialog.data.min ? `approx. ${parseInt(Math.round(formDialog.data.min * fiatRates[formDialog.data.currency]))} sat` : ''"
           ></q-input>
           <q-input
             v-if="!formDialog.fixedAmount"
@@ -205,8 +206,8 @@
             type="number"
             :step="formDialog.data.currency && formDialog.data.currency !== 'satoshis' ? '0.01' : '1'"
             label="Max *"
-          >
-          </q-input>
+            :hint="formDialog.data.currency && fiatRates[formDialog.data.currency] && formDialog.data.max ? `approx. ${parseInt(Math.round(formDialog.data.max * fiatRates[formDialog.data.currency]))} sat` : ''"
+          ></q-input>
         </div>
         <div class="row q-col-gutter-sm">
           <div class="col">
