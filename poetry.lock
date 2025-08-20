@@ -1655,14 +1655,14 @@ valkey = ["valkey (>=6)"]
 
 [[package]]
 name = "lnbits"
-version = "1.3.0rc3"
+version = "1.3.0rc4"
 description = "LNbits, free and open-source Lightning wallet and accounts system."
 optional = false
 python-versions = "<3.13,>=3.10"
 groups = ["main"]
 files = [
-    {file = "lnbits-1.3.0rc3-py3-none-any.whl", hash = "sha256:d3fc4f643314011a1b1050f84e16c540369d0ad2f3b290c72a617da479ed75c0"},
-    {file = "lnbits-1.3.0rc3.tar.gz", hash = "sha256:dcc3e58062353e2012b9535446f23ac7ea012e5c12813220cb6ac38a7b7a8eb3"},
+    {file = "lnbits-1.3.0rc4-py3-none-any.whl", hash = "sha256:eddff47480fa3160e0bd78bde28a73d216bebc741eed98cb054ba42fe4a068a8"},
+    {file = "lnbits-1.3.0rc4.tar.gz", hash = "sha256:9f9d32f8c717f4b151ab4f54776d314e07b409503a738b2fd6a835cd5a89237c"},
 ]
 
 [package.dependencies]
@@ -1683,7 +1683,7 @@ httpx = "0.27.0"
 itsdangerous = "2.2.0"
 jinja2 = "3.1.6"
 jsonpath-ng = ">=1.7.0,<2.0.0"
-lnurl = "0.7.2"
+lnurl = "0.7.3"
 loguru = "0.7.3"
 nostr-sdk = ">=0.42.1,<0.43.0"
 packaging = "25.0"
@@ -1716,14 +1716,14 @@ migration = ["psycopg2-binary (==2.9.10)"]
 
 [[package]]
 name = "lnurl"
-version = "0.7.2"
+version = "0.7.3"
 description = "LNURL implementation for Python."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "lnurl-0.7.2-py3-none-any.whl", hash = "sha256:4323ac398d49e5b883000c166b4c2448df2acad2eddca99f656c67f7b97cd80f"},
-    {file = "lnurl-0.7.2.tar.gz", hash = "sha256:9f0881cb5909512cadb35d238c27347d6a8afcec10b2b7aadd560083fd210c0b"},
+    {file = "lnurl-0.7.3-py3-none-any.whl", hash = "sha256:1a6796cb5124047e2d289ca8ba2015bbf62e3f78d717802205dc6e303e31898a"},
+    {file = "lnurl-0.7.3.tar.gz", hash = "sha256:b8e8036bc1d215d1d9b0cbb18b8d9b8d2e7e98850be1c98d33887e03c9f4b144"},
 ]
 
 [package.dependencies]
@@ -3661,5 +3661,5 @@ propcache = ">=0.2.1"
 
 [metadata]
 lock-version = "2.1"
-python-versions = "~3.12 | ~3.11"
-content-hash = "75afffd289b93f5d7faef35f9d6fdbfd84772dddba9e02ae4ee76cef4c429a0b"
+python-versions = "~3.12 | ~3.11 | ~3.10"
+content-hash = "c0ca281d7ccef9d43c50c20ae2bb0f627389b4901fa26fc021ef65a9c5ef64c6"
