@@ -167,7 +167,7 @@ window.app = Vue.createApp({
       const link = _.findWhere(this.payLinks, {id: linkId})
       if (link.currency) this.updateFiatRate(link.currency)
 
-      this.formDialog.data = _.clone(link._data)
+      this.formDialog.data = {...link}
       this.formDialog.show = true
       this.formDialog.fixedAmount =
         this.formDialog.data.min === this.formDialog.data.max
@@ -247,9 +247,7 @@ window.app = Vue.createApp({
       LNbits.api
         .request('GET', '/api/v1/rate/' + currency, null)
         .then(response => {
-          let rates = _.clone(this.fiatRates)
-          rates[currency] = response.data.rate
-          this.fiatRates = rates
+          this.fiatRates[currency] = response.data.rate
         })
         .catch(err => {
           LNbits.utils.notifyApiError(err)
