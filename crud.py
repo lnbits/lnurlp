@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import List, Optional, Union
 
 from lnbits.db import Database
 from lnbits.helpers import urlsafe_short_hash
@@ -31,7 +30,7 @@ async def delete_lnurlp_settings() -> None:
     await db.execute("DELETE FROM lnurlp.settings")
 
 
-async def get_pay_link_by_username(username: str) -> Optional[PayLink]:
+async def get_pay_link_by_username(username: str) -> PayLink | None:
     return await db.fetchone(
         "SELECT * FROM lnurlp.pay_links WHERE username = :username",
         {"username": username},
@@ -72,7 +71,7 @@ async def create_pay_link(data: CreatePayLinkData) -> PayLink:
     return link
 
 
-async def get_address_data(username: str) -> Optional[PayLink]:
+async def get_address_data(username: str) -> PayLink | None:
     return await db.fetchone(
         "SELECT * FROM lnurlp.pay_links WHERE username = :username",
         {"username": username},
@@ -80,7 +79,7 @@ async def get_address_data(username: str) -> Optional[PayLink]:
     )
 
 
-async def get_pay_link(link_id: str) -> Optional[PayLink]:
+async def get_pay_link(link_id: str) -> PayLink | None:
     return await db.fetchone(
         "SELECT * FROM lnurlp.pay_links WHERE id = :id",
         {"id": link_id},
@@ -88,7 +87,7 @@ async def get_pay_link(link_id: str) -> Optional[PayLink]:
     )
 
 
-async def get_pay_links(wallet_ids: Union[str, List[str]]) -> List[PayLink]:
+async def get_pay_links(wallet_ids: str | list[str]) -> list[PayLink]:
     if isinstance(wallet_ids, str):
         wallet_ids = [wallet_ids]
     q = ",".join([f"'{wallet_id}'" for wallet_id in wallet_ids])

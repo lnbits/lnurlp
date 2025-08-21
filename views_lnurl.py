@@ -1,6 +1,5 @@
 import json
 from http import HTTPStatus
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from lnbits.core.services import create_invoice
@@ -151,7 +150,7 @@ async def api_lnurl_callback(
     name="lnurlp.api_lnurl_response",
 )
 async def api_lnurl_response(
-    request: Request, link_id: str, webhook_data: Optional[str] = Query(None)
+    request: Request, link_id: str, webhook_data: str | None = Query(None)
 ) -> LnurlPayResponse:
     link = await get_pay_link(link_id)
     if not link:
@@ -188,19 +187,22 @@ async def api_lnurl_response(
     )
 
     if link.comment_chars > 0:
-        res.comment_allowed = link.comment_chars
+        res.commentAllowed = link.comment_chars
 
     if link.zaps:
         settings = await get_or_create_lnurlp_settings()
-        res.allows_nostr = True
-        res.nostr_pubkey = settings.public_key
+        res.allowsNostr = True
+        res.nostrPubkey = settings.public_key
 
     return res
 
 
 # redirected from /.well-known/lnurlp
 @lnurlp_lnurl_router.get("/api/v1/well-known/{username}")
-async def lnaddress(username: str, request: Request) -> LnurlPayResponse:
+async def lnaddress(
+    username: str, request: Request
+) -> LnurlPayResponse | LnurlErrorResponse:
     address_data = await get_address_data(username)
-    assert address_data, "User not found"
-    return await api_lnurl_response(request, address_data.id, webhook_data=None)
+    if not address_data:
+        return LnurlErrorResponse(reason="Lightning address not found.")
+    return await api_lnurl_response(request, address_data.id)

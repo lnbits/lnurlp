@@ -1,6 +1,5 @@
 import base64
 import secrets
-from typing import Optional
 
 import secp256k1
 from cffi import FFI
@@ -40,7 +39,7 @@ class PublicKey:
 
 
 class PrivateKey:
-    def __init__(self, raw_secret: Optional[bytes] = None) -> None:
+    def __init__(self, raw_secret: bytes | None = None) -> None:
         if raw_secret is not None:
             self.raw_secret = raw_secret
         else:
@@ -127,9 +126,7 @@ class PrivateKey:
         return self.raw_secret == other.raw_secret
 
 
-def mine_vanity_key(
-    prefix: Optional[str] = None, suffix: Optional[str] = None
-) -> PrivateKey:
+def mine_vanity_key(prefix: str | None = None, suffix: str | None = None) -> PrivateKey:
     if prefix is None and suffix is None:
         raise ValueError("Expected at least one of 'prefix' or 'suffix' arguments")
 

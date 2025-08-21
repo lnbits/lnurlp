@@ -3,7 +3,6 @@ import time
 from dataclasses import dataclass, field
 from enum import IntEnum
 from hashlib import sha256
-from typing import List, Optional
 
 from secp256k1 import PublicKey
 
@@ -21,14 +20,14 @@ class EventKind(IntEnum):
 
 @dataclass
 class Event:
-    content: Optional[str] = None
-    public_key: Optional[str] = None
-    created_at: Optional[int] = None
+    content: str | None = None
+    public_key: str | None = None
+    created_at: int | None = None
     kind: int = EventKind.TEXT_NOTE
-    tags: List[List[str]] = field(
+    tags: list[list[str]] = field(
         default_factory=list
     )  # Dataclasses require special handling when the default value is a mutable type
-    signature: Optional[str] = None
+    signature: str | None = None
 
     def __post_init__(self):
         if self.content is not None and not isinstance(self.content, str):
@@ -40,7 +39,7 @@ class Event:
 
     @staticmethod
     def serialize(
-        public_key: str, created_at: int, kind: int, tags: List[List[str]], content: str
+        public_key: str, created_at: int, kind: int, tags: list[list[str]], content: str
     ) -> bytes:
         data = [0, public_key, created_at, kind, tags, content]
         data_str = json.dumps(data, separators=(",", ":"), ensure_ascii=False)
@@ -48,7 +47,7 @@ class Event:
 
     @staticmethod
     def compute_id(
-        public_key: str, created_at: int, kind: int, tags: List[List[str]], content: str
+        public_key: str, created_at: int, kind: int, tags: list[list[str]], content: str
     ):
         return sha256(
             Event.serialize(public_key, created_at, kind, tags, content)
@@ -101,9 +100,9 @@ class Event:
 
 @dataclass
 class EncryptedDirectMessage(Event):
-    recipient_pubkey: Optional[str] = None
-    cleartext_content: Optional[str] = None
-    reference_event_id: Optional[str] = None
+    recipient_pubkey: str | None = None
+    cleartext_content: str | None = None
+    reference_event_id: str | None = None
 
     def __post_init__(self):
         if self.content is not None:
