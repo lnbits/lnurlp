@@ -1,6 +1,5 @@
 import json
 from http import HTTPStatus
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from lnbits.core.services import create_invoice
@@ -151,7 +150,7 @@ async def api_lnurl_callback(
     name="lnurlp.api_lnurl_response",
 )
 async def api_lnurl_response(
-    request: Request, link_id: str, webhook_data: Optional[str] = Query(None)
+    request: Request, link_id: str, webhook_data: str | None = Query(None)
 ) -> LnurlPayResponse:
     link = await get_pay_link(link_id)
     if not link:

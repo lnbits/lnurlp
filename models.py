@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Optional
 
 from fastapi import Query
 from pydantic import BaseModel, Field
@@ -62,4 +61,4 @@ class PayLink(BaseModel):
     disposable: bool
 
     # TODO deprecated, unused in the code, should be deleted from db.
-    domain: Optional[str] = None
+    domain: str | None = None

@@ -1,7 +1,6 @@
 import json
 import re
 from http import HTTPStatus
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from lnbits.core.crud import get_user, get_wallet
@@ -79,7 +78,7 @@ async def check_username_exists(username: str):
 @lnurlp_api_router.put("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_link_create_or_update(
     data: CreatePayLinkData,
-    link_id: Optional[str] = None,
+    link_id: str | None = None,
     key_info: WalletTypeInfo = Depends(require_admin_key),
 ) -> PayLink:
     if data.min > data.max:

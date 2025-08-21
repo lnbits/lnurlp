@@ -1,5 +1,4 @@
 import asyncio
-from typing import List
 
 from fastapi import APIRouter
 
@@ -29,7 +28,7 @@ lnurlp_ext.include_router(lnurlp_generic_router)
 lnurlp_ext.include_router(lnurlp_api_router)
 lnurlp_ext.include_router(lnurlp_lnurl_router)
 
-scheduled_tasks: List[asyncio.Task] = []
+scheduled_tasks: list[asyncio.Task] = []
 
 
 def lnurlp_stop():
@@ -45,10 +44,10 @@ def lnurlp_start():
 
 
 __all__ = [
-    "lnurlp_ext",
-    "lnurlp_static_files",
-    "lnurlp_redirect_paths",
-    "lnurlp_stop",
-    "lnurlp_start",
     "db",
+    "lnurlp_ext",
+    "lnurlp_redirect_paths",
+    "lnurlp_start",
+    "lnurlp_static_files",
+    "lnurlp_stop",
 ]
