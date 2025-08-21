@@ -200,7 +200,10 @@ async def api_lnurl_response(
 
 # redirected from /.well-known/lnurlp
 @lnurlp_lnurl_router.get("/api/v1/well-known/{username}")
-async def lnaddress(username: str, request: Request) -> LnurlPayResponse:
+async def lnaddress(
+    username: str, request: Request
+) -> LnurlPayResponse | LnurlErrorResponse:
     address_data = await get_address_data(username)
-    assert address_data, "User not found"
+    if not address_data:
+        return LnurlErrorResponse(reason="Lightning address not found.")
     return await api_lnurl_response(request, address_data.id)
