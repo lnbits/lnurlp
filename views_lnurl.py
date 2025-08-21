@@ -188,12 +188,12 @@ async def api_lnurl_response(
     )
 
     if link.comment_chars > 0:
-        res.comment_allowed = link.comment_chars
+        res.commentAllowed = link.comment_chars
 
     if link.zaps:
         settings = await get_or_create_lnurlp_settings()
-        res.allows_nostr = True
-        res.nostr_pubkey = settings.public_key
+        res.allowsNostr = True
+        res.nostrPubkey = settings.public_key
 
     return res
 
@@ -203,4 +203,4 @@ async def api_lnurl_response(
 async def lnaddress(username: str, request: Request) -> LnurlPayResponse:
     address_data = await get_address_data(username)
     assert address_data, "User not found"
-    return await api_lnurl_response(request, address_data.id, webhook_data=None)
+    return await api_lnurl_response(request, address_data.id)
