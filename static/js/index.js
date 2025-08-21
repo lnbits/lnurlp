@@ -11,6 +11,11 @@ const mapPayLink = obj => {
   obj._data = _.clone(obj)
   obj.created_at = LNbits.utils.formatDateString(obj.created_at)
   obj.updated_at = LNbits.utils.formatDateString(obj.updated_at)
+  if (obj.currency) {
+    obj.min = obj.min / obj.fiat_base_multiplier
+    obj.max = obj.max / obj.fiat_base_multiplier
+  }
+
   obj.print_url = [locationPath, 'print/', obj.id].join('')
   obj.pay_url = [locationPath, 'link/', obj.id].join('')
   return obj
@@ -119,6 +124,7 @@ window.app = Vue.createApp({
         )
         .then(response => {
           this.payLinks = response.data.map(mapPayLink)
+          console.log('Pay links:', this.payLinks)
         })
         .catch(err => {
           LNbits.utils.notifyApiError(err)
@@ -161,7 +167,7 @@ window.app = Vue.createApp({
       const link = _.findWhere(this.payLinks, {id: linkId})
       if (link.currency) this.updateFiatRate(link.currency)
 
-      this.formDialog.data = _.clone(link._data)
+      this.formDialog.data = {...link}
       this.formDialog.show = true
       this.formDialog.fixedAmount =
         this.formDialog.data.min === this.formDialog.data.max
@@ -241,9 +247,7 @@ window.app = Vue.createApp({
       LNbits.api
         .request('GET', '/api/v1/rate/' + currency, null)
         .then(response => {
-          let rates = _.clone(this.fiatRates)
-          rates[currency] = response.data.rate
-          this.fiatRates = rates
+          this.fiatRates[currency] = response.data.rate
         })
         .catch(err => {
           LNbits.utils.notifyApiError(err)

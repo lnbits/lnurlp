@@ -52,7 +52,9 @@ async def api_lnurl_callback(
     maximum = link.max
 
     rate = await get_fiat_rate_satoshis(link.currency) if link.currency else 1
-    if link.currency:
+    if link.currency and link.fiat_base_multiplier:
+        link.min = link.min / link.fiat_base_multiplier
+        link.max = link.max / link.fiat_base_multiplier
         # allow some fluctuation (as the fiat price may have changed between the calls)
         minimum = rate * 995 * link.min
         maximum = rate * 1010 * link.max
@@ -160,6 +162,11 @@ async def api_lnurl_response(
     await update_pay_link(link)
 
     rate = await get_fiat_rate_satoshis(link.currency) if link.currency else 1
+
+    if link.currency and link.fiat_base_multiplier:
+        link.min = link.min / link.fiat_base_multiplier
+        link.max = link.max / link.fiat_base_multiplier
+
     url = request.url_for("lnurlp.api_lnurl_callback", link_id=link.id)
     if webhook_data:
         url = url.include_query_params(webhook_data=webhook_data)
