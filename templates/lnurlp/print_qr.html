@@ -1,7 +1,7 @@
 {% extends "print.html" %} {% block page %}
 <div class="row justify-center">
   <div class="qr">
-    <lnbits-qrcode :value="lnurl"></lnbits-qrcode>
+    <lnbits-qrcode :value="lnurl" :show-buttons="false"></lnbits-qrcode>
   </div>
 </div>
 {% endblock %} {% block styles %}
@@ -14,17 +14,18 @@
 <script>
   window.app = Vue.createApp({
     el: '#vue',
+    data() {
+      return {
+        lnurl: '',
+        width: window.innerWidth * 0.5
+      }
+    },
     created() {
       const url = window.location.origin + '/lnurlp/{{ link_id }}'
       const bytes = new TextEncoder().encode(url)
       const bech32 = NostrTools.nip19.encodeBytes('lnurl', bytes)
       this.lnurl = `lightning:${bech32.toUpperCase()}`
       window.print()
-    },
-    data() {
-      return {
-        width: window.innerWidth * 0.5
-      }
     }
   })
 </script>
