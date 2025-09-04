@@ -2,38 +2,9 @@
 <div class="row q-col-gutter-md justify-center">
   <div class="col-12 col-sm-6 col-md-5 col-lg-4">
     <q-card class="q-pa-lg">
-      <q-card-section>
-        <q-tabs
-          v-model="tab"
-          dense
-          class="text-grey"
-          active-color="primary"
-          indicator-color="primary"
-          align="justify"
-          narrow-indicator
-          inline-label
-        >
-          <q-tab name="bech32" icon="qr_code" label="bech32"></q-tab>
-          <q-tab name="lud17" icon="link" label="url (lud17)"></q-tab>
-        </q-tabs>
-      </q-card-section>
       <q-card-section class="q-pa-none">
         <div class="text-center">
-          <a class="text-secondary" href="lnurl">
-            <lnbits-qrcode :value="lnurl"></lnbits-qrcode>
-          </a>
-        </div>
-        <div class="row q-mt-lg q-gutter-sm">
-          <q-btn outline color="grey" @click="copyText(lnurl)"
-            >Copy LNURL</q-btn
-          >
-          <q-btn
-            outline
-            color="grey"
-            icon="nfc"
-            @click="writeNfcTag(lnurl)"
-            :disable="nfcTagWriting"
-          ></q-btn>
+          <lnbits-qrcode-lnurl :url="url" :nfc="true"></lnbits-qrcode-lnurl>
         </div>
       </q-card-section>
     </q-card>
@@ -58,29 +29,8 @@
     mixins: [window.windowMixin],
     data() {
       return {
-        tab: 'bech32',
-        url: window.location.origin + '/lnurlp/{{ link_id }}',
-        lnurl: ''
+        url: window.location.origin + '/lnurlp/{{ link_id }}'
       }
-    },
-    methods: {
-      setBech32() {
-        const bytes = new TextEncoder().encode(this.url)
-        const bech32 = NostrTools.nip19.encodeBytes('lnurl', bytes)
-        this.lnurl = `lightning:${bech32.toUpperCase()}`
-      }
-    },
-    watch: {
-      tab(value) {
-        if (value == 'bech32') {
-          this.setBech32()
-        } else if (value == 'lud17') {
-          this.lnurl = this.url.replace('https://', 'lnurlp://')
-        }
-      }
-    },
-    created() {
-      this.setBech32()
     }
   })
 </script>

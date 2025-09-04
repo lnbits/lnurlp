@@ -31,9 +31,7 @@ window.app = Vue.createApp({
   },
   data() {
     return {
-      tab: 'bech32',
-      url: window.location.origin + '/lnurlp/api/v1/lnurl/',
-      lnurl: '',
+      activeUrl: '',
       settings: [
         {
           type: 'str',
@@ -108,13 +106,6 @@ window.app = Vue.createApp({
     }
   },
   methods: {
-    setBech32() {
-      const url =
-        window.location.origin + '/lnurlp/' + this.qrCodeDialog.data.id
-      const bytes = new TextEncoder().encode(url)
-      const bech32 = NostrTools.nip19.encodeBytes('lnurl', bytes)
-      this.lnurl = `lightning:${bech32.toUpperCase()}`
-    },
     getPayLinks() {
       LNbits.api
         .request(
@@ -124,11 +115,8 @@ window.app = Vue.createApp({
         )
         .then(response => {
           this.payLinks = response.data.map(mapPayLink)
-          console.log('Pay links:', this.payLinks)
         })
-        .catch(err => {
-          LNbits.utils.notifyApiError(err)
-        })
+        .catch(LNbits.utils.notifyApiError)
     },
     closeFormDialog() {
       this.resetFormData()
@@ -160,7 +148,7 @@ window.app = Vue.createApp({
         print_url: link.print_url,
         username: link.username
       }
-      this.setBech32()
+      this.activeUrl = window.location.origin + '/lnurlp/' + link.id
       this.qrCodeDialog.show = true
     },
     openUpdateDialog(linkId) {
@@ -252,53 +240,6 @@ window.app = Vue.createApp({
         .catch(err => {
           LNbits.utils.notifyApiError(err)
         })
-    },
-    writeNfcTag: async function (lnurl) {
-      try {
-        if (typeof NDEFReader == 'undefined') {
-          throw {
-            toString: function () {
-              return 'NFC not supported on this device or browser.'
-            }
-          }
-        }
-
-        const ndef = new NDEFReader()
-
-        this.nfcTagWriting = true
-        this.$q.notify({
-          message: 'Tap your NFC tag to write the LNURL-pay link to it.'
-        })
-
-        await ndef.write({
-          records: [{recordType: 'url', data: 'lightning:' + lnurl, lang: 'en'}]
-        })
-
-        this.nfcTagWriting = false
-        this.$q.notify({
-          type: 'positive',
-          message: 'NFC tag written successfully.'
-        })
-      } catch (error) {
-        this.nfcTagWriting = false
-        this.$q.notify({
-          type: 'negative',
-          message: error
-            ? error.toString()
-            : 'An unexpected error has occurred.'
-        })
-      }
-    }
-  },
-  watch: {
-    tab(value) {
-      if (value == 'bech32') {
-        this.setBech32()
-      } else if (value == 'lud17') {
-        const url =
-          window.location.origin + '/lnurlp/' + this.qrCodeDialog.data.id
-        this.lnurl = url.replace('https://', 'lnurlp://')
-      }
     }
   },
   created() {
