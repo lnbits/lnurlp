@@ -81,7 +81,7 @@ async def send_webhook(payment: Payment, pay_link: PayLink, zap_receipt=None):
                 timeout=6,
             )
             await mark_webhook_sent(
-                payment.payment_hash,
+                payment.checking_id,
                 r.status_code,
                 r.is_success,
                 r.reason_phrase,
@@ -90,14 +90,14 @@ async def send_webhook(payment: Payment, pay_link: PayLink, zap_receipt=None):
         except Exception as exc:
             logger.error(exc)
             await mark_webhook_sent(
-                payment.payment_hash, -1, False, "Unexpected Error", str(exc)
+                payment.checking_id, -1, False, "Unexpected Error", str(exc)
             )
 
 
 async def mark_webhook_sent(
-    payment_hash: str, status: int, is_success: bool, reason_phrase="", text=""
+    checking_id: str, status: int, is_success: bool, reason_phrase="", text=""
 ) -> None:
-    payment = await get_payment(payment_hash)
+    payment = await get_payment(checking_id)
     extra = payment.extra or {}
     extra["wh_status"] = status  # keep for backwards compability
     extra["wh_success"] = is_success
