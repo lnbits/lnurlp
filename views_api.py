@@ -39,6 +39,8 @@ async def api_links(
         wallet_ids = user.wallet_ids if user else []
 
     links = await get_pay_links(wallet_ids)
+    for link in links:
+        link.lnurl = lnurl_encode_link_id(req=None, link_id=link.id)
     return links
 
 
