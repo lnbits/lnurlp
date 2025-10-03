@@ -18,4 +18,4 @@ def lnurl_encode_link_id(req: Request, link_id: str) -> str:
     if url.netloc.endswith(".onion"):
         # change url string scheme to http
         url_str = url_str.replace("https://", "http://")
-    return lnurl_encode(url_str)
+    return str(lnurl_encode(url_str).bech32)  # type: ignore
