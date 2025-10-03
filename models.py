@@ -48,7 +48,7 @@ class PayLink(BaseModel):
     comment_chars: int
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    lnurl: str | None = None
+    lnurl: str | None = Field(default=None, no_database=True)
     username: str | None = None
     zaps: bool | None = None
     webhook_url: str | None = None
