@@ -30,6 +30,7 @@ lnurlp_api_router = APIRouter()
 
 @lnurlp_api_router.get("/api/v1/links", status_code=HTTPStatus.OK)
 async def api_links(
+    req: Request,
     key_info: WalletTypeInfo = Depends(require_invoice_key),
     all_wallets: bool = Query(False),
 ) -> list[PayLink]:
@@ -40,7 +41,7 @@ async def api_links(
 
     links = await get_pay_links(wallet_ids)
     for link in links:
-        link.lnurl = lnurl_encode_link_id(req=None, link_id=link.id)
+        link.lnurl = lnurl_encode_link_id(req=req, link_id=link.id)
     return links
 
 
