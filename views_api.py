@@ -2,7 +2,7 @@ import json
 import re
 from http import HTTPStatus
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from lnbits.core.crud import get_user, get_wallet
 from lnbits.core.models import SimpleStatus, WalletTypeInfo
 from lnbits.decorators import (
@@ -22,7 +22,7 @@ from .crud import (
     update_lnurlp_settings,
     update_pay_link,
 )
-from .helpers import parse_nostr_private_key
+from .helpers import lnurl_encode_link_id, parse_nostr_private_key
 from .models import CreatePayLinkData, LnurlpSettings, PayLink
 
 lnurlp_api_router = APIRouter()
@@ -44,7 +44,7 @@ async def api_links(
 
 @lnurlp_api_router.get("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_link_retrieve(
-    link_id: str, key_info: WalletTypeInfo = Depends(require_invoice_key)
+    req: Request, link_id: str, key_info: WalletTypeInfo = Depends(require_invoice_key)
 ) -> PayLink:
     link = await get_pay_link(link_id)
 
@@ -62,6 +62,8 @@ async def api_link_retrieve(
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
+
+    link.lnurl = lnurl_encode_link_id(req, link.id)
     return link
 
 
@@ -77,6 +79,7 @@ async def check_username_exists(username: str):
 @lnurlp_api_router.post("/api/v1/links", status_code=HTTPStatus.CREATED)
 @lnurlp_api_router.put("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
 async def api_link_create_or_update(
+    req: Request,
     data: CreatePayLinkData,
     link_id: str | None = None,
     key_info: WalletTypeInfo = Depends(require_admin_key),
@@ -172,6 +175,7 @@ async def api_link_create_or_update(
 
         link = await create_pay_link(data)
 
+    link.lnurl = lnurl_encode_link_id(req, link.id)
     return link
 
 
