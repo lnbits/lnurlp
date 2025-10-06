@@ -48,6 +48,16 @@ class PayLink(BaseModel):
     comment_chars: int
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    lnurl: str | None = Field(
+        default=None,
+        no_database=True,
+        deprecated=True,
+        description=(
+            "Deprecated: Instead of using this bech32 encoded string, dynamically "
+            "generate your own static link (lud17/bech32) on the client side. "
+            "Example: lnurlp://${window.location.hostname}/lnurlp/${paylink_id}"
+        ),
+    )
     username: str | None = None
     zaps: bool | None = None
     webhook_url: str | None = None
