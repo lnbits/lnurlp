@@ -35,6 +35,7 @@ class CreatePayLinkData(BaseModel):
     username: str | None = Query(None)
     zaps: bool | None = Query(False)
     disposable: bool | None = Query(True)
+    verify: bool | None = Query(False)
 
 
 class PayLink(BaseModel):
@@ -69,6 +70,7 @@ class PayLink(BaseModel):
     fiat_base_multiplier: int | None = None
 
     disposable: bool
+    verify: bool
 
     # TODO deprecated, unused in the code, should be deleted from db.
     domain: str | None = None

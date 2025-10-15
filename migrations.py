@@ -218,3 +218,9 @@ async def m012_add_disposable(db: Connection):
     await db.execute(
         "ALTER TABLE lnurlp.pay_links ADD COLUMN disposable BOOLEAN DEFAULT TRUE"
     )
+
+
+async def m013_add_verify(db: Connection):
+    await db.execute(
+        "ALTER TABLE lnurlp.pay_links ADD COLUMN verify BOOLEAN DEFAULT FALSE"
+    )
