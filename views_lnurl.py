@@ -13,6 +13,7 @@ from lnurl import (
     LnurlPayMetadata,
     LnurlPayResponse,
     LnurlPaySuccessActionTag,
+    LnurlPayVerifyResponse,
     Max144Str,
     MessageAction,
     MilliSatoshi,
@@ -219,25 +220,20 @@ async def lnaddress(
 
 
 # LUD-21. verify base spec. https://github.com/lnurl/luds/blob/luds/21.md
-# TODO: update lnurl lib to use updated `LnurlSuccessResponse` instead of dict
 @lnurlp_lnurl_router.get(
     "/api/v1/lnurl/verify/{payment_hash}",
     name="lnurlp.api_lnurl_verify",
 )
-async def api_lnurl_verify(payment_hash: str) -> LnurlErrorResponse | dict:
+async def api_lnurl_verify(
+    payment_hash: str,
+) -> LnurlErrorResponse | LnurlPayVerifyResponse:
     payment = await get_standalone_payment(payment_hash, incoming=True)
     if not payment:
         return LnurlErrorResponse(reason="Not found")
+    invoice = parse_obj_as(LightningInvoice, LightningInvoice(payment.bolt11))
     if payment.success:
-        return {
-            "status": "OK",
-            "settled": True,
-            "preimage": payment.preimage,
-            "pr": payment.bolt11,
-        }
+        return LnurlPayVerifyResponse(
+            settled=True, preimage=payment.preimage, pr=invoice
+        )
     else:
-        return {
-            "status": "OK",
-            "settled": False,
-            "pr": payment.bolt11,
-        }
+        return LnurlPayVerifyResponse(settled=False, pr=invoice)
