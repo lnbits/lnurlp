@@ -2,6 +2,7 @@ import json
 from http import HTTPStatus
 
 from fastapi import APIRouter, HTTPException, Query, Request
+from lnbits.core.crud import get_standalone_payment
 from lnbits.core.services import create_invoice
 from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
 from lnurl import (
@@ -12,6 +13,7 @@ from lnurl import (
     LnurlPayMetadata,
     LnurlPayResponse,
     LnurlPaySuccessActionTag,
+    LnurlPayVerifyResponse,
     Max144Str,
     MessageAction,
     MilliSatoshi,
@@ -120,13 +122,21 @@ async def api_lnurl_callback(
     )
     invoice = parse_obj_as(LightningInvoice, LightningInvoice(payment.bolt11))
 
+    verify: CallbackUrl | None = None
+
+    if link.verify:
+        verify_url = request.url_for(
+            "lnurlp.api_lnurl_verify", payment_hash=payment.payment_hash
+        )
+        verify = parse_obj_as(CallbackUrl, str(verify_url))
+
     if link.success_url:
         url = parse_obj_as(CallbackUrl, str(link.success_url))
         text = link.success_text or f"Link to {link.success_url}"
         desc = parse_obj_as(Max144Str, text)
         action = UrlAction(tag=LnurlPaySuccessActionTag.url, url=url, description=desc)
         return LnurlPayActionResponse(
-            pr=invoice, successAction=action, disposable=link.disposable
+            pr=invoice, successAction=action, disposable=link.disposable, verify=verify
         )
 
     if link.success_text:
@@ -135,9 +145,10 @@ async def api_lnurl_callback(
             pr=invoice,
             successAction=MessageAction(message=message),
             disposable=link.disposable,
+            verify=verify,
         )
 
-    return LnurlPayActionResponse(pr=invoice, disposable=link.disposable)
+    return LnurlPayActionResponse(pr=invoice, disposable=link.disposable, verify=verify)
 
 
 @lnurlp_lnurl_router.get(
@@ -206,3 +217,23 @@ async def lnaddress(
     if not address_data:
         return LnurlErrorResponse(reason="Lightning address not found.")
     return await api_lnurl_response(request, address_data.id)
+
+
+# LUD-21. verify base spec. https://github.com/lnurl/luds/blob/luds/21.md
+@lnurlp_lnurl_router.get(
+    "/api/v1/lnurl/verify/{payment_hash}",
+    name="lnurlp.api_lnurl_verify",
+)
+async def api_lnurl_verify(
+    payment_hash: str,
+) -> LnurlErrorResponse | LnurlPayVerifyResponse:
+    payment = await get_standalone_payment(payment_hash, incoming=True)
+    if not payment:
+        return LnurlErrorResponse(reason="Not found")
+    invoice = parse_obj_as(LightningInvoice, LightningInvoice(payment.bolt11))
+    if payment.success:
+        return LnurlPayVerifyResponse(
+            settled=True, preimage=payment.preimage, pr=invoice
+        )
+    else:
+        return LnurlPayVerifyResponse(settled=False, pr=invoice)

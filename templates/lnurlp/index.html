@@ -249,6 +249,19 @@
                   />
                 </div>
               </div>
+              <h5 class="text-caption q-mt-sm q-mb-none">
+                LUD-21: verify base spec.
+              </h5>
+              <div class="row">
+                <div class="col-12">
+                  <q-checkbox
+                    dense
+                    :toggle-indeterminate="false"
+                    v-model="formDialog.data.verify"
+                    label="If enabled, a verify URL will be added to LnurlPayActionResponse."
+                  />
+                </div>
+              </div>
               <h5 class="text-caption q-mt-sm q-mb-none">LNURL</h5>
               <div class="row">
                 <div class="col-12">
