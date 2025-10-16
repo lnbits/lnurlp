@@ -41,7 +41,7 @@ This new version of the extension will give you the option to add a Lightning Ad
 
 - Open your LNbits instance as super admin (not as a regular user. You will find the SuperUser-ID in your server logs on restart of LNbits. Use that to bookmark and manage LNbits from there in the future.)
   Now lets install the new version of a given extension like extensively [described in this guide](https://github.com/lnbits/lnbits/blob/main/docs/guide/extension-install.md#install-new-extension). In short:
-- Go to "Mange extensions", click on "ALL", search for e.g. LNURLp, click on "Manage"
+- Go to "Manage extensions", click on "ALL", search for e.g. LNURLp, click on "Manage"
 - Open the details of the extension and click on version 0.2.1, click "Install". You´re done!
 
 [![lnurl-p-1.jpg](https://i.postimg.cc/fTwDWD17/lnurl-p-1.jpg)](https://postimg.cc/xqFWtDfq)
