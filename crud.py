@@ -2,9 +2,9 @@ from datetime import datetime, timezone
 
 from lnbits.db import Database
 from lnbits.helpers import urlsafe_short_hash
+from pynostr.key import PrivateKey
 
 from .models import CreatePayLinkData, LnurlpSettings, PayLink
-from .nostr.key import PrivateKey
 
 db = Database("ext_lnurlp")
 

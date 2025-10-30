@@ -1,7 +1,6 @@
 from fastapi import Request
 from lnurl import encode as lnurl_encode
-
-from .nostr.key import PrivateKey
+from pynostr.key import PrivateKey
 
 
 def parse_nostr_private_key(key: str) -> PrivateKey:
