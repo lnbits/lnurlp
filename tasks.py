@@ -7,10 +7,10 @@ from lnbits.core.crud import get_payment, update_payment
 from lnbits.core.models import Payment
 from lnbits.tasks import register_invoice_listener
 from loguru import logger
+from pynostr.event import Event
 
 from .crud import get_or_create_lnurlp_settings, get_pay_link
 from .models import PayLink
-from .nostr.event import Event
 
 
 async def wait_for_paid_invoices():
@@ -136,7 +136,7 @@ async def send_zap(payment: Payment):
     )
 
     settings = await get_or_create_lnurlp_settings()
-    settings.private_key.sign_event(zap_receipt)
+    zap_receipt.sign(settings.private_key.hex())
 
     async def send_to_relay(relay_url: str, event_message: str):
         """Helper function to send an event to a single relay."""

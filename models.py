@@ -2,9 +2,9 @@ from datetime import datetime, timezone
 
 from fastapi import Query
 from pydantic import BaseModel, Field
+from pynostr.key import PrivateKey
 
 from .helpers import parse_nostr_private_key
-from .nostr.key import PrivateKey
 
 
 class LnurlpSettings(BaseModel):
