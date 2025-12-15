@@ -120,7 +120,7 @@ async def send_zap(payment: Payment):
         return res[0] if res else None
 
     tags = []
-    for t in ["p", "e"]:
+    for t in ["p", "e", "a"]:
         tag = get_tag(event_json, t)
         if tag:
             tags.append([t, tag[0]])
