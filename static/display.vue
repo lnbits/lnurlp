@@ -59,6 +59,7 @@
                 </q-card-section>
               </q-card>
             </q-expansion-item>
+          </q-list>
         </q-card-section>
       </q-card>
     </div>

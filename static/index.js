@@ -2,7 +2,7 @@ window.PageLnurlp = {
   template: '#page-lnurlp',
   computed: {
     baseUrl() {
-        return window.location.origin + '/lnurlp/api/v1/links'
+      return window.location.origin + '/lnurlp/api/v1/links'
     },
     endpoint() {
       return `/lnurlp/api/v1/settings?usr=${this.g.user.id}`
