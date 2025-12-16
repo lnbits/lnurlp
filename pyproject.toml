@@ -10,8 +10,8 @@ dependencies = ["lnbits>1"]
 [tool.poetry]
 package-mode = false
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "black>=24.3.0",
     "pytest-asyncio>=0.21.0",
     "pytest>=7.3.2",
@@ -34,14 +34,6 @@ warn_untyped_fields = true
 [[tool.mypy.overrides]]
 module = [
   "lnbits.*",
-  "lnurl.*",
-  "loguru.*",
-  "fastapi.*",
-  "pydantic.*",
-  "pyqrcode.*",
-  "shortuuid.*",
-  "httpx.*",
-  "websocket.*",
   "pynostr.*",
 ]
 ignore_missing_imports = "True"
