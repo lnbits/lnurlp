@@ -659,15 +659,6 @@
             "
             ><q-tooltip>Copy sharable link</q-tooltip>
           </q-btn>
-          <q-btn
-            outline
-            color="grey"
-            icon="print"
-            type="a"
-            :href="qrCodeDialog.data.print_url"
-            target="_blank"
-            ><q-tooltip>Print</q-tooltip></q-btn
-          >
           <q-btn v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
         </div>
       </q-card>
