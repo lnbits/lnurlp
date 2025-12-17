@@ -1,31 +1,10 @@
-/* globals Quasar, Vue, _, VueQrcode, windowMixin, LNbits, LOCALE */
-
-const locationPath = [
-  window.location.protocol,
-  '//',
-  window.location.host,
-  window.location.pathname
-].join('')
-
-const mapPayLink = obj => {
-  obj._data = _.clone(obj)
-  obj.created_at = LNbits.utils.formatDateString(obj.created_at)
-  obj.updated_at = LNbits.utils.formatDateString(obj.updated_at)
-  if (obj.currency) {
-    obj.min = obj.min / obj.fiat_base_multiplier
-    obj.max = obj.max / obj.fiat_base_multiplier
-  }
-
-  obj.print_url = [locationPath, 'print/', obj.id].join('')
-  obj.pay_url = [locationPath, 'link/', obj.id].join('')
-  return obj
-}
-
-window.app = Vue.createApp({
-  el: '#vue',
-  mixins: [window.windowMixin],
+window.PageLnurlp = {
+  template: '#page-lnurlp',
   computed: {
-    endpoint: function () {
+    baseUrl() {
+      return window.location.origin + '/lnurlp/api/v1/links'
+    },
+    endpoint() {
       return `/lnurlp/api/v1/settings?usr=${this.g.user.id}`
     }
   },
@@ -40,7 +19,6 @@ window.app = Vue.createApp({
         }
       ],
       domain: window.location.host,
-      currencies: [],
       fiatRates: {},
       payLinks: [],
       payLinksTable: {
@@ -106,6 +84,24 @@ window.app = Vue.createApp({
     }
   },
   methods: {
+    mapPayLink(obj) {
+      const locationPath = [
+        window.location.protocol,
+        '//',
+        window.location.host,
+        window.location.pathname
+      ].join('')
+      obj._data = _.clone(obj)
+      obj.created_at = LNbits.utils.formatDate(obj.created_at)
+      obj.updated_at = LNbits.utils.formatDate(obj.updated_at)
+      if (obj.currency) {
+        obj.min = obj.min / obj.fiat_base_multiplier
+        obj.max = obj.max / obj.fiat_base_multiplier
+      }
+      obj.print_url = [locationPath, 'print/', obj.id].join('')
+      obj.pay_url = [locationPath, 'link/', obj.id].join('')
+      return obj
+    },
     getPayLinks() {
       LNbits.api
         .request(
@@ -114,7 +110,7 @@ window.app = Vue.createApp({
           this.g.user.wallets[0].inkey
         )
         .then(response => {
-          this.payLinks = response.data.map(mapPayLink)
+          this.payLinks = response.data.map(this.mapPayLink)
         })
         .catch(LNbits.utils.notifyApiError)
     },
@@ -191,7 +187,7 @@ window.app = Vue.createApp({
         )
         .then(response => {
           this.payLinks = _.reject(this.payLinks, obj => obj.id === data.id)
-          this.payLinks.push(mapPayLink(response.data))
+          this.payLinks.push(this.mapPayLink(response.data))
           this.formDialog.show = false
           this.resetFormData()
         })
@@ -246,13 +242,5 @@ window.app = Vue.createApp({
     if (this.g.user.wallets?.length) {
       this.getPayLinks()
     }
-    LNbits.api
-      .request('GET', '/api/v1/currencies')
-      .then(response => {
-        this.currencies = ['satoshis', ...response.data]
-      })
-      .catch(err => {
-        LNbits.utils.notifyApiError(err)
-      })
   }
-})
+}

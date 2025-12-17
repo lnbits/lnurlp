@@ -7,8 +7,7 @@ async def m001_initial(db):
     """
     Initial pay table.
     """
-    await db.execute(
-        f"""
+    await db.execute(f"""
         CREATE TABLE lnurlp.pay_links (
             id {db.serial_primary_key},
             wallet TEXT NOT NULL,
@@ -17,8 +16,7 @@ async def m001_initial(db):
             served_meta INTEGER NOT NULL,
             served_pr INTEGER NOT NULL
         );
-        """
-    )
+        """)
 
 
 async def m002_webhooks_and_success_actions(db):
@@ -28,16 +26,14 @@ async def m002_webhooks_and_success_actions(db):
     await db.execute("ALTER TABLE lnurlp.pay_links ADD COLUMN webhook_url TEXT;")
     await db.execute("ALTER TABLE lnurlp.pay_links ADD COLUMN success_text TEXT;")
     await db.execute("ALTER TABLE lnurlp.pay_links ADD COLUMN success_url TEXT;")
-    await db.execute(
-        f"""
+    await db.execute(f"""
         CREATE TABLE lnurlp.invoices (
             pay_link INTEGER NOT NULL REFERENCES {db.references_schema}pay_links (id),
             payment_hash TEXT NOT NULL,
             webhook_sent INT, -- null means not sent, otherwise store status
             expiry INT
         );
-        """
-    )
+        """)
 
 
 async def m003_min_max_comment_fiat(db):
@@ -86,8 +82,7 @@ async def m006_redux(db):
     else:
         # but we have to do this for sqlite
         await db.execute("ALTER TABLE lnurlp.pay_links RENAME TO pay_links_old")
-        await db.execute(
-            f"""
+        await db.execute(f"""
             CREATE TABLE lnurlp.pay_links (
                 id TEXT PRIMARY KEY,
                 wallet TEXT NOT NULL,
@@ -105,8 +100,7 @@ async def m006_redux(db):
                 webhook_headers TEXT,
                 webhook_body TEXT
                 );
-            """
-        )
+            """)
 
         for row in [
             list(row) for row in await db.fetchall("SELECT * FROM lnurlp.pay_links_old")
@@ -172,13 +166,11 @@ async def m009_add_settings(db):
     """
     Add extension settings table
     """
-    await db.execute(
-        """
+    await db.execute("""
         CREATE TABLE lnurlp.settings (
             nostr_private_key TEXT NOT NULL
         );
-        """
-    )
+        """)
 
 
 async def m010_add_pay_link_domain(db):
@@ -193,14 +185,10 @@ async def m011_add_created_at(db: Connection):
     Add created_at to pay links
     """
 
-    await db.execute(
-        f"""ALTER TABLE lnurlp.pay_links ADD COLUMN
-        created_at TIMESTAMP DEFAULT {db.timestamp_column_default}"""
-    )
-    await db.execute(
-        f"""ALTER TABLE lnurlp.pay_links ADD COLUMN
-        updated_at TIMESTAMP DEFAULT {db.timestamp_column_default}"""
-    )
+    await db.execute(f"""ALTER TABLE lnurlp.pay_links ADD COLUMN
+        created_at TIMESTAMP DEFAULT {db.timestamp_column_default}""")
+    await db.execute(f"""ALTER TABLE lnurlp.pay_links ADD COLUMN
+        updated_at TIMESTAMP DEFAULT {db.timestamp_column_default}""")
 
     now = int(time())
     await db.execute(

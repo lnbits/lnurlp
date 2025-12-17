@@ -1,45 +1,17 @@
-from http import HTTPStatus
-
-from fastapi import APIRouter, Depends, Request
-from lnbits.core.models import User
+from fastapi import APIRouter, Depends
+from lnbits.core.views.generic import index, index_public
 from lnbits.decorators import check_user_exists
-from lnbits.helpers import template_renderer
-from starlette.exceptions import HTTPException
-from starlette.responses import HTMLResponse
-
-from .crud import get_pay_link
 
 lnurlp_generic_router = APIRouter()
 
+lnurlp_generic_router.add_api_route(
+    "/", methods=["GET"], endpoint=index, dependencies=[Depends(check_user_exists)]
+)
 
-def lnurlp_renderer():
-    return template_renderer(["lnurlp/templates"])
+lnurlp_generic_router.add_api_route(
+    "/link/{link_id}", methods=["GET"], endpoint=index_public
+)
 
-
-@lnurlp_generic_router.get("/", response_class=HTMLResponse)
-async def index(request: Request, user: User = Depends(check_user_exists)):
-    return lnurlp_renderer().TemplateResponse(
-        "lnurlp/index.html", {"request": request, "user": user.json()}
-    )
-
-
-@lnurlp_generic_router.get("/link/{link_id}", response_class=HTMLResponse)
-async def display(request: Request, link_id):
-    link = await get_pay_link(link_id)
-    if not link:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Pay link does not exist."
-        )
-    ctx = {"request": request, "link_id": link.id}
-    return lnurlp_renderer().TemplateResponse("lnurlp/display.html", ctx)
-
-
-@lnurlp_generic_router.get("/print/{link_id}", response_class=HTMLResponse)
-async def print_qr(request: Request, link_id):
-    link = await get_pay_link(link_id)
-    if not link:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Pay link does not exist."
-        )
-    ctx = {"request": request, "link_id": link.id}
-    return lnurlp_renderer().TemplateResponse("lnurlp/print_qr.html", ctx)
+lnurlp_generic_router.add_api_route(
+    "/print/{link_id}", methods=["GET"], endpoint=index_public
+)

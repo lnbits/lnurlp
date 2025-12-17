@@ -1,0 +1,14 @@
+[
+  {
+    "path": "/lnurlp/",
+    "name": "PageLnurlp",
+    "template": "/lnurlp/static/index.vue",
+    "component": "/lnurlp/static/index.js"
+  },
+  {
+    "path": "/lnurlp/link/:id",
+    "name": "PageLnurlpPublic",
+    "template": "/lnurlp/static/display.vue",
+    "component": "/lnurlp/static/display.js"
+  }
+]
