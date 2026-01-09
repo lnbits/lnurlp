@@ -12,7 +12,8 @@ def parse_nostr_private_key(key: str) -> PrivateKey:
 
 def lnurl_encode_link(req: Request, link_id: str, domain: str | None) -> str:
     if domain:
-        return f"https://{domain}/lnurlp/{link_id}"
+        url_str = f"https://{domain}/lnurlp/{link_id}"
+        return str(lnurl_encode(url_str).bech32)
 
     url = req.url_for("lnurlp.api_lnurl_response", link_id=link_id)
     url = url.replace(path=url.path)
