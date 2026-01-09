@@ -65,6 +65,7 @@ async def create_pay_link(data: CreatePayLinkData) -> PayLink:
         created_at=now,
         updated_at=now,
         disposable=data.disposable if data.disposable is not None else True,
+        domain=data.domain,
     )
 
     await db.insert("lnurlp.pay_links", link)
