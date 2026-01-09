@@ -36,7 +36,6 @@
                   <span v-text="col.label"></span>
                 </q-th>
                 <q-th auto-width></q-th>
-                <q-th auto-width></q-th>
               </q-tr>
             </template>
             <template v-slot:body="props">
@@ -55,7 +54,6 @@
                     ><q-tooltip>Shareable Page</q-tooltip></q-btn
                   >
                   <q-btn
-                    unelevated
                     dense
                     size="xs"
                     icon="visibility"
@@ -63,6 +61,27 @@
                     class="q-ml-sm"
                     @click="openQrCodeDialog(props.row.id)"
                     ><q-tooltip>View Link</q-tooltip></q-btn
+                  >
+                  <q-btn
+                    flat
+                    dense
+                    size="xs"
+                    @click="openUpdateDialog(props.row.id)"
+                    icon="edit"
+                    color="light-blue"
+                    class="q-ml-sm"
+                  >
+                    <q-tooltip>Edit</q-tooltip>
+                  </q-btn>
+                  <q-btn
+                    flat
+                    dense
+                    size="xs"
+                    @click="deletePayLink(props.row.id)"
+                    icon="cancel"
+                    color="pink"
+                    class="q-ml-sm"
+                    ><q-tooltip>Delete</q-tooltip></q-btn
                   >
                 </q-td>
                 <q-td
@@ -103,27 +122,6 @@
                       comment allowed
                     </q-tooltip>
                   </q-icon>
-                </q-td>
-                <q-td auto-width>
-                  <q-btn
-                    flat
-                    dense
-                    size="xs"
-                    @click="openUpdateDialog(props.row.id)"
-                    icon="edit"
-                    color="light-blue"
-                  >
-                    <q-tooltip>Edit</q-tooltip>
-                  </q-btn>
-                  <q-btn
-                    flat
-                    dense
-                    size="xs"
-                    @click="deletePayLink(props.row.id)"
-                    icon="cancel"
-                    color="pink"
-                    ><q-tooltip>Delete</q-tooltip></q-btn
-                  >
                 </q-td>
               </q-tr>
             </template>
@@ -402,10 +400,18 @@
                 "
               />
             </div>
-            <div class="col" style="margin-top: 10px">
-              <span class="label">
-                &nbsp;@&nbsp;<span v-text="domain"></span>
-              </span>
+            <div class="col" style="flex: 0 0 auto; margin-top: 10px">
+              <span class="label"> &nbsp;@&nbsp; </span>
+            </div>
+            <div class="col">
+              <q-input
+                filled
+                dense
+                v-model.trim="formDialog.data.domain"
+                :placeholder="domain"
+                type="text"
+                :label="'domain (' + domain + ')'"
+              />
             </div>
           </div>
           <div class="row q-col-gutter-sm q-mx-sm">
@@ -642,7 +648,7 @@
           <span v-text="qrCodeDialog.data.success"></span><br />
           <span v-if="qrCodeDialog.data.username">
             <strong>Lightning Address: </strong>
-            <span v-text="qrCodeDialog.data.username + '@' + domain"></span>
+            <span v-text="lnaddress(qrCodeDialog.data)"></span>
             <br />
           </span>
         </p>

@@ -84,6 +84,10 @@ window.PageLnurlp = {
     }
   },
   methods: {
+    lnaddress(link) {
+      const domain = link.domain || window.location.host
+      return `${link.username}@${domain}`
+    },
     mapPayLink(obj) {
       const locationPath = [
         window.location.protocol,
@@ -140,11 +144,13 @@ window.PageLnurlp = {
               (link.success_url ? ' and URL "' + link.success_url + '"' : '')
             : 'do nothing',
         lnurl: link.lnurl,
+        domain: link.domain,
         pay_url: link.pay_url,
         print_url: link.print_url,
         username: link.username
       }
-      this.activeUrl = window.location.origin + '/lnurlp/' + link.id
+      const domain = link.domain || window.location.host
+      this.activeUrl = `https://${domain}/lnurlp//${link.id}`
       this.qrCodeDialog.show = true
     },
     openUpdateDialog(linkId) {

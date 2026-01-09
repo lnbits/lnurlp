@@ -35,6 +35,7 @@ class CreatePayLinkData(BaseModel):
     username: str | None = Query(None)
     zaps: bool | None = Query(False)
     disposable: bool | None = Query(True)
+    domain: str | None = Query(None)
 
 
 class PayLink(BaseModel):
@@ -67,8 +68,25 @@ class PayLink(BaseModel):
     success_url: str | None = None
     currency: str | None = None
     fiat_base_multiplier: int | None = None
-
     disposable: bool
-
-    # TODO deprecated, unused in the code, should be deleted from db.
     domain: str | None = None
+
+
+class PublicPayLink(BaseModel):
+    id: str
+    username: str | None = None
+    description: str
+    min: float
+    max: float
+    domain: str | None = None
+    currency: str | None = None
+    lnurl: str | None = Field(
+        default=None,
+        no_database=True,
+        deprecated=True,
+        description=(
+            "Deprecated: Instead of using this bech32 encoded string, dynamically "
+            "generate your own static link (lud17/bech32) on the client side. "
+            "Example: lnurlp://${window.location.hostname}/lnurlp/${paylink_id}"
+        ),
+    )

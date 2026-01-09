@@ -22,8 +22,8 @@ from .crud import (
     update_lnurlp_settings,
     update_pay_link,
 )
-from .helpers import lnurl_encode_link_id, parse_nostr_private_key
-from .models import CreatePayLinkData, LnurlpSettings, PayLink
+from .helpers import lnurl_encode_link, parse_nostr_private_key
+from .models import CreatePayLinkData, LnurlpSettings, PayLink, PublicPayLink
 
 lnurlp_api_router = APIRouter()
 
@@ -41,11 +41,11 @@ async def api_links(
 
     links = await get_pay_links(wallet_ids)
     for link in links:
-        link.lnurl = lnurl_encode_link_id(req=req, link_id=link.id)
+        link.lnurl = lnurl_encode_link(req, link.id, link.domain)
     return links
 
 
-@lnurlp_api_router.get("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
+@lnurlp_api_router.get("/api/v1/links/{link_id}")
 async def api_link_retrieve(
     req: Request, link_id: str, key_info: WalletTypeInfo = Depends(require_invoice_key)
 ) -> PayLink:
@@ -66,7 +66,18 @@ async def api_link_retrieve(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
 
-    link.lnurl = lnurl_encode_link_id(req, link.id)
+    link.lnurl = lnurl_encode_link(req, link.id, link.domain)
+    return link
+
+
+@lnurlp_api_router.get("/api/v1/links/public/{link_id}", response_model=PublicPayLink)
+async def api_link_public_retrieve(req: Request, link_id: str) -> PayLink:
+    link = await get_pay_link(link_id)
+    if not link:
+        raise HTTPException(
+            detail="Pay link does not exist.", status_code=HTTPStatus.NOT_FOUND
+        )
+    link.lnurl = lnurl_encode_link(req, link.id, link.domain)
     return link
 
 
@@ -149,7 +160,7 @@ async def api_link_create_or_update(
             detail="Wallet does not exist.", status_code=HTTPStatus.FORBIDDEN
         )
 
-    # admins are allowed to create/edit paylinks beloging to regular users
+    # admins are allowed to create/edit paylinks belonging to regular users
     user = await get_user(key_info.wallet.user)
     admin_user = user.admin if user else False
     if not admin_user and new_wallet.user != key_info.wallet.user:
@@ -178,7 +189,7 @@ async def api_link_create_or_update(
 
         link = await create_pay_link(data)
 
-    link.lnurl = lnurl_encode_link_id(req, link.id)
+    link.lnurl = lnurl_encode_link(req, link.id, link.domain)
     return link
 
 
