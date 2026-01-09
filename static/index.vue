@@ -408,9 +408,8 @@
                 filled
                 dense
                 v-model.trim="formDialog.data.domain"
-                :placeholder="domain"
                 type="text"
-                :label="'domain (' + domain + ')'"
+                :label="domain"
               />
             </div>
           </div>
