@@ -99,7 +99,7 @@ async def api_lnurl_callback(
         extra["nostr"] = nostr  # put it here for later publishing in tasks.py
 
     if link.username:
-        identifier = f"{link.username}@{request.url.netloc}"
+        identifier = f"{link.username}@{link.domain or request.url.netloc}"
         text = f"Payment to {link.username}"
         _metadata = [["text/plain", text], ["text/identifier", identifier]]
         extra["lnaddress"] = identifier
@@ -173,7 +173,7 @@ async def api_lnurl_response(
     callback_url = parse_obj_as(CallbackUrl, str(url))
 
     if link.username:
-        identifier = f"{link.username}@{request.url.netloc}"
+        identifier = f"{link.username}@{link.domain or request.url.netloc}"
         text = f"Payment to {link.username}"
         metadata = [["text/plain", text], ["text/identifier", identifier]]
     else:
