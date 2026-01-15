@@ -10,6 +10,7 @@ from lnbits.decorators import (
     require_admin_key,
     require_invoice_key,
 )
+from lnurl import InvalidUrl
 
 from .crud import (
     create_pay_link,
@@ -28,6 +29,24 @@ from .models import CreatePayLinkData, LnurlpSettings, PayLink
 lnurlp_api_router = APIRouter()
 
 
+def check_lnurl_encode(req: Request, link_id: str) -> str:
+    try:
+        return lnurl_encode_link_id(req, link_id)
+    except InvalidUrl as exc:
+        raise HTTPException(
+            detail=(
+                f"Invalid URL for LNURL encoding: `{req.base_url}`. "
+                "Check proxy settings."
+            ),
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            detail="Error encoding LNURL.",
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+        ) from exc
+
+
 @lnurlp_api_router.get("/api/v1/links", status_code=HTTPStatus.OK)
 async def api_links(
     req: Request,
@@ -41,7 +60,7 @@ async def api_links(
 
     links = await get_pay_links(wallet_ids)
     for link in links:
-        link.lnurl = lnurl_encode_link_id(req=req, link_id=link.id)
+        link.lnurl = check_lnurl_encode(req=req, link_id=link.id)
     return links
 
 
@@ -66,7 +85,7 @@ async def api_link_retrieve(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
 
-    link.lnurl = lnurl_encode_link_id(req, link.id)
+    link.lnurl = check_lnurl_encode(req, link.id)
     return link
 
 
@@ -178,7 +197,8 @@ async def api_link_create_or_update(
 
         link = await create_pay_link(data)
 
-    link.lnurl = lnurl_encode_link_id(req, link.id)
+    link.lnurl = check_lnurl_encode(req=req, link_id=link.id)
+
     return link
 
 
