@@ -35,7 +35,7 @@ def check_lnurl_encode(req: Request, link_id: str) -> str:
     except InvalidUrl as exc:
         raise HTTPException(
             detail=(
-                f"Invalid URL for LNURL encoding: `{req.base_url}`."
+                f"Invalid URL for LNURL encoding: `{req.base_url}`. "
                 "Check proxy settings."
             ),
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
