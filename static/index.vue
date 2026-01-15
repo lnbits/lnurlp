@@ -648,6 +648,20 @@
           <span v-if="qrCodeDialog.data.username">
             <strong>Lightning Address: </strong>
             <span v-text="lnaddress(qrCodeDialog.data)"></span>
+            <q-icon
+              name="content_copy"
+              class="text-grey cursor-pointer q-ml-sm"
+              @click="utils.copyText(lnaddress(qrCodeDialog.data))"
+            ></q-icon>
+            <q-icon name="qr_code" class="text-grey cursor-pointer q-ml-sm">
+              <q-popup-proxy>
+                <lnbits-qrcode
+                  class="q-pa-md"
+                  :value="lnaddress(qrCodeDialog.data)"
+                  :show-buttons="false"
+                ></lnbits-qrcode>
+              </q-popup-proxy>
+            </q-icon>
             <br />
           </span>
         </p>
