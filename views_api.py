@@ -29,9 +29,9 @@ from .models import CreatePayLinkData, LnurlpSettings, PayLink, PublicPayLink
 lnurlp_api_router = APIRouter()
 
 
-def check_lnurl_encode(req: Request, link_id: str, domain: str | None = None) -> str:
+def check_lnurl_encode(req: Request, link: PayLink) -> str:
     try:
-        return lnurl_encode_link(req, link_id, domain)
+        return lnurl_encode_link(req, link.id, link.domain)
     except InvalidUrl as exc:
         raise HTTPException(
             detail=(
@@ -60,7 +60,7 @@ async def api_links(
 
     links = await get_pay_links(wallet_ids)
     for link in links:
-        link.lnurl = check_lnurl_encode(req, link.id, link.domain)
+        link.lnurl = check_lnurl_encode(req, link)
     return links
 
 
@@ -85,7 +85,7 @@ async def api_link_retrieve(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
 
-    link.lnurl = check_lnurl_encode(req, link.id, link.domain)
+    link.lnurl = check_lnurl_encode(req, link)
     return link
 
 
@@ -208,7 +208,7 @@ async def api_link_create_or_update(
 
         link = await create_pay_link(data)
 
-    link.lnurl = check_lnurl_encode(req, link.id, link.domain)
+    link.lnurl = check_lnurl_encode(req, link)
     return link
 
 

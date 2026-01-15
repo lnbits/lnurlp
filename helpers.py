@@ -10,7 +10,7 @@ def parse_nostr_private_key(key: str) -> PrivateKey:
         return PrivateKey(bytes.fromhex(key))
 
 
-def lnurl_encode_link(req: Request, link_id: str, domain: str | None) -> str:
+def lnurl_encode_link(req: Request, link_id: str, domain: str | None = None) -> str:
     if domain:
         url_str = f"https://{domain}/lnurlp/{link_id}"
         return str(lnurl_encode(url_str).bech32)
