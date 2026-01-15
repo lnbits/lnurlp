@@ -10,7 +10,7 @@ from lnbits.decorators import (
     require_admin_key,
     require_invoice_key,
 )
-from lnurl import InvalidLnurl
+from lnurl import InvalidUrl
 
 from .crud import (
     create_pay_link,
@@ -32,12 +32,17 @@ lnurlp_api_router = APIRouter()
 def check_lnurl_encode(req: Request, link_id: str) -> str:
     try:
         return lnurl_encode_link_id(req, link_id)
-    except InvalidLnurl as exc:
+    except InvalidUrl as exc:
         raise HTTPException(
             detail=(
                 f"Invalid URL for LNURL encoding: `{req.base_url}`."
                 "Check proxy settings."
             ),
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            detail="Error encoding LNURL.",
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
         ) from exc
 
