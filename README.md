@@ -1,3 +1,13 @@
+<a href="https://lnbits.com" target="_blank" rel="noopener noreferrer">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://i.imgur.com/QE6SIrs.png">
+    <img src="https://i.imgur.com/fyKPgVT.png" alt="LNbits" style="width:280px">
+  </picture>
+</a>
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-success?logo=open-source-initiative&logoColor=white)](./LICENSE)
+[![Built for LNbits](https://img.shields.io/badge/Built%20for-LNbits-4D4DFF?logo=lightning&logoColor=white)](https://github.com/lnbits/lnbits)
+
 # LNURLp - <small>[LNbits](https://github.com/lnbits/lnbits) extension</small>
 
 <small>For more about LNBits extension check [this tutorial](https://github.com/lnbits/lnbits/wiki/LNbits-Extensions)</small>
@@ -12,6 +22,7 @@ LNURL is a range of lightning-network standards that allow us to use lightning-n
 
 1. Create an LNURLp (New Pay link)\
    ![create lnurlp](https://i.imgur.com/rhUBJFy.jpg)
+
    - select your wallets
    - make a small description
    - enter amount
@@ -24,6 +35,7 @@ LNURL is a range of lightning-network standards that allow us to use lightning-n
 
 2. Use the shareable link or view the LNURLp you just created\
    ![LNURLp](https://i.imgur.com/C8s1P0Q.jpg)
+
    - you can now open your LNURLp and copy the LNURL, get the shareable link or print it\
      ![view lnurlp](https://i.imgur.com/4n41S7T.jpg)
 
@@ -55,3 +67,10 @@ Now you can receive sats to your newly created LN address. You will find this in
 [![lnurl-details.jpg](https://i.postimg.cc/zDwq1V2X/lnurl-details.jpg)](https://postimg.cc/3WwsXJHP)
 
 </details>
+
+## Powered by LNbits
+
+[LNbits](https://lnbits.com) is a free and open-source lightning accounts system.
+
+[![Visit LNbits Shop](https://img.shields.io/badge/Visit-LNbits%20Shop-7C3AED?logo=shopping-cart&logoColor=white&labelColor=5B21B6)](https://shop.lnbits.com/)
+[![Try myLNbits SaaS](https://img.shields.io/badge/Try-myLNbits%20SaaS-2563EB?logo=lightning&logoColor=white&labelColor=1E40AF)](https://my.lnbits.com/login)
