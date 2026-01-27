@@ -1,7 +1,10 @@
 {
-  "name": "Pay Links",
+  "id": "paylink",
   "version": "1.3.0",
-  "short_description": "Make reusable LNURL pay links",
+  "name": "Pay Links",
+  "repo": "https://github.com/lnbits/lnurlp",
+  "short_description": "Make static reusable LNURL pay links or lightning addresses",
+  "description": "",
   "tile": "/lnurlp/static/image/lnurl-pay.png",
   "min_lnbits_version": "1.4.0",
   "contributors": [
@@ -51,5 +54,9 @@
   ],
   "description_md": "https://raw.githubusercontent.com/lnbits/lnurlp/main/description.md",
   "terms_and_conditions_md": "https://raw.githubusercontent.com/lnbits/lnurlp/main/toc.md",
-  "license": "MIT"
+  "license": "MIT",
+  "paid_features": "",
+  "tags": ["Merchant", "Payments"],
+  "donate": "",
+  "hidden": false
 }
