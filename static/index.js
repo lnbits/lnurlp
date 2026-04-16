@@ -150,7 +150,7 @@ window.PageLnurlp = {
         username: link.username
       }
       const domain = link.domain || window.location.host
-      this.activeUrl = `https://${domain}/lnurlp//${link.id}`
+      this.activeUrl = `https://${domain}/lnurlp/${link.id}`
       this.qrCodeDialog.show = true
     },
     openUpdateDialog(linkId) {
