@@ -144,6 +144,16 @@ async def send_zap(payment: Payment):
             async with websockets.connect(relay_url, open_timeout=5) as websocket:
                 logger.debug(f"Sending zap to {relay_url}")
                 await websocket.send(event_message)
+                response = await asyncio.wait_for(websocket.recv(), timeout=5)
+                relay_response = json.loads(response)
+                if relay_response[0] != "OK" or not relay_response[2]:
+                    logger.debug(
+                        f"Relay did not acknowledge zap receipt: {relay_response}"
+                    )
+                    return
+                logger.debug(f"Zap sent to {relay_url} successfully")
+        except asyncio.TimeoutError:
+            logger.debug(f"Relay did not acknowledge zap receipt: {relay_url}")
         except Exception as e:
             logger.warning(f"Failed to send zap to {relay_url}: {e}")
 
