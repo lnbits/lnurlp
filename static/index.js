@@ -31,15 +31,25 @@ window.PageLnurlp = {
             sortable: true
           },
           {
+            name: 'wallet_name',
+            label: 'Wallet',
+            align: 'left',
+            field: 'wallet_name',
+            sortable: true
+          },
+          {
             name: 'description',
             label: 'Description',
             align: 'left',
-            field: 'description'
+            field: 'description',
+            sortable: true
           },
           {
             name: 'amount',
             label: 'Amount',
             align: 'left',
+            field: 'min',
+            sortable: true,
             format: (_, row) => {
               const min = row.min
               const max = row.max
@@ -52,6 +62,7 @@ window.PageLnurlp = {
             label: 'Currency',
             align: 'left',
             field: 'currency',
+            sortable: true,
             format: val => val ?? 'sat'
           },
           {
@@ -68,6 +79,7 @@ window.PageLnurlp = {
           rowsPerPage: 10
         }
       },
+      payLinksFilter: '',
       nfcTagWriting: false,
       formDialog: {
         show: false,
@@ -98,6 +110,8 @@ window.PageLnurlp = {
       obj._data = _.clone(obj)
       obj.created_at = LNbits.utils.formatDate(obj.created_at)
       obj.updated_at = LNbits.utils.formatDate(obj.updated_at)
+      const wallet = _.findWhere(this.g.user.wallets, {id: obj.wallet})
+      obj.wallet_name = wallet ? wallet.name : obj.wallet
       if (obj.currency) {
         obj.min = obj.min / obj.fiat_base_multiplier
         obj.max = obj.max / obj.fiat_base_multiplier

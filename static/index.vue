@@ -20,6 +20,19 @@
             <div class="col">
               <h5 class="text-subtitle1 q-my-none">Pay links</h5>
             </div>
+            <div class="col q-ml-lg">
+              <q-input
+                borderless
+                dense
+                debounce="300"
+                v-model="payLinksFilter"
+                placeholder="Search"
+              >
+                <template v-slot:append>
+                  <q-icon name="search"></q-icon>
+                </template>
+              </q-input>
+            </div>
           </div>
           <q-table
             dense
@@ -27,6 +40,7 @@
             :rows="payLinks"
             :columns="payLinksTable.columns"
             row-key="id"
+            :filter="payLinksFilter"
             v-model:pagination="payLinksTable.pagination"
           >
             <template v-slot:header="props">
