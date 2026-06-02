@@ -213,7 +213,13 @@ async def api_link_update(
             detail="Pay link does not exist.", status_code=HTTPStatus.NOT_FOUND
         )
 
-    if link.wallet != key_info.wallet.id:
+    user = await get_user(key_info.wallet.user)
+    if not user:
+        raise HTTPException(
+            detail="User does not exist.", status_code=HTTPStatus.FORBIDDEN
+        )
+
+    if link.wallet not in user.wallet_ids:
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
@@ -232,11 +238,6 @@ async def api_link_update(
     if not new_wallet:
         raise HTTPException(
             detail="Wallet does not exist.", status_code=HTTPStatus.FORBIDDEN
-        )
-    user = await get_user(key_info.wallet.user)
-    if not user:
-        raise HTTPException(
-            detail="User does not exist.", status_code=HTTPStatus.FORBIDDEN
         )
     if new_wallet.id not in user.wallet_ids:
         raise HTTPException(detail="Not your wallet.", status_code=HTTPStatus.FORBIDDEN)
