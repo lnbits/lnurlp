@@ -47,6 +47,54 @@ def check_lnurl_encode(req: Request, link: PayLink) -> str:
         ) from exc
 
 
+def validate_paylink(data: CreatePayLinkData):
+    if data.min > data.max:
+        raise HTTPException(
+            detail="Min is greater than max.", status_code=HTTPStatus.BAD_REQUEST
+        )
+
+    if not data.currency:
+        if round(data.min) != data.min or round(data.max) != data.max or data.min < 1:
+            raise HTTPException(
+                detail="Must use full satoshis.", status_code=HTTPStatus.BAD_REQUEST
+            )
+
+    if data.webhook_headers:
+        try:
+            json.loads(data.webhook_headers)
+        except ValueError as exc:
+            raise HTTPException(
+                detail="Invalid JSON in webhook_headers.",
+                status_code=HTTPStatus.BAD_REQUEST,
+            ) from exc
+
+    if data.webhook_body:
+        try:
+            json.loads(data.webhook_body)
+        except ValueError as exc:
+            raise HTTPException(
+                detail="Invalid JSON in webhook_body.",
+                status_code=HTTPStatus.BAD_REQUEST,
+            ) from exc
+
+    if data.username and not re.match("^[a-z0-9-_.]{1,210}$", data.username):
+        raise HTTPException(
+            detail=f"Invalid username: {data.username}. "
+            "Only letters a-z0-9-_. allowed, min 1 and max 210 characters!",
+            status_code=HTTPStatus.BAD_REQUEST,
+        )
+
+    if (
+        data.success_url
+        and data.success_url != ""
+        and not data.success_url.startswith("https://")
+    ):
+        raise HTTPException(
+            detail="Success URL must be secure https://...",
+            status_code=HTTPStatus.BAD_REQUEST,
+        )
+
+
 @lnurlp_api_router.get("/api/v1/links", status_code=HTTPStatus.OK)
 async def api_links(
     req: Request,
@@ -110,64 +158,19 @@ async def check_username_exists(username: str):
 
 
 @lnurlp_api_router.post("/api/v1/links", status_code=HTTPStatus.CREATED)
-@lnurlp_api_router.put("/api/v1/links/{link_id}", status_code=HTTPStatus.OK)
-async def api_link_create_or_update(
+async def api_link_create(
     req: Request,
     data: CreatePayLinkData,
-    link_id: str | None = None,
     key_info: WalletTypeInfo = Depends(require_admin_key),
 ) -> PayLink:
-    if data.min > data.max:
-        raise HTTPException(
-            detail="Min is greater than max.", status_code=HTTPStatus.BAD_REQUEST
-        )
 
-    if not data.currency:
-        if round(data.min) != data.min or round(data.max) != data.max or data.min < 1:
-            raise HTTPException(
-                detail="Must use full satoshis.", status_code=HTTPStatus.BAD_REQUEST
-            )
-
-    if data.webhook_headers:
-        try:
-            json.loads(data.webhook_headers)
-        except ValueError as exc:
-            raise HTTPException(
-                detail="Invalid JSON in webhook_headers.",
-                status_code=HTTPStatus.BAD_REQUEST,
-            ) from exc
-
-    if data.webhook_body:
-        try:
-            json.loads(data.webhook_body)
-        except ValueError as exc:
-            raise HTTPException(
-                detail="Invalid JSON in webhook_body.",
-                status_code=HTTPStatus.BAD_REQUEST,
-            ) from exc
+    validate_paylink(data)
 
     # database only allows int4 entries for min and max. For fiat currencies,
     # we multiply by data.fiat_base_multiplier (usually 100) to save the value in cents.
     if data.currency and data.fiat_base_multiplier:
         data.min *= data.fiat_base_multiplier
         data.max *= data.fiat_base_multiplier
-
-    if (
-        data.success_url
-        and data.success_url != ""
-        and not data.success_url.startswith("https://")
-    ):
-        raise HTTPException(
-            detail="Success URL must be secure https://...",
-            status_code=HTTPStatus.BAD_REQUEST,
-        )
-
-    if data.username and not re.match("^[a-z0-9-_.]{1,210}$", data.username):
-        raise HTTPException(
-            detail=f"Invalid username: {data.username}. "
-            "Only letters a-z0-9-_. allowed, min 1 and max 210 characters!",
-            status_code=HTTPStatus.BAD_REQUEST,
-        )
 
     # if wallet is not provided, use the wallet of the key
     if not data.wallet:
@@ -178,36 +181,73 @@ async def api_link_create_or_update(
         raise HTTPException(
             detail="Wallet does not exist.", status_code=HTTPStatus.FORBIDDEN
         )
-
-    # admins are allowed to create/edit paylinks belonging to regular users
     user = await get_user(key_info.wallet.user)
-    admin_user = user.admin if user else False
-    if not admin_user and new_wallet.user != key_info.wallet.user:
+    if not user:
+        raise HTTPException(
+            detail="User does not exist.", status_code=HTTPStatus.FORBIDDEN
+        )
+    if new_wallet.id not in user.wallet_ids:
+        raise HTTPException(detail="Not your wallet.", status_code=HTTPStatus.FORBIDDEN)
+
+    if data.username:
+        await check_username_exists(data.username)
+
+    link = await create_pay_link(data)
+    link.lnurl = check_lnurl_encode(req, link)
+    return link
+
+
+@lnurlp_api_router.put("/api/v1/links/{link_id}")
+async def api_link_update(
+    req: Request,
+    data: CreatePayLinkData,
+    link_id: str,
+    key_info: WalletTypeInfo = Depends(require_admin_key),
+) -> PayLink:
+
+    validate_paylink(data)
+
+    link = await get_pay_link(link_id)
+    if not link:
+        raise HTTPException(
+            detail="Pay link does not exist.", status_code=HTTPStatus.NOT_FOUND
+        )
+
+    if link.wallet != key_info.wallet.id:
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
 
-    if link_id:
-        link = await get_pay_link(link_id)
+    # database only allows int4 entries for min and max. For fiat currencies,
+    # we multiply by data.fiat_base_multiplier (usually 100) to save the value in cents.
+    if data.currency and data.fiat_base_multiplier:
+        data.min *= data.fiat_base_multiplier
+        data.max *= data.fiat_base_multiplier
 
-        if not link:
-            raise HTTPException(
-                detail="Pay link does not exist.", status_code=HTTPStatus.NOT_FOUND
-            )
+    # if wallet is not provided, use the wallet of the key
+    if not data.wallet:
+        data.wallet = key_info.wallet.id
 
-        if data.username and data.username != link.username:
-            await check_username_exists(data.username)
+    new_wallet = await get_wallet(data.wallet)
+    if not new_wallet:
+        raise HTTPException(
+            detail="Wallet does not exist.", status_code=HTTPStatus.FORBIDDEN
+        )
+    user = await get_user(key_info.wallet.user)
+    if not user:
+        raise HTTPException(
+            detail="User does not exist.", status_code=HTTPStatus.FORBIDDEN
+        )
+    if new_wallet.id not in user.wallet_ids:
+        raise HTTPException(detail="Not your wallet.", status_code=HTTPStatus.FORBIDDEN)
 
-        for k, v in data.dict().items():
-            setattr(link, k, v)
+    if data.username and data.username != link.username:
+        await check_username_exists(data.username)
 
-        link = await update_pay_link(link)
-    else:
-        if data.username:
-            await check_username_exists(data.username)
+    for k, v in data.dict().items():
+        setattr(link, k, v)
 
-        link = await create_pay_link(data)
-
+    link = await update_pay_link(link)
     link.lnurl = check_lnurl_encode(req, link)
     return link
 
