@@ -186,7 +186,8 @@ async def api_link_create(
         raise HTTPException(
             detail="User does not exist.", status_code=HTTPStatus.FORBIDDEN
         )
-    if new_wallet.id not in user.wallet_ids:
+
+    if not user.admin and new_wallet.id not in user.wallet_ids:
         raise HTTPException(detail="Not your wallet.", status_code=HTTPStatus.FORBIDDEN)
 
     if data.username:
@@ -219,7 +220,7 @@ async def api_link_update(
             detail="User does not exist.", status_code=HTTPStatus.FORBIDDEN
         )
 
-    if link.wallet not in user.wallet_ids:
+    if not user.admin and link.wallet not in user.wallet_ids:
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
@@ -239,7 +240,7 @@ async def api_link_update(
         raise HTTPException(
             detail="Wallet does not exist.", status_code=HTTPStatus.FORBIDDEN
         )
-    if new_wallet.id not in user.wallet_ids:
+    if not user.admin and new_wallet.id not in user.wallet_ids:
         raise HTTPException(detail="Not your wallet.", status_code=HTTPStatus.FORBIDDEN)
 
     if data.username and data.username != link.username:
