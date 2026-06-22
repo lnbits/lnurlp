@@ -3,12 +3,14 @@
     "path": "/lnurlp/",
     "name": "PageLnurlp",
     "template": "/lnurlp/static/index.vue",
-    "component": "/lnurlp/static/index.js"
+    "component": "/lnurlp/static/index.js",
+    "i18n": "/lnurlp/static/i18n"
   },
   {
     "path": "/lnurlp/link/:id",
     "name": "PageLnurlpPublic",
     "template": "/lnurlp/static/display.vue",
-    "component": "/lnurlp/static/display.js"
+    "component": "/lnurlp/static/display.js",
+    "i18n": "/lnurlp/static/i18n"
   }
 ]

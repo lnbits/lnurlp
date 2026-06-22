@@ -3,9 +3,12 @@
     <div class="col-12 col-md-7 q-gutter-y-md">
       <q-card>
         <q-card-section>
-          <q-btn unelevated color="primary" @click="formDialog.show = true"
-            >New pay link</q-btn
-          >
+          <q-btn
+            unelevated
+            color="primary"
+            :label="$t('lnurlp.new_pay_link')"
+            @click="formDialog.show = true"
+          ></q-btn>
           <lnbits-extension-settings-btn-dialog
             v-if="g.user.admin"
             :endpoint="endpoint"
@@ -18,7 +21,10 @@
         <q-card-section>
           <div class="row items-center no-wrap q-mb-md">
             <div class="col">
-              <h5 class="text-subtitle1 q-my-none">Pay links</h5>
+              <h5
+                class="text-subtitle1 q-my-none"
+                v-text="$t('lnurlp.pay_links')"
+              ></h5>
             </div>
             <div class="col q-ml-lg">
               <q-input
@@ -26,7 +32,7 @@
                 dense
                 debounce="300"
                 v-model="payLinksFilter"
-                placeholder="Search"
+                :placeholder="$t('search')"
               >
                 <template v-slot:append>
                   <q-icon name="search"></q-icon>
@@ -65,8 +71,11 @@
                     :href="props.row.pay_url"
                     target="_blank"
                     class="q-ml-sm"
-                    ><q-tooltip>Shareable Page</q-tooltip></q-btn
                   >
+                    <q-tooltip>
+                      <span v-text="$t('lnurlp.shareable_page')"></span>
+                    </q-tooltip>
+                  </q-btn>
                   <q-btn
                     dense
                     size="xs"
@@ -74,8 +83,11 @@
                     :color="$q.dark.isActive ? 'grey-7' : 'grey-5'"
                     class="q-ml-sm"
                     @click="openQrCodeDialog(props.row.id)"
-                    ><q-tooltip>View Link</q-tooltip></q-btn
                   >
+                    <q-tooltip>
+                      <span v-text="$t('lnurlp.view_link')"></span>
+                    </q-tooltip>
+                  </q-btn>
                   <q-btn
                     flat
                     dense
@@ -85,7 +97,9 @@
                     color="light-blue"
                     class="q-ml-sm"
                   >
-                    <q-tooltip>Edit</q-tooltip>
+                    <q-tooltip>
+                      <span v-text="$t('update')"></span>
+                    </q-tooltip>
                   </q-btn>
                   <q-btn
                     flat
@@ -95,8 +109,11 @@
                     icon="cancel"
                     color="pink"
                     class="q-ml-sm"
-                    ><q-tooltip>Delete</q-tooltip></q-btn
                   >
+                    <q-tooltip>
+                      <span v-text="$t('delete')"></span>
+                    </q-tooltip>
+                  </q-btn>
                 </q-td>
                 <q-td
                   v-for="col in props.cols"
@@ -106,9 +123,10 @@
                 ></q-td>
                 <q-td>
                   <q-icon v-if="props.row.webhook_url" size="14px" name="http">
-                    <q-tooltip
-                      >Webhook to <span v-text="props.row.webhook_url"></span
-                    ></q-tooltip>
+                    <q-tooltip>
+                      <span v-text="$t('lnurlp.webhook_to')"></span>
+                      <span v-text="props.row.webhook_url"></span>
+                    </q-tooltip>
                   </q-icon>
                   <q-icon
                     v-if="props.row.success_text || props.row.success_url"
@@ -116,14 +134,21 @@
                     name="call_to_action"
                   >
                     <q-tooltip>
-                      On success, show message '<span
-                        v-text="props.row.success_text"
-                      ></span
-                      >'
-                      <span v-if="props.row.success_url"
-                        >and URL '<span v-text="props.row.success_url"></span
-                        >'</span
-                      >
+                      <span
+                        v-text="
+                          $t('lnurlp.on_success_message', {
+                            message: props.row.success_text
+                          })
+                        "
+                      ></span>
+                      <span
+                        v-if="props.row.success_url"
+                        v-text="
+                          $t('lnurlp.on_success_and_url', {
+                            url: props.row.success_url
+                          })
+                        "
+                      ></span>
                     </q-tooltip>
                   </q-icon>
                   <q-icon
@@ -132,8 +157,13 @@
                     name="insert_comment"
                   >
                     <q-tooltip>
-                      <span v-text="props.row.comment_chars"></span>-char
-                      comment allowed
+                      <span
+                        v-text="
+                          $t('lnurlp.comment_chars_allowed', {
+                            chars: props.row.comment_chars
+                          })
+                        "
+                      ></span>
                     </q-tooltip>
                   </q-icon>
                 </q-td>
@@ -147,7 +177,10 @@
     <div class="col-12 col-md-5 q-gutter-y-md">
       <q-card>
         <q-card-section>
-          <h6 class="text-subtitle1 q-my-none">LNURL-pay extension</h6>
+          <h6
+            class="text-subtitle1 q-my-none"
+            v-text="$t('lnurlp.extension_title')"
+          ></h6>
         </q-card-section>
         <q-card-section class="q-pa-none">
           <q-separator></q-separator>
@@ -155,12 +188,12 @@
             <q-expansion-item
               group="extras"
               icon="swap_vertical_circle"
-              label="API info"
+              :label="$t('lnurlp.api_info')"
               :content-inset-level="0.5"
             >
               <q-btn
                 flat
-                label="Swagger API"
+                :label="$t('lnurlp.swagger_api')"
                 type="a"
                 href="../docs#/lnurlp"
               ></q-btn>
@@ -168,7 +201,7 @@
                 group="api"
                 dense
                 expand-separator
-                label="List pay links"
+                :label="$t('lnurlp.list_pay_links')"
               >
                 <q-card>
                   <q-card-section>
@@ -197,7 +230,7 @@
                 group="api"
                 dense
                 expand-separator
-                label="Get a pay link"
+                :label="$t('lnurlp.get_pay_link')"
               >
                 <q-card>
                   <q-card-section>
@@ -228,11 +261,11 @@
                 group="api"
                 dense
                 expand-separator
-                label="Create a pay link"
+                :label="$t('lnurlp.create_a_pay_link')"
               >
                 <q-btn
                   flat
-                  label="Swagger API"
+                  :label="$t('lnurlp.swagger_api')"
                   type="a"
                   href="../docs#/lnurlp"
                 ></q-btn>
@@ -273,7 +306,7 @@
                 group="api"
                 dense
                 expand-separator
-                label="Update a pay link"
+                :label="$t('lnurlp.update_a_pay_link')"
               >
                 <q-card>
                   <q-card-section>
@@ -310,7 +343,7 @@
                 group="api"
                 dense
                 expand-separator
-                label="Delete a pay link"
+                :label="$t('lnurlp.delete_a_pay_link')"
                 class="q-pb-md"
               >
                 <q-card>
@@ -340,38 +373,25 @@
             <q-expansion-item
               group="extras"
               icon="info"
-              label="Powered by LNURL"
+              :label="$t('lnurlp.powered_by_lnurl')"
             >
               <q-card>
                 <q-card-section>
                   <p>
-                    <b>WARNING: LNURL must be used over https or TOR</b><br />
-                    LNURL is a range of lightning-network standards that allow
-                    us to use lightning-network differently. An LNURL-pay is a
-                    link that wallets use to fetch an invoice from a server
-                    on-demand. The link or QR code is fixed, but each time it is
-                    read by a compatible wallet a new QR code is issued by the
-                    service. It can be used to activate machines without them
-                    having to maintain an electronic screen to generate and show
-                    invoices locally, or to sell any predefined good or service
-                    automatically.
+                    <b v-text="$t('lnurlp.https_warning')"></b><br />
+                    <span v-text="$t('lnurlp.lnurl_description')"></span>
                   </p>
-                  <p>
-                    Exploring LNURL and finding use cases, is really helping
-                    inform lightning protocol development, rather than the
-                    protocol dictating how lightning-network should be engaged
-                    with.
-                  </p>
-                  <small
-                    >Check
-                    <a
-                      class="text-secondary"
-                      href="https://github.com/fiatjaf/awesome-lnurl"
-                      target="_blank"
-                      >Awesome LNURL</a
-                    >
-                    for further information.</small
-                  >
+                  <p v-text="$t('lnurlp.lnurl_exploring')"></p>
+                  <i18n-t keypath="lnurlp.lnurl_more_info" tag="small">
+                    <template #link>
+                      <a
+                        class="text-secondary"
+                        href="https://github.com/fiatjaf/awesome-lnurl"
+                        target="_blank"
+                        >Awesome LNURL</a
+                      >
+                    </template>
+                  </i18n-t>
                 </q-card-section>
               </q-card>
             </q-expansion-item>
@@ -389,7 +409,7 @@
             emit-value
             v-model="formDialog.data.wallet"
             :options="g.user.walletOptions"
-            label="Wallet *"
+            :label="$t('lnurlp.wallet_label')"
           >
           </q-select>
           <q-input
@@ -397,7 +417,7 @@
             dense
             v-model.trim="formDialog.data.description"
             type="text"
-            label="Item description *"
+            :label="$t('lnurlp.item_description')"
           >
           </q-input>
           <div class="row">
@@ -407,7 +427,7 @@
                 dense
                 v-model.trim="formDialog.data.username"
                 type="text"
-                label="Lightning Address"
+                :label="$t('lnurlp.lightning_address')"
                 @input="
                   formDialog.data.username =
                     formDialog.data.username.toLowerCase()
@@ -439,12 +459,23 @@
                   ? '0.01'
                   : '1'
               "
-              :label="formDialog.fixedAmount ? 'Amount *' : 'Min *'"
+              :label="
+                formDialog.fixedAmount
+                  ? $t('lnurlp.amount_label')
+                  : $t('lnurlp.min_label')
+              "
               :hint="
                 formDialog.data.currency &&
                 fiatRates[formDialog.data.currency] &&
                 formDialog.data.min
-                  ? `approx. ${parseInt(Math.round(formDialog.data.min * fiatRates[formDialog.data.currency]))} sat`
+                  ? $t('lnurlp.approx_sats', {
+                      sats: parseInt(
+                        Math.round(
+                          formDialog.data.min *
+                            fiatRates[formDialog.data.currency]
+                        )
+                      )
+                    })
                   : ''
               "
             ></q-input>
@@ -460,12 +491,19 @@
                   ? '0.01'
                   : '1'
               "
-              label="Max *"
+              :label="$t('lnurlp.max_label')"
               :hint="
                 formDialog.data.currency &&
                 fiatRates[formDialog.data.currency] &&
                 formDialog.data.max
-                  ? `approx. ${parseInt(Math.round(formDialog.data.max * fiatRates[formDialog.data.currency]))} sat`
+                  ? $t('lnurlp.approx_sats', {
+                      sats: parseInt(
+                        Math.round(
+                          formDialog.data.max *
+                            fiatRates[formDialog.data.currency]
+                        )
+                      )
+                    })
                   : ''
               "
             ></q-input>
@@ -475,7 +513,7 @@
               <q-checkbox
                 dense
                 v-model="formDialog.fixedAmount"
-                label="Fixed amount"
+                :label="$t('lnurlp.fixed_amount')"
               />
             </div>
             <div class="col">
@@ -484,12 +522,16 @@
                 :options="g.allowedCurrencies || g.currencies"
                 v-model="formDialog.data.currency"
                 :display-value="formDialog.data.currency || 'satoshis'"
-                label="Currency"
+                :label="$t('currency')"
                 :hint="
-                  'Converted to satoshis at each payment. ' +
+                  $t('lnurlp.currency_hint') +
                   (formDialog.data.currency &&
                   fiatRates[formDialog.data.currency]
-                    ? `Currently 1 ${formDialog.data.currency} = ${fiatRates[formDialog.data.currency]} sat`
+                    ? ' ' +
+                      $t('lnurlp.currency_rate', {
+                        currency: formDialog.data.currency,
+                        rate: fiatRates[formDialog.data.currency]
+                      })
                     : '')
                 "
                 @input="updateFiatRate"
@@ -499,24 +541,28 @@
           <q-expansion-item
             group="advanced"
             icon="settings"
-            label="Advanced options"
+            :label="$t('lnurlp.advanced_options')"
           >
             <q-card>
               <q-card-section>
-                <h5 class="text-caption q-mt-sm q-mb-none">
-                  LUD-11: Disposable and storeable payRequests.
-                </h5>
+                <h5
+                  class="text-caption q-mt-sm q-mb-none"
+                  v-text="$t('lnurlp.lud11_title')"
+                ></h5>
                 <div class="row">
                   <div class="col-12">
                     <q-checkbox
                       dense
                       :toggle-indeterminate="false"
                       v-model="formDialog.data.disposable"
-                      label="If enabled, the LNURL will not be stored (default)."
+                      :label="$t('lnurlp.disposable_label')"
                     />
                   </div>
                 </div>
-                <h5 class="text-caption q-mt-sm q-mb-none">LNURL</h5>
+                <h5
+                  class="text-caption q-mt-sm q-mb-none"
+                  v-text="$t('lnurlp.lnurl_section')"
+                ></h5>
                 <div class="row">
                   <div class="col-12">
                     <q-input
@@ -524,8 +570,8 @@
                       dense
                       v-model.number="formDialog.data.comment_chars"
                       type="number"
-                      label="Comment maximum characters"
-                      hint="Allow the payer to attach a comment."
+                      :label="$t('lnurlp.comment_chars_label')"
+                      :hint="$t('lnurlp.comment_chars_hint')"
                     >
                     </q-input>
                   </div>
@@ -537,8 +583,8 @@
                       dense
                       v-model="formDialog.data.webhook_url"
                       type="text"
-                      label="Webhook URL (optional)"
-                      hint="A URL to be called whenever this link receives a payment."
+                      :label="$t('lnurlp.webhook_url_label')"
+                      :hint="$t('lnurlp.webhook_url_hint')"
                     ></q-input>
                   </div>
                 </div>
@@ -549,8 +595,8 @@
                       dense
                       v-model="formDialog.data.webhook_headers"
                       type="text"
-                      label="Webhook headers (optional)"
-                      hint="Custom data as JSON string, send headers along with the webhook."
+                      :label="$t('lnurlp.webhook_headers_label')"
+                      :hint="$t('lnurlp.webhook_headers_hint')"
                     ></q-input>
                   </div>
                   <div class="col-12">
@@ -559,8 +605,8 @@
                       dense
                       v-model="formDialog.data.webhook_body"
                       type="text"
-                      label="Webhook custom data (optional)"
-                      hint="Custom data as JSON string, will get posted along with webhook 'body' field."
+                      :label="$t('lnurlp.webhook_body_label')"
+                      :hint="$t('lnurlp.webhook_body_hint')"
                     ></q-input>
                   </div>
                 </div>
@@ -571,8 +617,8 @@
                       dense
                       v-model="formDialog.data.success_text"
                       type="text"
-                      label="Success message (optional)"
-                      hint="Will be shown to the user in his wallet after a successful payment."
+                      :label="$t('lnurlp.success_text_label')"
+                      :hint="$t('lnurlp.success_text_hint')"
                     ></q-input>
                   </div>
                 </div>
@@ -583,22 +629,25 @@
                       dense
                       v-model="formDialog.data.success_url"
                       type="text"
-                      label="Success URL (optional)"
-                      hint="Link will be shown to the sender after a successful payment."
+                      :label="$t('lnurlp.success_url_label')"
+                      :hint="$t('lnurlp.success_url_hint')"
                     >
                     </q-input>
                   </div>
                 </div>
               </q-card-section>
               <q-card-section>
-                <h5 class="text-caption q-mt-sm q-mb-none">Nostr</h5>
+                <h5
+                  class="text-caption q-mt-sm q-mb-none"
+                  v-text="$t('lnurlp.nostr_section')"
+                ></h5>
                 <div class="row">
                   <div class="col-12">
                     <q-checkbox
                       :toggle-indeterminate="false"
                       dense
                       v-model="formDialog.data.zaps"
-                      label="Enable nostr zaps"
+                      :label="$t('lnurlp.enable_zaps')"
                     />
                   </div>
                 </div>
@@ -611,8 +660,8 @@
               unelevated
               color="primary"
               type="submit"
-              >Update pay link</q-btn
-            >
+              :label="$t('lnurlp.update_pay_link')"
+            ></q-btn>
             <q-btn
               v-else
               unelevated
@@ -624,11 +673,15 @@
                 formDialog.data.min <= 0
               "
               type="submit"
-              >Create pay link</q-btn
-            >
-            <q-btn v-close-popup flat color="grey" class="q-ml-auto"
-              >Cancel</q-btn
-            >
+              :label="$t('lnurlp.create_pay_link')"
+            ></q-btn>
+            <q-btn
+              v-close-popup
+              flat
+              color="grey"
+              class="q-ml-auto"
+              :label="$t('cancel')"
+            ></q-btn>
           </div>
         </q-form>
       </q-card>
@@ -638,29 +691,34 @@
       <q-card v-if="qrCodeDialog.data" class="q-pa-lg lnbits__dialog-card">
         <lnbits-qrcode-lnurl :url="activeUrl" :nfc="true"></lnbits-qrcode-lnurl>
         <p style="word-break: break-all">
-          <strong>ID:</strong> <span v-text="qrCodeDialog.data.id"></span><br />
-          <strong>Amount:</strong>
+          <strong v-text="$t('lnurlp.id_label')"></strong>
+          <span v-text="qrCodeDialog.data.id"></span><br />
+          <strong v-text="$t('lnurlp.amount_label_colon')"></strong>
           <span v-text="qrCodeDialog.data.amount"></span><br />
 
-          <span v-if="qrCodeDialog.data.currency"
-            ><strong
-              ><span v-text="qrCodeDialog.data.currency"></span> price:</strong
-            >
+          <span v-if="qrCodeDialog.data.currency">
+            <strong
+              v-text="
+                $t('lnurlp.currency_price', {
+                  currency: qrCodeDialog.data.currency
+                })
+              "
+            ></strong>
             <span
               v-if="fiatRates[qrCodeDialog.data.currency]"
               v-text="fiatRates[qrCodeDialog.data.currency] + 'sat'"
             ></span>
-            <span v-else>Loading...</span>
-            <br
-          /></span>
-          <strong>Accepts comments:</strong>
+            <span v-else v-text="$t('lnurlp.loading')"></span>
+            <br />
+          </span>
+          <strong v-text="$t('lnurlp.accepts_comments')"></strong>
           <span v-text="qrCodeDialog.data.comments"></span><br />
-          <strong>Dispatches webhook to:</strong>
+          <strong v-text="$t('lnurlp.dispatches_webhook')"></strong>
           <span v-text="qrCodeDialog.data.webhook"></span><br />
-          <strong>On success:</strong>
+          <strong v-text="$t('lnurlp.on_success_label')"></strong>
           <span v-text="qrCodeDialog.data.success"></span><br />
           <span v-if="qrCodeDialog.data.username">
-            <strong>Lightning Address: </strong>
+            <strong v-text="$t('lnurlp.lightning_address_label')"></strong>
             <span v-text="lnaddress(qrCodeDialog.data)"></span>
             <q-icon
               name="content_copy"
@@ -690,9 +748,18 @@
                 'Link copied to clipboard!'
               )
             "
-            ><q-tooltip>Copy sharable link</q-tooltip>
+          >
+            <q-tooltip>
+              <span v-text="$t('lnurlp.copy_link')"></span>
+            </q-tooltip>
           </q-btn>
-          <q-btn v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
+          <q-btn
+            v-close-popup
+            flat
+            color="grey"
+            class="q-ml-auto"
+            :label="$t('close')"
+          ></q-btn>
         </div>
       </q-card>
     </q-dialog>

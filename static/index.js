@@ -25,28 +25,28 @@ window.PageLnurlp = {
         columns: [
           {
             name: 'created_at',
-            label: 'Created',
+            label: this.$t('created_at'),
             align: 'left',
             field: 'created_at',
             sortable: true
           },
           {
             name: 'wallet_name',
-            label: 'Wallet',
+            label: this.$t('lnurlp.wallet_col'),
             align: 'left',
             field: 'wallet_name',
             sortable: true
           },
           {
             name: 'description',
-            label: 'Description',
+            label: this.$t('description'),
             align: 'left',
             field: 'description',
             sortable: true
           },
           {
             name: 'amount',
-            label: 'Amount',
+            label: this.$t('amount'),
             align: 'left',
             field: 'min',
             sortable: true,
@@ -59,7 +59,7 @@ window.PageLnurlp = {
           },
           {
             name: 'currency',
-            label: 'Currency',
+            label: this.$t('currency'),
             align: 'left',
             field: 'currency',
             sortable: true,
@@ -67,11 +67,11 @@ window.PageLnurlp = {
           },
           {
             name: 'username',
-            label: 'Username',
+            label: this.$t('lnurlp.username'),
             align: 'left',
             field: 'username',
             sortable: true,
-            format: val => val ?? 'None',
+            format: val => val ?? this.$t('lnurlp.no_username'),
             classes: val => (val ? 'text-normal' : 'text-grey')
           }
         ],
@@ -147,16 +147,16 @@ window.PageLnurlp = {
           (link.currency || 'sat'),
         currency: link.currency,
         comments: link.comment_chars
-          ? `${link.comment_chars} characters`
-          : 'no',
-        webhook: link.webhook_url || 'nowhere',
+          ? this.$t('lnurlp.characters', {count: link.comment_chars})
+          : this.$t('lnurlp.no_comments'),
+        webhook: link.webhook_url || this.$t('lnurlp.webhook_nowhere'),
         success:
           link.success_text || link.success_url
-            ? 'Display message "' +
-              link.success_text +
-              '"' +
-              (link.success_url ? ' and URL "' + link.success_url + '"' : '')
-            : 'do nothing',
+            ? this.$t('lnurlp.success_display', {text: link.success_text}) +
+              (link.success_url
+                ? this.$t('lnurlp.success_and_url', {url: link.success_url})
+                : '')
+            : this.$t('lnurlp.do_nothing'),
         lnurl: link.lnurl,
         domain: link.domain,
         pay_url: link.pay_url,
@@ -231,7 +231,7 @@ window.PageLnurlp = {
       var link = _.findWhere(this.payLinks, {id: linkId})
 
       LNbits.utils
-        .confirmDialog('Are you sure you want to delete this pay link?')
+        .confirmDialog(this.$t('lnurlp.delete_confirm'))
         .onOk(() => {
           LNbits.api
             .request(
