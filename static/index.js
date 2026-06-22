@@ -6,6 +6,61 @@ window.PageLnurlp = {
     },
     endpoint() {
       return `/lnurlp/api/v1/settings?usr=${this.g.user.id}`
+    },
+    payLinksColumns() {
+      return [
+        {
+          name: 'created_at',
+          label: this.$t('created_at'),
+          align: 'left',
+          field: 'created_at',
+          sortable: true
+        },
+        {
+          name: 'wallet_name',
+          label: this.$t('lnurlp.wallet_col'),
+          align: 'left',
+          field: 'wallet_name',
+          sortable: true
+        },
+        {
+          name: 'description',
+          label: this.$t('description'),
+          align: 'left',
+          field: 'description',
+          sortable: true
+        },
+        {
+          name: 'amount',
+          label: this.$t('amount'),
+          align: 'left',
+          field: 'min',
+          sortable: true,
+          format: (_, row) => {
+            const min = row.min
+            const max = row.max
+            if (min === max) return `${min}`
+            return `${min} - ${max}`
+          }
+        },
+        {
+          name: 'currency',
+          label: this.$t('currency'),
+          align: 'left',
+          field: 'currency',
+          sortable: true,
+          format: val => val ?? 'sat'
+        },
+        {
+          name: 'username',
+          label: this.$t('lnurlp.username'),
+          align: 'left',
+          field: 'username',
+          sortable: true,
+          format: val => val ?? this.$t('lnurlp.no_username'),
+          classes: val => (val ? 'text-normal' : 'text-grey')
+        }
+      ]
     }
   },
   data() {
@@ -22,59 +77,6 @@ window.PageLnurlp = {
       fiatRates: {},
       payLinks: [],
       payLinksTable: {
-        columns: [
-          {
-            name: 'created_at',
-            label: this.$t('created_at'),
-            align: 'left',
-            field: 'created_at',
-            sortable: true
-          },
-          {
-            name: 'wallet_name',
-            label: this.$t('lnurlp.wallet_col'),
-            align: 'left',
-            field: 'wallet_name',
-            sortable: true
-          },
-          {
-            name: 'description',
-            label: this.$t('description'),
-            align: 'left',
-            field: 'description',
-            sortable: true
-          },
-          {
-            name: 'amount',
-            label: this.$t('amount'),
-            align: 'left',
-            field: 'min',
-            sortable: true,
-            format: (_, row) => {
-              const min = row.min
-              const max = row.max
-              if (min === max) return `${min}`
-              return `${min} - ${max}`
-            }
-          },
-          {
-            name: 'currency',
-            label: this.$t('currency'),
-            align: 'left',
-            field: 'currency',
-            sortable: true,
-            format: val => val ?? 'sat'
-          },
-          {
-            name: 'username',
-            label: this.$t('lnurlp.username'),
-            align: 'left',
-            field: 'username',
-            sortable: true,
-            format: val => val ?? this.$t('lnurlp.no_username'),
-            classes: val => (val ? 'text-normal' : 'text-grey')
-          }
-        ],
         pagination: {
           rowsPerPage: 10
         }

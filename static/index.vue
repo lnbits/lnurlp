@@ -44,7 +44,7 @@
             dense
             flat
             :rows="payLinks"
-            :columns="payLinksTable.columns"
+            :columns="payLinksColumns"
             row-key="id"
             :filter="payLinksFilter"
             v-model:pagination="payLinksTable.pagination"
