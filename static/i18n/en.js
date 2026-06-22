@@ -45,7 +45,8 @@ window.i18n.global.mergeLocaleMessage('en', {
     comment_chars_label: 'Comment maximum characters',
     comment_chars_hint: 'Allow the payer to attach a comment.',
     webhook_url_label: 'Webhook URL (optional)',
-    webhook_url_hint: 'A URL to be called whenever this link receives a payment.',
+    webhook_url_hint:
+      'A URL to be called whenever this link receives a payment.',
     webhook_headers_label: 'Webhook headers (optional)',
     webhook_headers_hint:
       'Custom data as JSON string, send headers along with the webhook.',
@@ -56,7 +57,8 @@ window.i18n.global.mergeLocaleMessage('en', {
     success_text_hint:
       'Will be shown to the user in his wallet after a successful payment.',
     success_url_label: 'Success URL (optional)',
-    success_url_hint: 'Link will be shown to the sender after a successful payment.',
+    success_url_hint:
+      'Link will be shown to the sender after a successful payment.',
     nostr_section: 'Nostr',
     enable_zaps: 'Enable nostr zaps',
     update_pay_link: 'Update pay link',

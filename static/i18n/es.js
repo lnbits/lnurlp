@@ -23,8 +23,7 @@ window.i18n.global.mergeLocaleMessage('es', {
       'Explorar LNURL y encontrar casos de uso está ayudando a informar el desarrollo del protocolo Lightning, en lugar de que el protocolo dicte cómo interactuar con la red Lightning.',
     lnurl_more_info: 'Consulte {link} para obtener más información.',
     lnbits_pay_link: 'Enlace LNURL-Pay de LNbits',
-    pay_with_wallet:
-      'Use una cartera bitcoin compatible con LNURL para pagar.',
+    pay_with_wallet: 'Use una cartera bitcoin compatible con LNURL para pagar.',
     webhook_to: 'Webhook a',
     on_success_message: "Al completar, mostrar mensaje '{message}'",
     on_success_and_url: "y URL '{url}'",
@@ -59,7 +58,8 @@ window.i18n.global.mergeLocaleMessage('es', {
     success_text_hint:
       'Se mostrará al usuario en su cartera tras un pago exitoso.',
     success_url_label: 'URL de éxito (opcional)',
-    success_url_hint: 'El enlace se mostrará al remitente tras un pago exitoso.',
+    success_url_hint:
+      'El enlace se mostrará al remitente tras un pago exitoso.',
     nostr_section: 'Nostr',
     enable_zaps: 'Activar zaps de Nostr',
     update_pay_link: 'Actualizar enlace de pago',

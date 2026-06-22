@@ -59,7 +59,8 @@ window.i18n.global.mergeLocaleMessage('de', {
     success_text_hint:
       'Wird dem Nutzer in seiner Wallet nach einer erfolgreichen Zahlung angezeigt.',
     success_url_label: 'Erfolgs-URL (optional)',
-    success_url_hint: 'Link wird dem Absender nach einer erfolgreichen Zahlung angezeigt.',
+    success_url_hint:
+      'Link wird dem Absender nach einer erfolgreichen Zahlung angezeigt.',
     nostr_section: 'Nostr',
     enable_zaps: 'Nostr-Zaps aktivieren',
     update_pay_link: 'Zahlungslink aktualisieren',

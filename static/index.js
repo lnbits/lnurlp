@@ -230,22 +230,20 @@ window.PageLnurlp = {
     deletePayLink(linkId) {
       var link = _.findWhere(this.payLinks, {id: linkId})
 
-      LNbits.utils
-        .confirmDialog(this.$t('lnurlp.delete_confirm'))
-        .onOk(() => {
-          LNbits.api
-            .request(
-              'DELETE',
-              '/lnurlp/api/v1/links/' + linkId,
-              _.findWhere(this.g.user.wallets, {id: link.wallet}).adminkey
-            )
-            .then(() => {
-              this.payLinks = _.reject(this.payLinks, obj => obj.id === linkId)
-            })
-            .catch(err => {
-              LNbits.utils.notifyApiError(err)
-            })
-        })
+      LNbits.utils.confirmDialog(this.$t('lnurlp.delete_confirm')).onOk(() => {
+        LNbits.api
+          .request(
+            'DELETE',
+            '/lnurlp/api/v1/links/' + linkId,
+            _.findWhere(this.g.user.wallets, {id: link.wallet}).adminkey
+          )
+          .then(() => {
+            this.payLinks = _.reject(this.payLinks, obj => obj.id === linkId)
+          })
+          .catch(err => {
+            LNbits.utils.notifyApiError(err)
+          })
+      })
     },
     updateFiatRate(currency) {
       LNbits.api
