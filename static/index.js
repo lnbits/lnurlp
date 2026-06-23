@@ -6,6 +6,61 @@ window.PageLnurlp = {
     },
     endpoint() {
       return `/lnurlp/api/v1/settings?usr=${this.g.user.id}`
+    },
+    payLinksColumns() {
+      return [
+        {
+          name: 'created_at',
+          label: this.$t('created_at'),
+          align: 'left',
+          field: 'created_at',
+          sortable: true
+        },
+        {
+          name: 'wallet_name',
+          label: this.$t('lnurlp.wallet_col'),
+          align: 'left',
+          field: 'wallet_name',
+          sortable: true
+        },
+        {
+          name: 'description',
+          label: this.$t('description'),
+          align: 'left',
+          field: 'description',
+          sortable: true
+        },
+        {
+          name: 'amount',
+          label: this.$t('amount'),
+          align: 'left',
+          field: 'min',
+          sortable: true,
+          format: (_, row) => {
+            const min = row.min
+            const max = row.max
+            if (min === max) return `${min}`
+            return `${min} - ${max}`
+          }
+        },
+        {
+          name: 'currency',
+          label: this.$t('currency'),
+          align: 'left',
+          field: 'currency',
+          sortable: true,
+          format: val => val ?? 'sat'
+        },
+        {
+          name: 'username',
+          label: this.$t('lnurlp.username'),
+          align: 'left',
+          field: 'username',
+          sortable: true,
+          format: val => val ?? this.$t('lnurlp.no_username'),
+          classes: val => (val ? 'text-normal' : 'text-grey')
+        }
+      ]
     }
   },
   data() {
@@ -22,59 +77,6 @@ window.PageLnurlp = {
       fiatRates: {},
       payLinks: [],
       payLinksTable: {
-        columns: [
-          {
-            name: 'created_at',
-            label: 'Created',
-            align: 'left',
-            field: 'created_at',
-            sortable: true
-          },
-          {
-            name: 'wallet_name',
-            label: 'Wallet',
-            align: 'left',
-            field: 'wallet_name',
-            sortable: true
-          },
-          {
-            name: 'description',
-            label: 'Description',
-            align: 'left',
-            field: 'description',
-            sortable: true
-          },
-          {
-            name: 'amount',
-            label: 'Amount',
-            align: 'left',
-            field: 'min',
-            sortable: true,
-            format: (_, row) => {
-              const min = row.min
-              const max = row.max
-              if (min === max) return `${min}`
-              return `${min} - ${max}`
-            }
-          },
-          {
-            name: 'currency',
-            label: 'Currency',
-            align: 'left',
-            field: 'currency',
-            sortable: true,
-            format: val => val ?? 'sat'
-          },
-          {
-            name: 'username',
-            label: 'Username',
-            align: 'left',
-            field: 'username',
-            sortable: true,
-            format: val => val ?? 'None',
-            classes: val => (val ? 'text-normal' : 'text-grey')
-          }
-        ],
         pagination: {
           rowsPerPage: 10
         }
@@ -147,16 +149,16 @@ window.PageLnurlp = {
           (link.currency || 'sat'),
         currency: link.currency,
         comments: link.comment_chars
-          ? `${link.comment_chars} characters`
-          : 'no',
-        webhook: link.webhook_url || 'nowhere',
+          ? this.$t('lnurlp.characters', {count: link.comment_chars})
+          : this.$t('lnurlp.no_comments'),
+        webhook: link.webhook_url || this.$t('lnurlp.webhook_nowhere'),
         success:
           link.success_text || link.success_url
-            ? 'Display message "' +
-              link.success_text +
-              '"' +
-              (link.success_url ? ' and URL "' + link.success_url + '"' : '')
-            : 'do nothing',
+            ? this.$t('lnurlp.success_display', {text: link.success_text}) +
+              (link.success_url
+                ? this.$t('lnurlp.success_and_url', {url: link.success_url})
+                : '')
+            : this.$t('lnurlp.do_nothing'),
         lnurl: link.lnurl,
         domain: link.domain,
         pay_url: link.pay_url,
@@ -230,22 +232,20 @@ window.PageLnurlp = {
     deletePayLink(linkId) {
       var link = _.findWhere(this.payLinks, {id: linkId})
 
-      LNbits.utils
-        .confirmDialog('Are you sure you want to delete this pay link?')
-        .onOk(() => {
-          LNbits.api
-            .request(
-              'DELETE',
-              '/lnurlp/api/v1/links/' + linkId,
-              _.findWhere(this.g.user.wallets, {id: link.wallet}).adminkey
-            )
-            .then(() => {
-              this.payLinks = _.reject(this.payLinks, obj => obj.id === linkId)
-            })
-            .catch(err => {
-              LNbits.utils.notifyApiError(err)
-            })
-        })
+      LNbits.utils.confirmDialog(this.$t('lnurlp.delete_confirm')).onOk(() => {
+        LNbits.api
+          .request(
+            'DELETE',
+            '/lnurlp/api/v1/links/' + linkId,
+            _.findWhere(this.g.user.wallets, {id: link.wallet}).adminkey
+          )
+          .then(() => {
+            this.payLinks = _.reject(this.payLinks, obj => obj.id === linkId)
+          })
+          .catch(err => {
+            LNbits.utils.notifyApiError(err)
+          })
+      })
     },
     updateFiatRate(currency) {
       LNbits.api

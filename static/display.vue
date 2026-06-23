@@ -12,12 +12,11 @@
     <div class="col-12 col-sm-6 col-md-5 col-lg-4 q-gutter-y-md">
       <q-card>
         <q-card-section>
-          <h6 class="text-subtitle1 q-mb-sm q-mt-none">
-            LNbits LNURL-pay link
-          </h6>
-          <p class="q-my-none">
-            Use an LNURL compatible bitcoin wallet to pay.
-          </p>
+          <h6
+            class="text-subtitle1 q-mb-sm q-mt-none"
+            v-text="$t('lnurlp.lnbits_pay_link')"
+          ></h6>
+          <p class="q-my-none" v-text="$t('lnurlp.pay_with_wallet')"></p>
         </q-card-section>
         <q-card-section class="q-pa-none">
           <q-separator></q-separator>
@@ -25,37 +24,22 @@
             <q-expansion-item
               group="extras"
               icon="info"
-              label="Powered by LNURL"
+              :label="$t('lnurlp.powered_by_lnurl')"
             >
               <q-card>
                 <q-card-section>
-                  <p>
-                    LNURL is a range of lightning-network standards that allow
-                    us to use lightning-network differently. An LNURL-pay is a
-                    link that wallets use to fetch an invoice from a server
-                    on-demand. The link or QR code is fixed, but each time it is
-                    read by a compatible wallet a new QR code is issued by the
-                    service. It can be used to activate machines without them
-                    having to maintain an electronic screen to generate and show
-                    invoices locally, or to sell any predefined good or service
-                    automatically.
-                  </p>
-                  <p>
-                    Exploring LNURL and finding use cases, is really helping
-                    inform lightning protocol development, rather than the
-                    protocol dictating how lightning-network should be engaged
-                    with.
-                  </p>
-                  <small
-                    >Check
-                    <a
-                      class="text-secondary"
-                      href="https://github.com/fiatjaf/awesome-lnurl"
-                      target="_blank"
-                      >Awesome LNURL</a
-                    >
-                    for further information.</small
-                  >
+                  <p v-text="$t('lnurlp.lnurl_description')"></p>
+                  <p v-text="$t('lnurlp.lnurl_exploring')"></p>
+                  <i18n-t keypath="lnurlp.lnurl_more_info" tag="small">
+                    <template #link>
+                      <a
+                        class="text-secondary"
+                        href="https://github.com/fiatjaf/awesome-lnurl"
+                        target="_blank"
+                        >Awesome LNURL</a
+                      >
+                    </template>
+                  </i18n-t>
                 </q-card-section>
               </q-card>
             </q-expansion-item>
