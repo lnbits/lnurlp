@@ -1,9 +1,8 @@
-import asyncio
-
 from fastapi import APIRouter
+from lnbits.task_manager import Task, task_manager  # type: ignore
 
 from .crud import db
-from .tasks import wait_for_paid_invoices
+from .tasks import on_invoice_paid
 from .views import lnurlp_generic_router
 from .views_api import lnurlp_api_router
 from .views_lnurl import lnurlp_lnurl_router
@@ -28,18 +27,16 @@ lnurlp_ext.include_router(lnurlp_generic_router)
 lnurlp_ext.include_router(lnurlp_api_router)
 lnurlp_ext.include_router(lnurlp_lnurl_router)
 
-scheduled_tasks: list[asyncio.Task] = []
+scheduled_tasks: list[Task] = []
 
 
 def lnurlp_stop():
     for task in scheduled_tasks:
-        task.cancel()
+        task_manager.cancel_task(task)
 
 
 def lnurlp_start():
-    from lnbits.tasks import create_permanent_unique_task
-
-    task = create_permanent_unique_task("lnurlp", wait_for_paid_invoices)
+    task = task_manager.register_invoice_listener(on_invoice_paid, "ext_lnurlp")
     scheduled_tasks.append(task)
 
 
