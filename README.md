@@ -12,57 +12,97 @@
 
 <small>For more about LNBits extension check [this tutorial](https://github.com/lnbits/lnbits/wiki/LNbits-Extensions)</small>
 
-## Create a static QR code or LNaddress people can use to pay over Lightning Network
+## Features
 
-LNURL is a range of lightning-network standards that allow us to use lightning-network differently. An LNURL-pay is a link that wallets use to fetch an invoice from a server on-demand. The link or QR code is fixed, but each time it is read by a compatible wallet a new invoice is issued by the service and sent to the wallet.
+- **Reusable pay links** - one QR code or link can receive many payments
+- **Lightning Address** - receive payments at names like `alice@example.com`
+- **Fixed or flexible amounts** - set one amount or a min/max range
+- **Fiat pricing** - price in a fiat currency and convert to sats at payment time
+- **Comments and success messages** - collect a short note and reply after payment
+- **Webhooks** - notify another system when a link is paid
+- **Nostr zaps** - receive NIP-57 zaps through a pay link
 
-[**Wallets supporting LNURL**](https://github.com/fiatjaf/awesome-lnurl#wallets)
+## Overview
+
+LNURLp creates reusable Lightning payment links. The QR code stays the same, but every time someone scans it with an LNURL-compatible wallet, LNbits creates a fresh invoice for that payment.
+
+Use LNURLp for donation pages, tip jars, checkout links, printed QR codes, Lightning Addresses, or simple payment pages that do not need a full shop.
+
+[Wallets supporting LNURL](https://github.com/fiatjaf/awesome-lnurl#wallets)
 
 ## Usage
 
-1. Create an LNURLp (New Pay link)\
-   ![create lnurlp](https://i.imgur.com/rhUBJFy.jpg)
-   - select your wallets
-   - make a small description
-   - enter amount
-   - if _Fixed amount_ is unchecked you'll have the option to configure a Max and Min amount
-   - you can set the currency to something different than sats. For example if you choose EUR, the satoshi amount will be calculated when a user scans the LNURLp
-   - You can ask the user to send a comment that will be sent along with the payment (for example a comment to a blog post)
-   - Webhook URL allows to call an URL when the LNURLp is paid
-   - Success mesage, will send a message back to the user after a successful payment, for example a thank you note
-   - Success URL, will send back a clickable link to the user. Access to some hidden content, or a download link
+1. **Create** a new pay link.
 
-2. Use the shareable link or view the LNURLp you just created\
-   ![LNURLp](https://i.imgur.com/C8s1P0Q.jpg)
-   - you can now open your LNURLp and copy the LNURL, get the shareable link or print it\
-     ![view lnurlp](https://i.imgur.com/4n41S7T.jpg)
+   ![Create LNURLp](https://github.com/lnbits/lnurlp/blob/main/static/image/lnurlp_01.png?raw=true)
 
-3. Optional - add Lightning Address
-   - attach a username to your lnurlp to create a lightning address
-   - the LN address format will be username@lnbits-domain-name
-   - Find out more about the lightning address spec at lightningaddress.com
+2. Fill in the basics:
+   - Wallet to receive payments
+   - Description shown to the payer
+   - Amount, or min/max amount if it is not fixed
+   - Currency, if you want fiat pricing instead of sats
 
-## Update your LNURL-pay extension
+3. Open the link details.
 
-Now that the extensions are taken out of core LNbits we can update each extension separately without the need to reload or restart LNbits as a whole.
-This new version of the extension will give you the option to add a Lightning Address to each LNURLpay link.
+   ![LNURLp list](https://github.com/lnbits/lnurlp/blob/main/static/image/lnurlp_02.png?raw=true)
 
-- Open your LNbits instance as super admin (not as a regular user. You will find the SuperUser-ID in your server logs on restart of LNbits. Use that to bookmark and manage LNbits from there in the future.)
-  Now lets install the new version of a given extension like extensively [described in this guide](https://github.com/lnbits/lnbits/blob/main/docs/guide/extension-install.md#install-new-extension). In short:
-- Go to "Manage extensions", click on "ALL", search for e.g. LNURLp, click on "Manage"
-- Open the details of the extension and click on version 0.2.1, click "Install". You´re done!
+4. Share the page, copy the LNURL, write it to NFC, or print the QR code.
 
-[![lnurl-p-1.jpg](https://i.postimg.cc/fTwDWD17/lnurl-p-1.jpg)](https://postimg.cc/xqFWtDfq)
+   ![View LNURLp](https://github.com/lnbits/lnurlp/blob/main/static/image/lnurlp_03.png?raw=true)
 
-- Open the LNURLp extension from the left panel
-- If you already have had some LNURLp defined, you can now click on edit and add a LN Address to each. _Note that this will change your QR-Code!_
-- If you didn't create any LNURLp before nothing changed except the window for defining new ones
+## Lightning Address
 
-[![lnurl-p-ln-address.jpg](https://i.postimg.cc/rsQQc1tr/lnurl-p-ln-address.jpg)](https://postimg.cc/tnnhNVkq)
+Add a username to a pay link to create a Lightning Address.
 
-Now you can receive sats to your newly created LN address. You will find this info also in the transaction overview for each payment (click on the green arrow).
+For example, username `alice` on `example.com` becomes:
 
-[![lnurl-details.jpg](https://i.postimg.cc/zDwq1V2X/lnurl-details.jpg)](https://postimg.cc/3WwsXJHP)
+```text
+alice@example.com
+```
+
+You can also set a custom domain on the pay link. Use this when your public Lightning Address domain is different from the LNbits host.
+
+## Fiat Amounts
+
+Set a currency such as EUR or USD when you want the payer to pay a fiat-denominated price. LNbits converts the amount to sats when the wallet requests the invoice.
+
+Use fixed amounts for products or donations with a set price. Use min/max amounts for tips, pay-what-you-want pages, and open donations.
+
+## Comments and Success Actions
+
+LNURLp can ask the payer for a short comment. This is useful for names, order notes, blog comments, or donation messages.
+
+After payment, the payer's wallet can show:
+
+- A success message
+- A secure `https://` success URL
+
+Use success actions for thank-you notes, download links, gated pages, or next steps after payment.
+
+## Webhooks
+
+Add a webhook URL when another app should be notified after a payment. LNURLp sends payment details to the webhook and can include:
+
+- The payment hash and invoice
+- The paid amount
+- The payer comment
+- Custom webhook data
+- Optional custom headers and body data
+- Zap receipt data when Nostr zaps are enabled
+
+## Nostr Zaps
+
+Enable zaps when the pay link should support [NIP-57](https://nips.nostr.com/57) Nostr zap payments. Admins can set the extension's Nostr private key in the LNURLp settings dialog.
+
+When a zap payment is paid, LNURLp signs a zap receipt and sends it to the relays from the zap request.
+
+## Disposable Pay Requests
+
+LNURLp supports disposable and storeable pay requests. The default is disposable, which is the safest option for normal reusable QR codes and payment pages.
+
+When enabled, wallets can save the LNURLp or lnaddress, for reuse later. [LUD-11](https://github.com/lnurl/luds/blob/luds/11.md)
+
+Only change this if you know your wallet or integration needs storeable pay requests.
 
 </details>
 
