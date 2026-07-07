@@ -4,7 +4,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from lnbits.core.services import create_invoice
+from lnbits.exceptions import InvoiceError
 from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
+from lnbits.wallets import get_funding_source
+from lnbits.wallets.base import Feature
 from lnurl import (
     CallbackUrl,
     LightningInvoice,
@@ -111,14 +114,26 @@ async def api_lnurl_callback(
 
     # we take the zap request as the description instead of the metadata if present
     unhashed_description = nostr.encode() if nostr else metadata.encode()
+    funding_source = get_funding_source()
+    if (
+        funding_source.features is not None
+        and not funding_source.has_feature(Feature.descriptionhash)
+    ):
+        return LnurlErrorResponse(
+            reason="This payment link cannot receive payments with its current configuration."
+        )
 
-    payment = await create_invoice(
-        wallet_id=link.wallet,
-        amount=int(amount / 1000),
-        memo=link.description,
-        unhashed_description=unhashed_description,
-        extra=extra,
-    )
+    try:
+        payment = await create_invoice(
+            wallet_id=link.wallet,
+            amount=int(amount / 1000),
+            memo=link.description,
+            unhashed_description=unhashed_description,
+            extra=extra,
+        )
+    except InvoiceError as exc:
+        return LnurlErrorResponse(reason=exc.message)
+
     invoice = parse_obj_as(LightningInvoice, LightningInvoice(payment.bolt11))
 
     if link.success_url:
