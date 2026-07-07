@@ -5,21 +5,11 @@ import httpx
 import websockets
 from lnbits.core.crud import get_payment, update_payment
 from lnbits.core.models import Payment
-from lnbits.tasks import register_invoice_listener
 from loguru import logger
 from pynostr.event import Event
 
 from .crud import get_or_create_lnurlp_settings, get_pay_link
 from .models import PayLink
-
-
-async def wait_for_paid_invoices():
-    invoice_queue = asyncio.Queue()
-    register_invoice_listener(invoice_queue, "ext_lnurlp")
-
-    while True:
-        payment = await invoice_queue.get()
-        await on_invoice_paid(payment)
 
 
 async def on_invoice_paid(payment: Payment):
