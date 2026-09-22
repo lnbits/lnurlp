@@ -206,3 +206,25 @@ async def m012_add_disposable(db: Connection):
     await db.execute(
         "ALTER TABLE lnurlp.pay_links ADD COLUMN disposable BOOLEAN DEFAULT TRUE"
     )
+
+
+async def m013_make_lnaddress_usernames_unique(db: Connection):
+    duplicate: object | None = await db.fetchone("""
+        SELECT LOWER(username)
+        FROM lnurlp.pay_links
+        WHERE username IS NOT NULL
+        GROUP BY LOWER(username)
+        HAVING COUNT(*) > 1
+        LIMIT 1
+        """)
+    if duplicate:
+        raise RuntimeError(
+            "Cannot enable automatic Lightning Addresses while duplicate usernames "
+            "exist. Resolve duplicate lnurlp.pay_links usernames and retry."
+        )
+
+    await db.execute("""
+        CREATE UNIQUE INDEX lnurlp_pay_links_username_unique
+        ON lnurlp.pay_links (LOWER(username))
+        WHERE username IS NOT NULL
+        """)

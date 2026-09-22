@@ -62,6 +62,8 @@ alice@example.com
 
 You can also set a custom domain on the pay link. Use this when your public Lightning Address domain is different from the LNbits host.
 
+When a Lightning Address is requested for an LNbits account username that has no existing pay link, LNURLp creates a reusable address for that account on demand. It uses the configured LNbits public hostname, accepts payments from 1 sat through the configured incoming-payment maximum, and enables Nostr zaps. An existing manually configured address is never changed.
+
 ## Fiat Amounts
 
 Set a currency such as EUR or USD when you want the payer to pay a fiat-denominated price. LNbits converts the amount to sats when the wallet requests the invoice.
