@@ -1,9 +1,13 @@
 import json
+import re
 from http import HTTPStatus
 from typing import Annotated
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, HTTPException, Query, Request
+from lnbits.core.crud.users import get_account_by_username, get_user_from_account
 from lnbits.core.services import create_invoice
+from lnbits.settings import settings
 from lnbits.utils.exchange_rates import get_fiat_rate_satoshis
 from lnurl import (
     CallbackUrl,
@@ -19,15 +23,90 @@ from lnurl import (
     UrlAction,
 )
 from pydantic import parse_obj_as
+from sqlalchemy.exc import IntegrityError  # type: ignore[import-untyped]
 
 from .crud import (
+    create_pay_link,
     get_address_data,
     get_or_create_lnurlp_settings,
     get_pay_link,
     update_pay_link,
 )
+from .models import CreatePayLinkData, PayLink
 
 lnurlp_lnurl_router = APIRouter()
+
+_LNADDRESS_USERNAME_PATTERN = r"^[a-z0-9-_.]{1,210}$"
+_MAX_DATABASE_SATS = 2_147_483_647
+
+
+def configured_lnaddress_domain() -> str | None:
+    parsed = urlsplit(settings.lnbits_baseurl)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        return None
+
+    try:
+        port = parsed.port
+    except ValueError:
+        return None
+
+    hostname = parsed.hostname.encode("idna").decode("ascii").lower()
+    if port and not (
+        (parsed.scheme == "http" and port == 80)
+        or (parsed.scheme == "https" and port == 443)
+    ):
+        return f"{hostname}:{port}"
+    return hostname
+
+
+async def create_default_lnaddress(username: str) -> PayLink | None:
+    account = await get_account_by_username(username)
+    if not account or not account.username:
+        return None
+
+    username = account.username.lower()
+    if not re.fullmatch(_LNADDRESS_USERNAME_PATTERN, username):
+        return None
+
+    existing_link = await get_address_data(username)
+    if existing_link:
+        return existing_link
+
+    domain = configured_lnaddress_domain()
+    if not domain:
+        return None
+
+    user = await get_user_from_account(account)
+    if not user:
+        return None
+    wallet = next(
+        (wallet for wallet in user.wallets if wallet.can_receive_payments), None
+    )
+    if not wallet:
+        return None
+
+    maximum = min(
+        settings.lnbits_max_incoming_payment_amount_sats or _MAX_DATABASE_SATS,
+        _MAX_DATABASE_SATS,
+    )
+    try:
+        return await create_pay_link(
+            CreatePayLinkData(
+                description=f"Payment to {username}",
+                wallet=wallet.id,
+                min=1,
+                max=maximum,
+                username=username,
+                zaps=True,
+                disposable=False,
+                domain=domain,
+            )
+        )
+    except IntegrityError:
+        link = await get_address_data(username)
+        if link:
+            return link
+        raise
 
 
 @lnurlp_lnurl_router.get(
@@ -206,6 +285,8 @@ async def lnaddress(
     username: str, request: Request
 ) -> LnurlPayResponse | LnurlErrorResponse:
     address_data = await get_address_data(username)
+    if not address_data:
+        address_data = await create_default_lnaddress(username)
     if not address_data:
         return LnurlErrorResponse(reason="Lightning address not found.")
     return await api_lnurl_response(request, address_data.id)

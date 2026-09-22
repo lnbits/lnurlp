@@ -32,7 +32,7 @@ async def delete_lnurlp_settings() -> None:
 
 async def get_pay_link_by_username(username: str) -> PayLink | None:
     return await db.fetchone(
-        "SELECT * FROM lnurlp.pay_links WHERE username = :username",
+        "SELECT * FROM lnurlp.pay_links WHERE LOWER(username) = LOWER(:username)",
         {"username": username},
         PayLink,
     )
@@ -74,7 +74,7 @@ async def create_pay_link(data: CreatePayLinkData) -> PayLink:
 
 async def get_address_data(username: str) -> PayLink | None:
     return await db.fetchone(
-        "SELECT * FROM lnurlp.pay_links WHERE username = :username",
+        "SELECT * FROM lnurlp.pay_links WHERE LOWER(username) = LOWER(:username)",
         {"username": username},
         PayLink,
     )
