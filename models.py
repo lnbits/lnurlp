@@ -90,3 +90,11 @@ class PublicPayLink(BaseModel):
             "Example: lnurlp://${window.location.hostname}/lnurlp/${paylink_id}"
         ),
     )
+
+
+class PayLinkInvoice(BaseModel):
+    payment_hash: str
+    pay_link: str
+    wallet_id: str
+    amount: int
+    processed: bool = False

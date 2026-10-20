@@ -6,7 +6,7 @@
   "short_description": "Make static reusable LNURL pay links or lightning addresses",
   "description": "",
   "tile": "/lnurlp/static/image/lnurl-pay.png",
-  "min_lnbits_version": "1.5.5",
+  "min_lnbits_version": "1.6.0",
   "contributors": [
     {
       "name": "arcbtc",

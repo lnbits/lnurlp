@@ -4,7 +4,7 @@ from lnbits.db import Database
 from lnbits.helpers import urlsafe_short_hash
 from pynostr.key import PrivateKey
 
-from .models import CreatePayLinkData, LnurlpSettings, PayLink
+from .models import CreatePayLinkData, LnurlpSettings, PayLink, PayLinkInvoice
 
 db = Database("ext_lnurlp")
 
@@ -106,3 +106,38 @@ async def update_pay_link(link: PayLink) -> PayLink:
 
 async def delete_pay_link(link_id: str) -> None:
     await db.execute("DELETE FROM lnurlp.pay_links WHERE id = :id", {"id": link_id})
+
+
+async def mark_pay_link_served_meta(link_id: str) -> None:
+    await db.execute(
+        "UPDATE lnurlp.pay_links SET served_meta = 1 WHERE id = :id",
+        {"id": link_id},
+    )
+
+
+async def mark_pay_link_served_pr(link_id: str) -> None:
+    await db.execute(
+        "UPDATE lnurlp.pay_links SET served_pr = 1 WHERE id = :id",
+        {"id": link_id},
+    )
+
+
+async def create_pay_link_invoice(invoice: PayLinkInvoice) -> None:
+    await db.insert("lnurlp.invoices", invoice)
+
+
+async def claim_pay_link_invoice(invoice: PayLinkInvoice) -> bool:
+    result = await db.execute(
+        """
+        UPDATE lnurlp.invoices SET processed = true
+        WHERE payment_hash = :payment_hash AND pay_link = :pay_link
+            AND wallet_id = :wallet_id AND amount = :amount AND processed = false
+        """,
+        {
+            "payment_hash": invoice.payment_hash,
+            "pay_link": invoice.pay_link,
+            "wallet_id": invoice.wallet_id,
+            "amount": invoice.amount,
+        },
+    )
+    return result.rowcount == 1
