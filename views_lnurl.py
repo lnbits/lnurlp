@@ -18,7 +18,7 @@ from lnurl import (
     MilliSatoshi,
     UrlAction,
 )
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 
 from .crud import (
     get_address_data,
@@ -119,19 +119,21 @@ async def api_lnurl_callback(
         unhashed_description=unhashed_description,
         extra=extra,
     )
-    invoice = parse_obj_as(LightningInvoice, LightningInvoice(payment.bolt11))
+    invoice = TypeAdapter(LightningInvoice).validate_python(
+        LightningInvoice(payment.bolt11)
+    )
 
     if link.success_url:
-        url = parse_obj_as(CallbackUrl, str(link.success_url))
+        url = TypeAdapter(CallbackUrl).validate_python(str(link.success_url))
         text = link.success_text or f"Link to {link.success_url}"
-        desc = parse_obj_as(Max144Str, text)
+        desc = TypeAdapter(Max144Str).validate_python(text)
         action = UrlAction(tag=LnurlPaySuccessActionTag.url, url=url, description=desc)
         return LnurlPayActionResponse(
             pr=invoice, successAction=action, disposable=link.disposable
         )
 
     if link.success_text:
-        message = parse_obj_as(Max144Str, link.success_text)
+        message = TypeAdapter(Max144Str).validate_python(link.success_text)
         return LnurlPayActionResponse(
             pr=invoice,
             successAction=MessageAction(message=message),
@@ -173,7 +175,7 @@ async def api_lnurl_response(
     if webhook_data:
         url = url.include_query_params(webhook_data=webhook_data)
 
-    callback_url = parse_obj_as(CallbackUrl, str(url))
+    callback_url = TypeAdapter(CallbackUrl).validate_python(str(url))
 
     if link.username:
         identifier = f"{link.username}@{link.domain or request.url.netloc}"
