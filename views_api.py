@@ -4,12 +4,13 @@ from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from lnbits.core.crud import get_user, get_wallet
-from lnbits.core.models import SimpleStatus, WalletTypeInfo
+from lnbits.core.models import KeyType, SimpleStatus, WalletTypeInfo
 from lnbits.decorators import (
     check_admin,
     require_admin_key,
     require_invoice_key,
 )
+from lnbits.helpers import check_callback_url
 from lnurl import InvalidUrl
 
 from .crud import (
@@ -52,6 +53,15 @@ def validate_paylink(data: CreatePayLinkData):
         raise HTTPException(
             detail="Min is greater than max.", status_code=HTTPStatus.BAD_REQUEST
         )
+
+    if data.webhook_url:
+        try:
+            check_callback_url(data.webhook_url)
+        except ValueError as exc:
+            raise HTTPException(
+                detail="Webhook URL is not allowed.",
+                status_code=HTTPStatus.BAD_REQUEST,
+            ) from exc
 
     if not data.currency:
         if round(data.min) != data.min or round(data.max) != data.max or data.min < 1:
@@ -109,7 +119,7 @@ async def api_links(
     links = await get_pay_links(wallet_ids)
     for link in links:
         link.lnurl = check_lnurl_encode(req, link)
-    return links
+    return [_filter_pay_link(link, key_info) for link in links]
 
 
 @lnurlp_api_router.get("/api/v1/links/{link_id}")
@@ -128,13 +138,13 @@ async def api_link_retrieve(
     # admins are allowed to read paylinks beloging to regular users
     user = await get_user(key_info.wallet.user)
     admin_user = user.admin if user else False
-    if not admin_user and link_wallet and link_wallet.user != key_info.wallet.user:
+    if not link_wallet or (not admin_user and link_wallet.user != key_info.wallet.user):
         raise HTTPException(
             detail="Not your pay link.", status_code=HTTPStatus.FORBIDDEN
         )
 
     link.lnurl = check_lnurl_encode(req, link)
-    return link
+    return _filter_pay_link(link, key_info)
 
 
 @lnurlp_api_router.get("/api/v1/links/public/{link_id}", response_model=PublicPayLink)
@@ -296,3 +306,11 @@ async def api_update_settings(data: LnurlpSettings) -> LnurlpSettings:
 @lnurlp_api_router.delete("/api/v1/settings", dependencies=[Depends(check_admin)])
 async def api_delete_settings() -> None:
     await delete_lnurlp_settings()
+
+
+def _filter_pay_link(link: PayLink, key_info: WalletTypeInfo) -> PayLink:
+    if key_info.key_type == KeyType.admin:
+        return link
+    return link.copy(
+        update={"webhook_url": None, "webhook_headers": None, "webhook_body": None}
+    )

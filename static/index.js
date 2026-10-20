@@ -127,7 +127,7 @@ window.PageLnurlp = {
         .request(
           'GET',
           '/lnurlp/api/v1/links?all_wallets=true',
-          this.g.user.wallets[0].inkey
+          this.g.user.wallets[0].adminkey
         )
         .then(response => {
           this.payLinks = response.data.map(this.mapPayLink)

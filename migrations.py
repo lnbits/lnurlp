@@ -206,3 +206,15 @@ async def m012_add_disposable(db: Connection):
     await db.execute(
         "ALTER TABLE lnurlp.pay_links ADD COLUMN disposable BOOLEAN DEFAULT TRUE"
     )
+
+
+async def m013_track_issued_invoices(db: Connection):
+    await db.execute(f"""
+        CREATE TABLE lnurlp.invoices (
+            payment_hash TEXT PRIMARY KEY,
+            pay_link TEXT NOT NULL,
+            wallet_id TEXT NOT NULL,
+            amount {db.big_int} NOT NULL,
+            processed BOOLEAN NOT NULL DEFAULT FALSE
+        );
+    """)
