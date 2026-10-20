@@ -5,10 +5,13 @@ requires-python = ">=3.10,<3.13"
 description = "LNbits, free and open-source Lightning wallet and accounts system."
 authors = [{ name = "Alan Bits", email = "alan@lnbits.com" }]
 urls = { Homepage = "https://lnbits.com", Repository = "https://github.com/lnbits/lnbits" }
-dependencies = ["lnbits>1"]
+dependencies = ["lnbits>=1.6.0"]
 
 [tool.poetry]
 package-mode = false
+
+# Keep UV configuration independent of a parent LNbits checkout.
+[tool.uv]
 
 [dependency-groups]
 dev = [
