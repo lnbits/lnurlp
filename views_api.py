@@ -246,7 +246,7 @@ async def api_link_update(
     if data.username and data.username != link.username:
         await check_username_exists(data.username)
 
-    for k, v in data.dict().items():
+    for k, v in data.model_dump().items():
         setattr(link, k, v)
 
     link = await update_pay_link(link)
