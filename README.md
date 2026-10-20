@@ -37,7 +37,6 @@ Use LNURLp for donation pages, tip jars, checkout links, printed QR codes, Light
    ![Create LNURLp](https://github.com/lnbits/lnurlp/blob/main/static/image/lnurlp_01.png?raw=true)
 
 2. Fill in the basics:
-
    - Wallet to receive payments
    - Description shown to the payer
    - Amount, or min/max amount if it is not fixed
