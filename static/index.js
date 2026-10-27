@@ -248,6 +248,7 @@ window.PageLnurlp = {
       })
     },
     updateFiatRate(currency) {
+      if (!currency) return
       LNbits.api
         .request('GET', '/api/v1/rate/' + currency, null)
         .then(response => {
