@@ -21,11 +21,15 @@ from lnurl import (
 from pydantic import TypeAdapter
 
 from .crud import (
+    create_pay_link_invoice,
     get_address_data,
     get_or_create_lnurlp_settings,
     get_pay_link,
-    update_pay_link,
+    mark_pay_link_served_meta,
+    mark_pay_link_served_pr,
 )
+from .helpers import validate_zap_request
+from .models import PayLinkInvoice
 
 lnurlp_lnurl_router = APIRouter()
 
@@ -46,8 +50,7 @@ async def api_lnurl_callback(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Pay link does not exist."
         )
-    link.served_pr = 1
-    await update_pay_link(link)
+    await mark_pay_link_served_pr(link.id)
     minimum = link.min
     maximum = link.max
 
@@ -97,7 +100,14 @@ async def api_lnurl_callback(
     # nip 57
     nostr = request.query_params.get("nostr")
     if nostr:
-        extra["nostr"] = nostr  # put it here for later publishing in tasks.py
+        if not link.zaps or amount % 1000:
+            return LnurlErrorResponse(reason="Zap is not supported for this request.")
+        settings = await get_or_create_lnurlp_settings()
+        try:
+            validate_zap_request(nostr, amount, settings.public_key)
+        except ValueError:
+            return LnurlErrorResponse(reason="Invalid zap request.")
+        extra["nostr"] = nostr
 
     if link.username:
         identifier = f"{link.username}@{link.domain or request.url.netloc}"
@@ -118,6 +128,14 @@ async def api_lnurl_callback(
         memo=link.description,
         unhashed_description=unhashed_description,
         extra=extra,
+    )
+    await create_pay_link_invoice(
+        PayLinkInvoice(
+            payment_hash=payment.payment_hash,
+            pay_link=link.id,
+            wallet_id=payment.wallet_id,
+            amount=payment.amount,
+        )
     )
     invoice = TypeAdapter(LightningInvoice).validate_python(
         LightningInvoice(payment.bolt11)
@@ -162,8 +180,7 @@ async def api_lnurl_response(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Pay link does not exist."
         )
-    link.served_meta = 1
-    await update_pay_link(link)
+    await mark_pay_link_served_meta(link.id)
 
     rate = await get_fiat_rate_satoshis(link.currency) if link.currency else 1
 
