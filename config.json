@@ -1,12 +1,12 @@
 {
   "id": "lnurlp",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "name": "Pay Links",
   "repo": "https://github.com/lnbits/lnurlp",
   "short_description": "Make static reusable LNURL pay links or lightning addresses",
   "description": "",
   "tile": "/lnurlp/static/image/lnurl-pay.png",
-  "min_lnbits_version": "1.6.0",
+  "min_lnbits_version": "1.7.0-rc1",
   "contributors": [
     {
       "name": "arcbtc",

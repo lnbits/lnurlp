@@ -184,17 +184,17 @@ async def test_only_issued_invoice_is_processed_once(
         {"status": "pending"},
         {"status": "failed"},
     ):
-        await tasks.on_invoice_paid(payment.copy(update=change))
+        await tasks.on_invoice_paid(payment.model_copy(update=change))
     foreign = await crud.create_pay_link(
         CreatePayLinkData(description="Other", wallet="wallet", min=1, max=1)
     )
-    forged = payment.copy(deep=True)
+    forged = payment.model_copy(deep=True)
     forged.extra["link"] = foreign.id
     await tasks.on_invoice_paid(forged)
     webhook.assert_not_awaited()
     await asyncio.gather(
-        tasks.on_invoice_paid(payment.copy(deep=True)),
-        tasks.on_invoice_paid(payment.copy(deep=True)),
+        tasks.on_invoice_paid(payment.model_copy(deep=True)),
+        tasks.on_invoice_paid(payment.model_copy(deep=True)),
     )
     webhook.assert_awaited_once()
     zap.assert_awaited_once()

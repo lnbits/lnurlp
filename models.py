@@ -51,7 +51,7 @@ class PayLink(BaseModel):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     lnurl: str | None = Field(
         default=None,
-        no_database=True,
+        json_schema_extra={"no_database": True},
         deprecated=True,
         description=(
             "Deprecated: Instead of using this bech32 encoded string, dynamically "
@@ -82,7 +82,7 @@ class PublicPayLink(BaseModel):
     currency: str | None = None
     lnurl: str | None = Field(
         default=None,
-        no_database=True,
+        json_schema_extra={"no_database": True},
         deprecated=True,
         description=(
             "Deprecated: Instead of using this bech32 encoded string, dynamically "

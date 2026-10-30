@@ -256,7 +256,7 @@ async def api_link_update(
     if data.username and data.username != link.username:
         await check_username_exists(data.username)
 
-    for k, v in data.dict().items():
+    for k, v in data.model_dump().items():
         setattr(link, k, v)
 
     link = await update_pay_link(link)
@@ -311,6 +311,6 @@ async def api_delete_settings() -> None:
 def _filter_pay_link(link: PayLink, key_info: WalletTypeInfo) -> PayLink:
     if key_info.key_type == KeyType.admin:
         return link
-    return link.copy(
+    return link.model_copy(
         update={"webhook_url": None, "webhook_headers": None, "webhook_body": None}
     )
