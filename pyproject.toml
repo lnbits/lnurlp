@@ -1,6 +1,6 @@
 [project]
 name = "lnbits-lnurlp"
-version = "1.5.0"
+version = "1.5.1"
 requires-python = ">=3.10,<3.14"
 description = "LNbits, free and open-source Lightning wallet and accounts system."
 authors = [{ name = "Alan Bits", email = "alan@lnbits.com" }]
@@ -26,7 +26,7 @@ dev = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = ">=3.10,<3.14"
 
 [tool.mypy]
 # exclude = "(nostr/*)"
