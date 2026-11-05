@@ -519,7 +519,11 @@
             <div class="col">
               <q-select
                 dense
-                :options="g.allowedCurrencies || g.currencies"
+                :options="
+                  g.allowedCurrencies && g.allowedCurrencies.length > 0
+                    ? g.allowedCurrencies
+                    : g.currencies
+                "
                 v-model="formDialog.data.currency"
                 :display-value="formDialog.data.currency || 'satoshis'"
                 :label="$t('currency')"
