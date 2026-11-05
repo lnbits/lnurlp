@@ -150,8 +150,9 @@ def payment():
 
 
 @pytest.mark.anyio
-async def test_only_issued_invoice_is_processed_once(
-    database, link, payment, monkeypatch
+@pytest.mark.parametrize("recorded", [False, True])
+async def test_paid_invoice_is_processed_once(
+    database, link, payment, monkeypatch, recorded
 ):
     payment.extra["link"] = link.id
     webhook = AsyncMock()
@@ -160,37 +161,22 @@ async def test_only_issued_invoice_is_processed_once(
     monkeypatch.setattr(tasks, "send_zap", zap)
     log = Mock()
     monkeypatch.setattr(tasks, "logger", log)
-    # Knowing the receiving wallet's invoice key still cannot forge provenance.
-    await tasks.on_invoice_paid(payment)
-    webhook.assert_not_awaited()
-    log.debug.assert_called_once_with(
-        "LNURLp invoice claim skipped: payment_hash={}, pay_link={}",
-        payment.payment_hash,
-        link.id,
-    )
-    await crud.create_pay_link_invoice(
-        PayLinkInvoice(
-            payment_hash=payment.payment_hash,
-            pay_link=link.id,
-            wallet_id=payment.wallet_id,
-            amount=payment.amount,
+    if recorded:
+        await crud.create_pay_link_invoice(
+            PayLinkInvoice(
+                payment_hash=payment.payment_hash,
+                pay_link=link.id,
+                wallet_id=payment.wallet_id,
+                amount=payment.amount,
+            )
         )
-    )
     for change in (
         {"wallet_id": "attacker"},
-        {"payment_hash": "wrong"},
-        {"amount": 1000},
         {"amount": -21000},
         {"status": "pending"},
         {"status": "failed"},
     ):
         await tasks.on_invoice_paid(payment.model_copy(update=change))
-    foreign = await crud.create_pay_link(
-        CreatePayLinkData(description="Other", wallet="wallet", min=1, max=1)
-    )
-    forged = payment.model_copy(deep=True)
-    forged.extra["link"] = foreign.id
-    await tasks.on_invoice_paid(forged)
     webhook.assert_not_awaited()
     await asyncio.gather(
         tasks.on_invoice_paid(payment.model_copy(deep=True)),
@@ -198,6 +184,51 @@ async def test_only_issued_invoice_is_processed_once(
     )
     webhook.assert_awaited_once()
     zap.assert_awaited_once()
+    saved = await database.fetchone(
+        "SELECT * FROM lnurlp.invoices WHERE payment_hash = :payment_hash",
+        {"payment_hash": payment.payment_hash},
+        PayLinkInvoice,
+    )
+    assert saved == PayLinkInvoice(
+        payment_hash=payment.payment_hash,
+        pay_link=link.id,
+        wallet_id=payment.wallet_id,
+        amount=payment.amount,
+        processed=True,
+    )
+    log.debug.assert_called_with(
+        "LNURLp invoice claim skipped: payment_hash={}, pay_link={}",
+        payment.payment_hash,
+        link.id,
+    )
+
+
+@pytest.mark.anyio
+async def test_invoice_claim_rejects_conflicting_details(database, link, payment):
+    invoice = PayLinkInvoice(
+        payment_hash=payment.payment_hash,
+        pay_link=link.id,
+        wallet_id=payment.wallet_id,
+        amount=payment.amount,
+    )
+    await crud.create_pay_link_invoice(invoice)
+    other = await crud.create_pay_link(
+        CreatePayLinkData(description="Other", wallet="wallet", min=1, max=1)
+    )
+    for change in (
+        {"wallet_id": "attacker"},
+        {"pay_link": other.id},
+        {"amount": 1000},
+    ):
+        assert not await crud.claim_pay_link_invoice(invoice.model_copy(update=change))
+    saved = await database.fetchone(
+        "SELECT * FROM lnurlp.invoices WHERE payment_hash = :payment_hash",
+        {"payment_hash": payment.payment_hash},
+        PayLinkInvoice,
+    )
+    assert saved == invoice
+    assert await crud.claim_pay_link_invoice(invoice)
+    assert not await crud.claim_pay_link_invoice(invoice)
 
 
 @pytest.mark.anyio
