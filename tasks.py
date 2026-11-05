@@ -138,7 +138,7 @@ async def send_webhook(payment: Payment, pay_link: PayLink, zap_receipt=None):
                     if address == addresses[-1]:
                         raise
     except Exception as exc:
-        logger.warning("LNURLp webhook request failed: {}", type(exc).__name__)
+        logger.warning(exc)
         await mark_webhook_sent(
             payment.checking_id, -1, False, "Webhook request failed."
         )
