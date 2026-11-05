@@ -971,7 +971,7 @@ wheels = [
 
 [[package]]
 name = "lnbits"
-version = "1.6.0"
+version = "1.6.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiosqlite" },
@@ -1021,9 +1021,9 @@ dependencies = [
     { name = "websocket-client" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/13/9c/2a889226cc359eb378f12ee171f30f238fb94832871d22910bee07b54eba/lnbits-1.6.0.tar.gz", hash = "sha256:f9bec101b0f300155bf10752e4ecaf95cc5f1649a3d2d68f3990e5eb6d9175f2", size = 5358217, upload-time = "2026-09-02T17:42:42.239Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/95/82/46db10da416197b239a29c518eef4dfeb99bbbd5a340009e1a9c9b9e0cf6/lnbits-1.6.2.tar.gz", hash = "sha256:628c66c81a91cdca8831d1c3bd279216b8396288dc290094cfd106c656e21c81", size = 5398909, upload-time = "2026-09-18T13:43:42.409Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d1/05/2952aca4d36938332aab77215b0c76473dccb388187103d468146fcb386e/lnbits-1.6.0-py3-none-any.whl", hash = "sha256:c1a5059abd29ed1a067b4181095b1217e493a9c8d2d1f88f44c4038c91cdd8d6", size = 3847812, upload-time = "2026-09-02T17:42:40.557Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/5f/710d94638159acbdb911c3cd51ca47baa3e56137d0e89b49de4202b2b1d6/lnbits-1.6.2-py3-none-any.whl", hash = "sha256:25649a8b40f58e30e19aa9bb3c391a92b26e47cf9f028818fcab10b38a849339", size = 3873292, upload-time = "2026-09-18T13:43:40.725Z" },
 ]
 
 [[package]]
@@ -1046,7 +1046,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "lnbits", specifier = ">=1.6.0" }]
+requires-dist = [{ name = "lnbits", specifier = ">=1.6.0,<1.7.0" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1613,15 +1613,15 @@ wheels = [
 
 [[package]]
 name = "pyln-client"
-version = "25.12.1"
+version = "25.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyln-bolt7" },
     { name = "pyln-proto" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/75/b1/28c46889cf1822f89a5d23644aa08806cedd17c2553afee2d72c4e101c62/pyln_client-25.12.1.tar.gz", hash = "sha256:4e92d18ce79879b891355d4a9bb79117466e98e12b83c1b5f321fc3e77039d5b", size = 92116, upload-time = "2026-01-15T00:04:15.621Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/35/c3/6375d73950df8cda594ca7ee1069f63a817190b08ea8cb57c9ce65019664/pyln_client-25.12.tar.gz", hash = "sha256:9a0435436dea7ce471e096aac9c4e3ede704c305b862b0a3b5e410279b54d8d6", size = 92109, upload-time = "2025-12-04T00:25:55.808Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/41/51/fb302f67a8e62eaa49d869b489cad61dac66fda9a3fd737ac56422b1b920/pyln_client-25.12.1-py3-none-any.whl", hash = "sha256:cb8c42bf4b432a3a2ec0b1ee94b96f5ad91fee1ddd0289930d55c988ab801293", size = 37633, upload-time = "2026-01-15T00:04:14.386Z" },
+    { url = "https://files.pythonhosted.org/packages/04/e7/76f13dc3174b58f91aecf7890efc174ef12721dc015601a200ac40044356/pyln_client-25.12-py3-none-any.whl", hash = "sha256:9e4ff323acb71cbc4522d160dd931599f59a4c167076db016ec5d63e6a002f86", size = 37618, upload-time = "2025-12-04T00:25:54.365Z" },
 ]
 
 [[package]]
