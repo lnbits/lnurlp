@@ -127,11 +127,17 @@ async def create_pay_link_invoice(invoice: PayLinkInvoice) -> None:
 
 
 async def claim_pay_link_invoice(invoice: PayLinkInvoice) -> bool:
+    """Claim a paid invoice once, including invoices created outside LNURLp."""
     result = await db.execute(
         """
-        UPDATE lnurlp.invoices SET processed = true
-        WHERE payment_hash = :payment_hash AND pay_link = :pay_link
-            AND wallet_id = :wallet_id AND amount = :amount AND processed = false
+        INSERT INTO lnurlp.invoices
+            (payment_hash, pay_link, wallet_id, amount, processed)
+        SELECT :payment_hash, :pay_link, :wallet_id, :amount, true
+        FROM lnurlp.pay_links
+        WHERE id = :pay_link AND wallet = :wallet_id
+        ON CONFLICT (payment_hash) DO UPDATE SET processed = true
+        WHERE invoices.pay_link = :pay_link AND invoices.wallet_id = :wallet_id
+            AND invoices.amount = :amount AND invoices.processed = false
         """,
         {
             "payment_hash": invoice.payment_hash,

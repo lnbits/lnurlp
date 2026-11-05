@@ -3,8 +3,42 @@ on:
   push:
     branches:
       - main
+      - maintenance/lnbits-1.6
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   lint:
-    uses: lnbits/lnbits/.github/workflows/lint.yml@dev
+    name: ${{ matrix.target }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [checkblack, checkruff, mypy, pyright, checkprettier, test]
+    env:
+      UV_LOCKED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Install Python dependencies
+        run: uv sync --locked --dev
+      - name: Set up Node.js
+        if: matrix.target == 'pyright' || matrix.target == 'checkprettier'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: npm
+      - name: Install Node.js dependencies
+        if: matrix.target == 'pyright' || matrix.target == 'checkprettier'
+        run: npm ci
+      - name: Run ${{ matrix.target }}
+        run: make ${{ matrix.target }}
