@@ -7,6 +7,8 @@ from urllib.parse import urlsplit
 from fastapi import Request
 from lnbits.helpers import check_callback_url
 from lnbits.settings import settings
+from lnbits.utils.network import is_global_address
+from lnbits.utils.outbound import check_outbound_addresses, check_outbound_hostname
 from lnurl import encode as lnurl_encode
 from pynostr.event import Event
 from pynostr.key import PrivateKey
@@ -38,6 +40,7 @@ async def resolve_callback_addresses(url: str) -> list[str]:
     parsed = urlsplit(url)
     scheme = {"ws": "http", "wss": "https"}.get(parsed.scheme, parsed.scheme)
     check_callback_url(parsed._replace(scheme=scheme).geturl())
+    check_outbound_hostname(parsed.hostname or "")
     port = parsed.port or (443 if scheme == "https" else 80)
     try:
         infos = await asyncio.wait_for(
@@ -51,9 +54,13 @@ async def resolve_callback_addresses(url: str) -> list[str]:
     addresses = [ipaddress.ip_address(info[4][0]) for info in infos]
     if not addresses or (
         not settings.lnbits_callback_allow_private_ips
-        and any(not address.is_global for address in addresses)
+        and any(
+            address.is_multicast or not is_global_address(address)
+            for address in addresses
+        )
     ):
         raise ValueError("Callback target IP address is not allowed.")
+    await check_outbound_addresses(addresses)
     return [str(address) for address in dict.fromkeys(addresses)]
 
 
