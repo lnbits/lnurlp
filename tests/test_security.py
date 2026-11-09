@@ -9,10 +9,13 @@ import httpx
 import pytest
 from bolt11 import decode as bolt11_decode
 from fastapi import FastAPI
+from lnbits.core.db import core_app_extra
 from lnbits.core.models import KeyType, Payment, Wallet, WalletTypeInfo
+from lnbits.core.services import lnurl as lnurl_service
 from lnbits.db import Database
 from lnbits.decorators import require_invoice_key
 from lnbits.settings import settings
+from lnbits.utils import outbound
 from lnbits.wallets.fake import FakeWallet
 from pynostr.event import Event
 from pynostr.key import PrivateKey
@@ -332,8 +335,9 @@ def test_zap_signature_and_event_id_are_checked():
 
 
 @pytest.mark.anyio
+@pytest.mark.parametrize("internal", [False, True])
 async def test_callback_records_invoice_and_signs_matching_zap(
-    client, link, monkeypatch
+    client, link, monkeypatch, internal
 ):
     created = []
     nostr = zap_request()
@@ -356,9 +360,24 @@ async def test_callback_records_invoice_and_signs_matching_zap(
         return payment
 
     monkeypatch.setattr(views_lnurl, "create_invoice", create_invoice)
-    response = await client.get(
-        f"/lnurlp/api/v1/lnurl/cb/{link.id}", params={"amount": 21000, "nostr": nostr}
-    )
+    if internal:
+        monkeypatch.setattr(settings, "lnbits_baseurl", str(client.base_url))
+        monkeypatch.setattr(core_app_extra, "local_lnurl_app", client._transport.app)
+        send = AsyncMock(side_effect=AssertionError("Local payment used the network"))
+        monkeypatch.setattr(lnurl_service, "_send_lnurl_request", send)
+        metadata = await lnurl_service.request_lnurl_json(
+            f"{str(client.base_url).rstrip('/')}/lnurlp/{link.id}"
+        )
+        data = await lnurl_service.request_lnurl_json(
+            metadata["callback"], params={"amount": 21000, "nostr": nostr}
+        )
+        response = httpx.Response(200, json=data)
+        send.assert_not_awaited()
+    else:
+        response = await client.get(
+            f"/lnurlp/api/v1/lnurl/cb/{link.id}",
+            params={"amount": 21000, "nostr": nostr},
+        )
     assert response.status_code == 200 and "pr" in response.json()
     payment = created[0]
     queued = []
@@ -402,11 +421,24 @@ async def test_invalid_zap_does_not_create_invoice(client, link, monkeypatch):
 @pytest.mark.anyio
 @pytest.mark.parametrize(
     "address",
-    ["127.0.0.1", "10.0.0.1", "169.254.169.254", "::1", "fe80::1", "::ffff:127.0.0.1"],
+    [
+        "127.0.0.1",
+        "10.0.0.1",
+        "169.254.169.254",
+        "::1",
+        "fe80::1",
+        "::ffff:127.0.0.1",
+        "64:ff9b::7f00:1",
+        "64:ff9b:1::a00:1",
+        "2002:7f00:1::",
+        "224.0.0.1",
+        "ff02::1",
+    ],
 )
 @pytest.mark.parametrize("scheme", ["https", "ws", "wss"])
 async def test_private_and_mixed_dns_targets_are_blocked(monkeypatch, address, scheme):
     loop = asyncio.get_running_loop()
+    monkeypatch.setattr(outbound, "_is_assigned", lambda ip: ip.is_loopback)
     monkeypatch.setattr(
         loop,
         "getaddrinfo",
@@ -420,10 +452,19 @@ async def test_private_and_mixed_dns_targets_are_blocked(monkeypatch, address, s
     with pytest.raises(ValueError, match="not allowed"):
         await helpers.resolve_callback_addresses(f"{scheme}://callback.example")
     monkeypatch.setattr(settings, "lnbits_callback_allow_private_ips", True)
-    assert await helpers.resolve_callback_addresses(f"{scheme}://callback.example") == [
-        "8.8.8.8",
-        address,
-    ]
+    if address in {
+        "127.0.0.1",
+        "::1",
+        "::ffff:127.0.0.1",
+        "64:ff9b::7f00:1",
+        "2002:7f00:1::",
+    }:
+        with pytest.raises(ValueError, match="this server"):
+            await helpers.resolve_callback_addresses(f"{scheme}://callback.example")
+    else:
+        assert await helpers.resolve_callback_addresses(
+            f"{scheme}://callback.example"
+        ) == ["8.8.8.8", address]
 
 
 @pytest.mark.anyio
@@ -628,3 +669,21 @@ async def test_public_activity_does_not_overwrite_owner_settings(link):
     assert saved is not None
     assert saved.webhook_url == "https://new.example"
     assert saved.served_meta == saved.served_pr == 1
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("scheme", ["https", "ws", "wss"])
+async def test_public_host_addresses_blocked_even_with_private_opt_in(
+    monkeypatch, scheme
+):
+    monkeypatch.setattr(settings, "lnbits_callback_allow_private_ips", True)
+    monkeypatch.setattr(settings, "lnbits_outbound_host_ips", ["8.8.8.8"])
+    monkeypatch.setattr(
+        asyncio.get_running_loop(),
+        "getaddrinfo",
+        AsyncMock(
+            return_value=[(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("8.8.8.8", 443))]
+        ),
+    )
+    with pytest.raises(ValueError, match="this server"):
+        await helpers.resolve_callback_addresses(f"{scheme}://alias.example:8443/")
