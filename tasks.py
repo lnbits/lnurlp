@@ -1,20 +1,21 @@
 import asyncio
 import hashlib
 import json
-from urllib.parse import urlsplit
 
 import httpx
 import websockets
 from bolt11 import decode as bolt11_decode
 from lnbits.core.crud import get_payment, update_payment
 from lnbits.core.models import Payment
+from lnbits.settings import settings as core_settings
 from lnbits.task_manager import task_manager
 from lnbits.tasks import register_invoice_listener
+from lnbits.utils.safe_http import SafeHttpClient, validate_url
 from loguru import logger
 from pynostr.event import Event
 
 from .crud import claim_pay_link_invoice, get_or_create_lnurlp_settings, get_pay_link
-from .helpers import resolve_callback_addresses, validate_zap_request
+from .helpers import validate_zap_request
 from .models import PayLink, PayLinkInvoice
 
 
@@ -87,56 +88,45 @@ async def send_webhook(payment: Payment, pay_link: PayLink, zap_receipt=None):
 
     try:
         url = httpx.URL(pay_link.webhook_url)
-        addresses = await resolve_callback_addresses(str(url))
+        private_endpoint = _callback_private_endpoint(url)
         headers = (
             json.loads(pay_link.webhook_headers) if pay_link.webhook_headers else {}
         )
-        headers = httpx.Headers(headers)
-        headers["Host"] = urlsplit(str(url)).netloc
-        async with httpx.AsyncClient(follow_redirects=False, trust_env=False) as client:
-            for address in addresses:
-                try:
-                    async with client.stream(
-                        "POST",
-                        url.copy_with(host=address),
-                        json={
-                            "payment_hash": payment.payment_hash,
-                            "payment_request": payment.bolt11,
-                            "amount": payment.amount,
-                            "comment": (
-                                payment.extra.get("comment") if payment.extra else None
-                            ),
-                            "webhook_data": (
-                                payment.extra.get("webhook_data")
-                                if payment.extra
-                                else None
-                            ),
-                            "lnurlp": pay_link.id,
-                            "body": (
-                                json.loads(pay_link.webhook_body)
-                                if pay_link.webhook_body
-                                else ""
-                            ),
-                            "zap_receipt": zap_receipt or "",
-                        },
-                        headers=headers,
-                        extensions={"sni_hostname": url.host},
-                        timeout=6,
-                    ) as response:
-                        await mark_webhook_sent(
-                            payment.checking_id,
-                            response.status_code,
-                            response.is_success,
-                            (
-                                "Webhook delivered."
-                                if response.is_success
-                                else "Webhook failed."
-                            ),
-                        )
-                    return
-                except (httpx.ConnectError, httpx.ConnectTimeout):
-                    if address == addresses[-1]:
-                        raise
+        async with SafeHttpClient(
+            timeout=6,
+            read_body=False,
+            private_endpoint=private_endpoint,
+            allow_private_ips=(
+                core_settings.lnbits_callback_allow_private_ips
+                and private_endpoint is None
+            ),
+        ) as client:
+            response = await client.post(
+                url,
+                json={
+                    "payment_hash": payment.payment_hash,
+                    "payment_request": payment.bolt11,
+                    "amount": payment.amount,
+                    "comment": payment.extra.get("comment") if payment.extra else None,
+                    "webhook_data": (
+                        payment.extra.get("webhook_data") if payment.extra else None
+                    ),
+                    "lnurlp": pay_link.id,
+                    "body": (
+                        json.loads(pay_link.webhook_body)
+                        if pay_link.webhook_body
+                        else ""
+                    ),
+                    "zap_receipt": zap_receipt or "",
+                },
+                headers=headers,
+            )
+            await mark_webhook_sent(
+                payment.checking_id,
+                response.status_code,
+                response.is_success,
+                "Webhook delivered." if response.is_success else "Webhook failed.",
+            )
     except Exception as exc:
         logger.warning("LNURLp webhook request failed: {}", type(exc).__name__)
         await mark_webhook_sent(
@@ -197,15 +187,20 @@ async def send_zap(payment: Payment):
 
 async def _send_to_relay(relay_url: str, event_message: str) -> None:
     try:
-        addresses = await resolve_callback_addresses(relay_url)
-        parsed = urlsplit(relay_url)
+        url = httpx.URL(relay_url)
+        if url.scheme not in {"ws", "wss"}:
+            raise ValueError("Invalid zap relay scheme.")
+        addresses = await validate_url(
+            url.copy_with(scheme="https" if url.scheme == "wss" else "http"),
+            allow_private_ips=core_settings.lnbits_callback_allow_private_ips,
+        )
         for address in addresses:
             connected = False
             try:
                 async with websockets.connect(
                     relay_url,
                     host=address,
-                    port=parsed.port or (443 if parsed.scheme == "wss" else 80),
+                    port=url.port or (443 if url.scheme == "wss" else 80),
                     proxy=None,
                     open_timeout=5,
                     close_timeout=1,
@@ -220,3 +215,10 @@ async def _send_to_relay(relay_url: str, event_message: str) -> None:
                     raise
     except Exception as exc:
         logger.warning("LNURLp relay delivery failed: {}", type(exc).__name__)
+
+
+def _callback_private_endpoint(url: httpx.URL) -> str | None:
+    # Only a literal administrator-approved origin grants this exception.
+    # Empty lists and regex matches keep core's normal destination checks.
+    origin = f"{url.scheme}://{url.netloc.decode('ascii')}"
+    return origin if origin in core_settings.lnbits_callback_url_rules else None

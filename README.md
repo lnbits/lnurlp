@@ -90,6 +90,14 @@ Add a webhook URL when another app should be notified after a payment. LNURLp se
 - Optional custom headers and body data
 - Zap receipt data when Nostr zaps are enabled
 
+Webhook delivery uses LNbits core's HTTP validation and callback URL rules.
+To allow a private or local receiver, an administrator can add its exact origin
+to `lnbits_callback_url_rules`, for example `http://localhost:8500`. Use only the
+scheme, hostname, and port, without a path, trailing slash, or regex syntax.
+This grants access to that receiver through core's private endpoint support.
+An empty list or a matching regex does not grant this exception. Core continues
+to block the configured LNbits origin, metadata addresses, and redirects.
+
 ## Nostr Zaps
 
 Enable zaps when the pay link should support [NIP-57](https://nips.nostr.com/57) Nostr zap payments. Admins can set the extension's Nostr private key in the LNURLp settings dialog.
