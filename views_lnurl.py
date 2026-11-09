@@ -38,6 +38,7 @@ lnurlp_lnurl_router = APIRouter()
     "/api/v1/lnurl/cb/{link_id}",
     status_code=HTTPStatus.OK,
     name="lnurlp.api_lnurl_callback",
+    openapi_extra={"x-lnbits-local-lnurl": True},
 )
 async def api_lnurl_callback(
     request: Request,
@@ -165,10 +166,12 @@ async def api_lnurl_callback(
     "/api/v1/lnurl/{link_id}",  # Backwards compatibility for old LNURLs / QR codes
     name="lnurlp.api_lnurl_response.deprecated",
     deprecated=True,
+    openapi_extra={"x-lnbits-local-lnurl": True},
 )
 @lnurlp_lnurl_router.get(
     "/{link_id}",
     name="lnurlp.api_lnurl_response",
+    openapi_extra={"x-lnbits-local-lnurl": True},
 )
 async def api_lnurl_response(
     request: Request,
@@ -220,7 +223,9 @@ async def api_lnurl_response(
 
 
 # redirected from /.well-known/lnurlp
-@lnurlp_lnurl_router.get("/api/v1/well-known/{username}")
+@lnurlp_lnurl_router.get(
+    "/api/v1/well-known/{username}", openapi_extra={"x-lnbits-local-lnurl": True}
+)
 async def lnaddress(
     username: str, request: Request
 ) -> LnurlPayResponse | LnurlErrorResponse:
