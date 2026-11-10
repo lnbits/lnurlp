@@ -152,6 +152,41 @@ def payment():
     )
 
 
+@pytest.fixture
+def callback_sender(link, payment, monkeypatch):
+    requests = []
+
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(200)
+
+    client_class = httpx.AsyncClient
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda **kwargs: client_class(transport=httpx.MockTransport(handler), **kwargs),
+    )
+    websocket = SimpleNamespace(send=AsyncMock(), recv=AsyncMock(return_value='["OK"]'))
+    connection = Mock(
+        __aenter__=AsyncMock(return_value=websocket), __aexit__=AsyncMock()
+    )
+    connect_relay = Mock(return_value=connection)
+    monkeypatch.setattr(tasks.websockets, "connect", connect_relay)
+    monkeypatch.setattr(tasks, "get_payment", AsyncMock(return_value=payment))
+    monkeypatch.setattr(tasks, "update_payment", AsyncMock())
+
+    async def send(url):
+        if url.startswith(("ws:", "wss:")):
+            before = connect_relay.call_count
+            await tasks._send_to_relay(url, "message")
+            return connect_relay.call_count > before
+        link.webhook_url = url
+        await tasks.send_webhook(payment, link)
+        return payment.extra["wh_success"]
+
+    return SimpleNamespace(send=send, requests=requests)
+
+
 @pytest.mark.anyio
 @pytest.mark.parametrize("recorded", [False, True])
 async def test_paid_invoice_is_processed_once(
@@ -436,7 +471,9 @@ async def test_invalid_zap_does_not_create_invoice(client, link, monkeypatch):
     ],
 )
 @pytest.mark.parametrize("scheme", ["https", "ws", "wss"])
-async def test_private_and_mixed_dns_targets_are_blocked(monkeypatch, address, scheme):
+async def test_private_and_mixed_dns_targets_are_blocked(
+    callback_sender, monkeypatch, address, scheme
+):
     loop = asyncio.get_running_loop()
     monkeypatch.setattr(outbound, "_is_assigned", lambda ip: ip.is_loopback)
     monkeypatch.setattr(
@@ -449,8 +486,7 @@ async def test_private_and_mixed_dns_targets_are_blocked(monkeypatch, address, s
             ]
         ),
     )
-    with pytest.raises(ValueError, match="not allowed"):
-        await helpers.resolve_callback_addresses(f"{scheme}://callback.example")
+    assert not await callback_sender.send(f"{scheme}://callback.example")
     monkeypatch.setattr(settings, "lnbits_callback_allow_private_ips", True)
     if address in {
         "127.0.0.1",
@@ -459,28 +495,150 @@ async def test_private_and_mixed_dns_targets_are_blocked(monkeypatch, address, s
         "64:ff9b::7f00:1",
         "2002:7f00:1::",
     }:
-        with pytest.raises(ValueError, match="this server"):
-            await helpers.resolve_callback_addresses(f"{scheme}://callback.example")
+        assert not await callback_sender.send(f"{scheme}://callback.example")
     else:
-        assert await helpers.resolve_callback_addresses(
-            f"{scheme}://callback.example"
-        ) == ["8.8.8.8", address]
+        assert await callback_sender.send(f"{scheme}://callback.example")
 
 
 @pytest.mark.anyio
-async def test_callback_rules_and_schemes_are_enforced(monkeypatch):
+async def test_callback_rules_and_schemes_are_enforced(callback_sender, monkeypatch):
     for url in (
         "file:///etc/passwd",
         "https://user:pass@host.example",
         "wss://host.example:bad",
     ):
-        with pytest.raises(ValueError):
-            await helpers.resolve_callback_addresses(url)
+        assert not await callback_sender.send(url)
     monkeypatch.setattr(
         settings, "lnbits_callback_url_rules", ["https://allowed.example"]
     )
-    with pytest.raises(ValueError):
-        await helpers.resolve_callback_addresses("wss://blocked.example")
+    assert not await callback_sender.send("wss://blocked.example")
+    assert not await callback_sender.send("https://blocked.example")
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("allow_private", [False, True])
+@pytest.mark.parametrize("address", ["127.0.0.1", "::1"])
+async def test_explicit_callback_origin_allows_local_receiver(
+    callback_sender, monkeypatch, allow_private, address
+):
+    monkeypatch.setattr(settings, "lnbits_baseurl", "http://localhost:5000")
+    monkeypatch.setattr(settings, "lnbits_callback_allow_private_ips", allow_private)
+    monkeypatch.setattr(
+        settings, "lnbits_callback_url_rules", ["http://localhost:8500"]
+    )
+    monkeypatch.setattr(
+        asyncio.get_running_loop(),
+        "getaddrinfo",
+        AsyncMock(
+            return_value=[(socket.AF_INET, socket.SOCK_STREAM, 6, "", (address, 8500))]
+        ),
+    )
+
+    assert await callback_sender.send("http://localhost:8500/hook?token=secret")
+    request = callback_sender.requests[0]
+    assert request.url.host == address
+    assert request.url.port == 8500
+    assert request.url.path == "/hook"
+    assert request.headers["host"] == "localhost:8500"
+    assert request.headers["authorization"] == "secret"
+    assert json.loads(request.content)["body"] == {"token": "secret"}
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    "rules",
+    [
+        [],
+        [r"http://.*"],
+        [r"http://localhost:\d+"],
+        ["http://localhost:8501"],
+        ["http://localhost:8500/hook"],
+    ],
+)
+async def test_only_literal_origin_grants_private_callback_exception(
+    callback_sender, monkeypatch, rules
+):
+    monkeypatch.setattr(settings, "lnbits_callback_url_rules", rules)
+    monkeypatch.setattr(settings, "lnbits_callback_allow_private_ips", True)
+    monkeypatch.setattr(
+        asyncio.get_running_loop(),
+        "getaddrinfo",
+        AsyncMock(return_value=[("", "", "", "", ("127.0.0.1", 8500))]),
+    )
+    assert not await callback_sender.send("http://localhost:8500/hook")
+    assert not callback_sender.requests
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://localhost:8501/hook",
+        "https://localhost:8500/hook",
+        "http://127.0.0.1:8500/hook",
+        "http://user:password@localhost:8500/hook",
+    ],
+)
+async def test_private_callback_exception_is_scoped_to_origin(
+    callback_sender, monkeypatch, url
+):
+    monkeypatch.setattr(
+        settings,
+        "lnbits_callback_url_rules",
+        ["http://localhost:8500", r"https?://.*"],
+    )
+    monkeypatch.setattr(settings, "lnbits_callback_allow_private_ips", True)
+    monkeypatch.setattr(
+        asyncio.get_running_loop(),
+        "getaddrinfo",
+        AsyncMock(return_value=[("", "", "", "", ("127.0.0.1", 8500))]),
+    )
+    assert not await callback_sender.send(url)
+    assert not callback_sender.requests
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    "addresses",
+    [
+        ["169.254.169.254"],
+        ["fd00:ec2::254"],
+        ["224.0.0.1"],
+        ["8.8.8.8"],
+        ["127.0.0.1", "8.8.8.8"],
+    ],
+)
+async def test_explicit_callback_keeps_core_address_restrictions(
+    callback_sender, monkeypatch, addresses
+):
+    monkeypatch.setattr(
+        settings, "lnbits_callback_url_rules", ["http://receiver.example:8500"]
+    )
+    monkeypatch.setattr(settings, "lnbits_outbound_host_ips", ["8.8.8.8"])
+    monkeypatch.setattr(
+        asyncio.get_running_loop(),
+        "getaddrinfo",
+        AsyncMock(return_value=[("", "", "", "", (ip, 8500)) for ip in addresses]),
+    )
+    assert not await callback_sender.send("http://receiver.example:8500/hook")
+    assert not callback_sender.requests
+
+
+@pytest.mark.anyio
+async def test_explicit_callback_cannot_target_lnbits_origin(
+    callback_sender, monkeypatch
+):
+    monkeypatch.setattr(settings, "lnbits_baseurl", "http://localhost:5000")
+    monkeypatch.setattr(
+        settings, "lnbits_callback_url_rules", ["http://localhost:5000"]
+    )
+    monkeypatch.setattr(
+        asyncio.get_running_loop(),
+        "getaddrinfo",
+        AsyncMock(return_value=[("", "", "", "", ("127.0.0.1", 5000))]),
+    )
+    assert not await callback_sender.send("http://localhost:5000/admin")
+    assert not callback_sender.requests
 
 
 @pytest.mark.anyio
@@ -499,10 +657,10 @@ async def test_webhook_pins_target_and_does_not_store_response(
     client_class = httpx.AsyncClient
 
     def client(**kwargs):
-        assert kwargs == {"follow_redirects": False, "trust_env": False}
+        assert kwargs == {"timeout": 6, "follow_redirects": False, "trust_env": False}
         return client_class(transport=httpx.MockTransport(handler), **kwargs)
 
-    monkeypatch.setattr(tasks.httpx, "AsyncClient", client)
+    monkeypatch.setattr(httpx, "AsyncClient", client)
     monkeypatch.setattr(
         asyncio.get_running_loop(),
         "getaddrinfo",
@@ -550,14 +708,19 @@ async def test_webhook_only_retries_connection_failures(
 
     client_class = httpx.AsyncClient
     monkeypatch.setattr(
-        tasks.httpx,
+        httpx,
         "AsyncClient",
         lambda **kwargs: client_class(transport=httpx.MockTransport(handler), **kwargs),
     )
     monkeypatch.setattr(
-        tasks,
-        "resolve_callback_addresses",
-        AsyncMock(return_value=["8.8.8.8", "1.1.1.1"]),
+        asyncio.get_running_loop(),
+        "getaddrinfo",
+        AsyncMock(
+            return_value=[
+                (socket.AF_INET, socket.SOCK_STREAM, 6, "", (address, 443))
+                for address in ["8.8.8.8", "1.1.1.1"]
+            ]
+        ),
     )
     monkeypatch.setattr(tasks, "get_payment", AsyncMock(return_value=payment))
     monkeypatch.setattr(tasks, "update_payment", AsyncMock())
@@ -598,9 +761,14 @@ async def test_relay_only_retries_before_sending(monkeypatch, error_type, connec
     connect = Mock(side_effect=[first, second])
     monkeypatch.setattr(tasks.websockets, "connect", connect)
     monkeypatch.setattr(
-        tasks,
-        "resolve_callback_addresses",
-        AsyncMock(return_value=["8.8.8.8", "1.1.1.1"]),
+        asyncio.get_running_loop(),
+        "getaddrinfo",
+        AsyncMock(
+            return_value=[
+                (socket.AF_INET, socket.SOCK_STREAM, 6, "", (address, 443))
+                for address in ["8.8.8.8", "1.1.1.1"]
+            ]
+        ),
     )
     log = Mock()
     monkeypatch.setattr(tasks, "logger", log)
@@ -674,7 +842,7 @@ async def test_public_activity_does_not_overwrite_owner_settings(link):
 @pytest.mark.anyio
 @pytest.mark.parametrize("scheme", ["https", "ws", "wss"])
 async def test_public_host_addresses_blocked_even_with_private_opt_in(
-    monkeypatch, scheme
+    callback_sender, monkeypatch, scheme
 ):
     monkeypatch.setattr(settings, "lnbits_callback_allow_private_ips", True)
     monkeypatch.setattr(settings, "lnbits_outbound_host_ips", ["8.8.8.8"])
@@ -685,5 +853,4 @@ async def test_public_host_addresses_blocked_even_with_private_opt_in(
             return_value=[(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("8.8.8.8", 443))]
         ),
     )
-    with pytest.raises(ValueError, match="this server"):
-        await helpers.resolve_callback_addresses(f"{scheme}://alias.example:8443/")
+    assert not await callback_sender.send(f"{scheme}://alias.example:8443/")
