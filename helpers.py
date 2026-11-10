@@ -1,8 +1,11 @@
 import json
 from urllib.parse import urlsplit
 
+import httpx
 from fastapi import Request
 from lnbits.helpers import check_callback_url
+from lnbits.settings import settings
+from lnbits.utils.safe_http import SafeHttpClient, validate_url
 from lnurl import encode as lnurl_encode
 from pynostr.event import Event
 from pynostr.key import PrivateKey
@@ -28,6 +31,34 @@ def lnurl_encode_link(req: Request, link_id: str, domain: str | None = None) -> 
         url_str = url_str.replace("https://", "http://")
 
     return str(lnurl_encode(url_str).bech32)
+
+
+def create_webhook_client(url: httpx.URL) -> SafeHttpClient:
+    private_endpoint = _callback_private_endpoint(url)
+    return SafeHttpClient(
+        timeout=6,
+        read_body=False,
+        private_endpoint=private_endpoint,
+        allow_private_ips=(
+            settings.lnbits_callback_allow_private_ips and private_endpoint is None
+        ),
+    )
+
+
+def _callback_private_endpoint(url: httpx.URL) -> str | None:
+    # Only a literal administrator-approved origin grants this exception.
+    # Empty lists and regex matches keep core's normal destination checks.
+    origin = f"{url.scheme}://{url.netloc.decode('ascii')}"
+    return origin if origin in settings.lnbits_callback_url_rules else None
+
+
+async def resolve_relay_addresses(url: httpx.URL) -> list[str]:
+    if url.scheme not in {"ws", "wss"}:
+        raise ValueError("Invalid zap relay scheme.")
+    return await validate_url(
+        url.copy_with(scheme="https" if url.scheme == "wss" else "http"),
+        allow_private_ips=settings.lnbits_callback_allow_private_ips,
+    )
 
 
 def validate_zap_request(nostr: str, amount: int, nostr_pubkey: str) -> Event:

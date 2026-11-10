@@ -7,15 +7,17 @@ import websockets
 from bolt11 import decode as bolt11_decode
 from lnbits.core.crud import get_payment, update_payment
 from lnbits.core.models import Payment
-from lnbits.settings import settings as core_settings
 from lnbits.task_manager import task_manager
 from lnbits.tasks import register_invoice_listener
-from lnbits.utils.safe_http import SafeHttpClient, validate_url
 from loguru import logger
 from pynostr.event import Event
 
 from .crud import claim_pay_link_invoice, get_or_create_lnurlp_settings, get_pay_link
-from .helpers import validate_zap_request
+from .helpers import (
+    create_webhook_client,
+    resolve_relay_addresses,
+    validate_zap_request,
+)
 from .models import PayLink, PayLinkInvoice
 
 
@@ -88,19 +90,10 @@ async def send_webhook(payment: Payment, pay_link: PayLink, zap_receipt=None):
 
     try:
         url = httpx.URL(pay_link.webhook_url)
-        private_endpoint = _callback_private_endpoint(url)
         headers = (
             json.loads(pay_link.webhook_headers) if pay_link.webhook_headers else {}
         )
-        async with SafeHttpClient(
-            timeout=6,
-            read_body=False,
-            private_endpoint=private_endpoint,
-            allow_private_ips=(
-                core_settings.lnbits_callback_allow_private_ips
-                and private_endpoint is None
-            ),
-        ) as client:
+        async with create_webhook_client(url) as client:
             response = await client.post(
                 url,
                 json={
@@ -188,12 +181,7 @@ async def send_zap(payment: Payment):
 async def _send_to_relay(relay_url: str, event_message: str) -> None:
     try:
         url = httpx.URL(relay_url)
-        if url.scheme not in {"ws", "wss"}:
-            raise ValueError("Invalid zap relay scheme.")
-        addresses = await validate_url(
-            url.copy_with(scheme="https" if url.scheme == "wss" else "http"),
-            allow_private_ips=core_settings.lnbits_callback_allow_private_ips,
-        )
+        addresses = await resolve_relay_addresses(url)
         for address in addresses:
             connected = False
             try:
@@ -215,10 +203,3 @@ async def _send_to_relay(relay_url: str, event_message: str) -> None:
                     raise
     except Exception as exc:
         logger.warning("LNURLp relay delivery failed: {}", type(exc).__name__)
-
-
-def _callback_private_endpoint(url: httpx.URL) -> str | None:
-    # Only a literal administrator-approved origin grants this exception.
-    # Empty lists and regex matches keep core's normal destination checks.
-    origin = f"{url.scheme}://{url.netloc.decode('ascii')}"
-    return origin if origin in core_settings.lnbits_callback_url_rules else None
