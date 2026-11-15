@@ -30,12 +30,15 @@ async def delete_lnurlp_settings() -> None:
     await db.execute("DELETE FROM lnurlp.settings")
 
 
-async def get_pay_link_by_username(username: str) -> PayLink | None:
-    return await db.fetchone(
-        "SELECT * FROM lnurlp.pay_links WHERE username = :username",
-        {"username": username},
-        PayLink,
-    )
+async def get_pay_link_by_username(
+    username: str, exclude_id: str | None = None
+) -> PayLink | None:
+    query = "SELECT * FROM lnurlp.pay_links WHERE LOWER(username) = :username"
+    values: dict[str, str] = {"username": username.lower()}
+    if exclude_id:
+        query += " AND id != :exclude_id"
+        values["exclude_id"] = exclude_id
+    return await db.fetchone(query, values, PayLink)
 
 
 async def create_pay_link(data: CreatePayLinkData) -> PayLink:
@@ -74,8 +77,12 @@ async def create_pay_link(data: CreatePayLinkData) -> PayLink:
 
 async def get_address_data(username: str) -> PayLink | None:
     return await db.fetchone(
-        "SELECT * FROM lnurlp.pay_links WHERE username = :username",
-        {"username": username},
+        """
+        SELECT * FROM lnurlp.pay_links
+        WHERE LOWER(username) = :username
+        ORDER BY CASE WHEN username = :username THEN 0 ELSE 1 END, id ASC
+        """,
+        {"username": username.lower()},
         PayLink,
     )
 

@@ -13,7 +13,7 @@ from lnbits.core.db import core_app_extra
 from lnbits.core.models import KeyType, Payment, Wallet, WalletTypeInfo
 from lnbits.core.services import lnurl as lnurl_service
 from lnbits.db import Database
-from lnbits.decorators import require_invoice_key
+from lnbits.decorators import require_admin_key, require_invoice_key
 from lnbits.settings import settings
 from lnbits.utils import outbound
 from lnbits.wallets.fake import FakeWallet
@@ -84,6 +84,9 @@ async def client(monkeypatch, key_info):
     app.include_router(views_api.lnurlp_api_router, prefix="/lnurlp")
     app.include_router(views_lnurl.lnurlp_lnurl_router, prefix="/lnurlp")
     app.dependency_overrides[require_invoice_key] = lambda: key_info
+    app.dependency_overrides[require_admin_key] = lambda: WalletTypeInfo(
+        KeyType.admin, key_info.wallet
+    )
     monkeypatch.setattr(
         views_api,
         "get_user",
@@ -93,6 +96,9 @@ async def client(monkeypatch, key_info):
     )
     monkeypatch.setattr(
         views_api, "get_wallet", AsyncMock(return_value=key_info.wallet)
+    )
+    monkeypatch.setattr(
+        views_api, "get_wallet_id_by_ln_address", AsyncMock(return_value=None)
     )
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="https://lnbits.example"
@@ -854,3 +860,277 @@ async def test_public_host_addresses_blocked_even_with_private_opt_in(
         ),
     )
     assert not await callback_sender.send(f"{scheme}://alias.example:8443/")
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("mode", ["extension_first", "core_first"])
+async def test_create_pay_link_rejects_core_wallet_lightning_address(
+    client, database, monkeypatch, mode
+):
+    monkeypatch.setattr(settings, "lnbits_ln_address_mode", mode)
+    lookup = AsyncMock(return_value="core-wallet-id")
+    monkeypatch.setattr(views_api, "get_wallet_id_by_ln_address", lookup)
+
+    response = await client.post(
+        "/lnurlp/api/v1/links",
+        json={
+            "description": "Pay Alice",
+            "min": 1,
+            "max": 10,
+            "comment_chars": 0,
+            "username": "alice",
+        },
+    )
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Username already taken."
+    lookup.assert_awaited_once_with("alice")
+
+
+@pytest.mark.anyio
+async def test_create_pay_link_allows_core_username_in_extension_only_mode(
+    client, database, monkeypatch
+):
+    monkeypatch.setattr(settings, "lnbits_ln_address_mode", "extension_only")
+    assert not settings.ln_address_creation_allowed
+    lookup = AsyncMock(return_value="core-wallet-id")
+    monkeypatch.setattr(views_api, "get_wallet_id_by_ln_address", lookup)
+
+    response = await client.post(
+        "/lnurlp/api/v1/links",
+        json={
+            "description": "Pay Alice",
+            "min": 1,
+            "max": 10,
+            "comment_chars": 0,
+            "username": "alice",
+        },
+    )
+    assert response.status_code == 201
+    assert response.json()["username"] == "alice"
+    lookup.assert_not_awaited()
+
+    duplicate = await client.post(
+        "/lnurlp/api/v1/links",
+        json={
+            "description": "Duplicate Alice",
+            "min": 1,
+            "max": 10,
+            "comment_chars": 0,
+            "username": "alice",
+        },
+    )
+    assert duplicate.status_code == 409
+    assert duplicate.json()["detail"] == "Username already taken."
+
+
+@pytest.mark.anyio
+async def test_update_pay_link_checks_core_lightning_address_only_when_username_changes(
+    client, database, monkeypatch
+):
+    monkeypatch.setattr(settings, "lnbits_ln_address_mode", "extension_first")
+    existing = await crud.create_pay_link(
+        CreatePayLinkData(
+            description="Initial",
+            wallet="wallet",
+            min=1,
+            max=10,
+            comment_chars=0,
+            username="alice",
+            zaps=False,
+        )
+    )
+    legacy = await crud.create_pay_link(
+        CreatePayLinkData(
+            description="Legacy",
+            wallet="wallet",
+            min=1,
+            max=10,
+            comment_chars=0,
+            username="Carol",
+            zaps=False,
+        )
+    )
+
+    lookup = AsyncMock(
+        side_effect=lambda name: (
+            "core-wallet-id" if name in {"alice", "bob", "carol"} else None
+        )
+    )
+    monkeypatch.setattr(views_api, "get_wallet_id_by_ln_address", lookup)
+
+    conflict = await client.put(
+        f"/lnurlp/api/v1/links/{existing.id}",
+        json={
+            "description": "Renamed",
+            "min": 1,
+            "max": 10,
+            "comment_chars": 0,
+            "username": "bob",
+            "zaps": True,
+        },
+    )
+    assert conflict.status_code == 409
+    assert conflict.json()["detail"] == "Username already taken."
+    lookup.assert_awaited_once_with("bob")
+
+    lookup.reset_mock()
+    unchanged = await client.put(
+        f"/lnurlp/api/v1/links/{existing.id}",
+        json={
+            "description": "Updated description",
+            "min": 1,
+            "max": 20,
+            "comment_chars": 0,
+            "username": "alice",
+            "zaps": True,
+        },
+    )
+    assert unchanged.status_code == 200
+    assert unchanged.json()["description"] == "Updated description"
+    assert unchanged.json()["zaps"] is True
+    assert unchanged.json()["username"] == "alice"
+    lookup.assert_not_awaited()
+
+    normalized = await client.put(
+        f"/lnurlp/api/v1/links/{legacy.id}",
+        json={
+            "description": "UI round-trip preserves legacy MixedCase payload",
+            "min": 1,
+            "max": 10,
+            "comment_chars": 0,
+            "username": "Carol",
+            "zaps": True,
+        },
+    )
+    assert normalized.status_code == 200
+    assert normalized.json()["username"] == "carol"
+    lookup.assert_not_awaited()
+
+    renamed = await client.put(
+        f"/lnurlp/api/v1/links/{existing.id}",
+        json={
+            "description": "Renamed to available",
+            "min": 1,
+            "max": 20,
+            "comment_chars": 0,
+            "username": "dave",
+            "zaps": True,
+        },
+    )
+    assert renamed.status_code == 200
+    assert renamed.json()["username"] == "dave"
+    lookup.assert_awaited_once_with("dave")
+
+
+@pytest.mark.anyio
+async def test_legacy_duplicate_precedence_and_newline_rejection(
+    client, database, monkeypatch
+):
+    monkeypatch.setattr(settings, "lnbits_ln_address_mode", "extension_first")
+    legacy_upper = await crud.create_pay_link(
+        CreatePayLinkData(
+            description="Older MixedCase",
+            wallet="wallet",
+            min=1,
+            max=10,
+            comment_chars=0,
+            username="Carol",
+        )
+    )
+    exact_lower = await crud.create_pay_link(
+        CreatePayLinkData(
+            description="Exact lowercase owner",
+            wallet="wallet",
+            min=2,
+            max=20,
+            comment_chars=0,
+            username="carol",
+        )
+    )
+
+    resolved = await client.get("/lnurlp/api/v1/well-known/carol")
+    assert resolved.status_code == 200
+    assert resolved.json()["callback"].endswith(f"/{exact_lower.id}")
+
+    dup_put = await client.put(
+        f"/lnurlp/api/v1/links/{legacy_upper.id}",
+        json={
+            "description": "Attempt duplicate lowercase",
+            "min": 1,
+            "max": 10,
+            "comment_chars": 0,
+            "username": "Carol",
+        },
+    )
+    assert dup_put.status_code == 409
+    assert dup_put.json()["detail"] == "Username already taken."
+
+    newline_post = await client.post(
+        "/lnurlp/api/v1/links",
+        json={
+            "description": "Trailing newline",
+            "min": 1,
+            "max": 10,
+            "comment_chars": 0,
+            "username": "alice\n",
+        },
+    )
+    assert newline_post.status_code == 400
+
+
+@pytest.mark.anyio
+async def test_well_known_and_uniqueness_are_case_insensitive(
+    client, database, monkeypatch
+):
+    await crud.create_pay_link(
+        CreatePayLinkData(
+            description="Pay Alice",
+            wallet="wallet",
+            min=1,
+            max=10,
+            comment_chars=0,
+            username="alice",
+        )
+    )
+    await crud.create_pay_link(
+        CreatePayLinkData(
+            description="Pay Legacy Bob",
+            wallet="wallet",
+            min=1,
+            max=10,
+            comment_chars=0,
+            username="LegacyBob",
+        )
+    )
+
+    upper_res = await client.get("/lnurlp/api/v1/well-known/Alice")
+    assert upper_res.status_code == 200
+    assert upper_res.json()["tag"] == "payRequest"
+
+    legacy_res = await client.get("/lnurlp/api/v1/well-known/legacybob")
+    assert legacy_res.status_code == 200
+    assert legacy_res.json()["tag"] == "payRequest"
+    assert ["text/identifier", "legacybob@lnbits.example"] in json.loads(
+        legacy_res.json()["metadata"]
+    )
+
+    missing_res = await client.get("/lnurlp/api/v1/well-known/missing")
+    assert missing_res.status_code == 200
+    assert missing_res.json() == {
+        "status": "ERROR",
+        "reason": "Lightning address not found.",
+    }
+
+    monkeypatch.setattr(settings, "lnbits_ln_address_mode", "extension_only")
+    collision = await client.post(
+        "/lnurlp/api/v1/links",
+        json={
+            "description": "Collide with LegacyBob",
+            "min": 1,
+            "max": 10,
+            "comment_chars": 0,
+            "username": "legacybob",
+        },
+    )
+    assert collision.status_code == 409
+    assert collision.json()["detail"] == "Username already taken."

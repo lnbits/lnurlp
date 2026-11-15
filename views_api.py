@@ -4,6 +4,7 @@ from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from lnbits.core.crud import get_user, get_wallet
+from lnbits.core.crud.wallets import get_wallet_id_by_ln_address
 from lnbits.core.models import KeyType, SimpleStatus, WalletTypeInfo
 from lnbits.decorators import (
     check_admin,
@@ -11,6 +12,7 @@ from lnbits.decorators import (
     require_invoice_key,
 )
 from lnbits.helpers import check_callback_url
+from lnbits.settings import settings
 from lnurl import InvalidUrl
 
 from .crud import (
@@ -87,7 +89,7 @@ def validate_paylink(data: CreatePayLinkData):
                 status_code=HTTPStatus.BAD_REQUEST,
             ) from exc
 
-    if data.username and not re.match("^[a-z0-9-_.]{1,210}$", data.username):
+    if data.username and not re.fullmatch(r"[a-z0-9-_.]{1,210}", data.username):
         raise HTTPException(
             detail=f"Invalid username: {data.username}. "
             "Only letters a-z0-9-_. allowed, min 1 and max 210 characters!",
@@ -158,9 +160,23 @@ async def api_link_public_retrieve(req: Request, link_id: str) -> PayLink:
     return link
 
 
-async def check_username_exists(username: str):
-    prev_link = await get_pay_link_by_username(username)
+async def check_username_exists(
+    username: str,
+    *,
+    exclude_id: str | None = None,
+    check_core: bool = True,
+):
+    prev_link = await get_pay_link_by_username(username, exclude_id=exclude_id)
     if prev_link:
+        raise HTTPException(
+            detail="Username already taken.",
+            status_code=HTTPStatus.CONFLICT,
+        )
+    if (
+        check_core
+        and settings.ln_address_creation_allowed
+        and await get_wallet_id_by_ln_address(username)
+    ):
         raise HTTPException(
             detail="Username already taken.",
             status_code=HTTPStatus.CONFLICT,
@@ -215,14 +231,19 @@ async def api_link_update(
     link_id: str,
     key_info: WalletTypeInfo = Depends(require_admin_key),
 ) -> PayLink:
-
-    validate_paylink(data)
-
     link = await get_pay_link(link_id)
     if not link:
         raise HTTPException(
             detail="Pay link does not exist.", status_code=HTTPStatus.NOT_FOUND
         )
+    if (
+        data.username
+        and link.username
+        and data.username.lower() == link.username.lower()
+    ):
+        data.username = data.username.lower()
+
+    validate_paylink(data)
 
     user = await get_user(key_info.wallet.user)
     if not user:
@@ -253,8 +274,14 @@ async def api_link_update(
     if not user.admin and new_wallet.id not in user.wallet_ids:
         raise HTTPException(detail="Not your wallet.", status_code=HTTPStatus.FORBIDDEN)
 
-    if data.username and data.username != link.username:
-        await check_username_exists(data.username)
+    if data.username:
+        username_changed = data.username.lower() != (link.username or "").lower()
+        if username_changed or data.username != link.username:
+            await check_username_exists(
+                data.username,
+                exclude_id=link.id,
+                check_core=username_changed,
+            )
 
     for k, v in data.model_dump().items():
         setattr(link, k, v)
